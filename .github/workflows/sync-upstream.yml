@@ -1,0 +1,103 @@
+name: Sync upstream
+
+# Tracks Hex's stable release tags: when anomalyco/hex publishes a new
+# vX.Y.Z, fast-forward `main` to it, regenerate the `voinc` branch from it
+# (.voinc/rebrand.sh, then .voinc/patches/*.patch), and open a pull request
+# into `voinc`. Schedules read this file from the default branch, so `voinc`
+# must stay the repository's default branch.
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this branch with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find the newest upstream stable tag
+        id: tag
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/anomalyco/hex.git
+          git fetch upstream 'refs/tags/v*:refs/tags/v*' --quiet
+          tag="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+          if [ -z "$tag" ]; then
+            echo "::error::no upstream stable tag found"
+            exit 1
+          fi
+          if [ "$(git rev-parse "$tag^{commit}")" = "$(git rev-parse origin/main^{commit})" ]; then
+            echo "Already in sync with upstream $tag."
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "New upstream stable release: $tag"
+          echo "updated=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Fast-forward main to the new tag
+        if: steps.tag.outputs.updated == 'true'
+        run: |
+          git push origin "${{ steps.tag.outputs.tag }}:refs/heads/main"
+
+      - name: Regenerate the voinc branch
+        if: steps.tag.outputs.updated == 'true'
+        run: |
+          set -euo pipefail
+          tag="${{ steps.tag.outputs.tag }}"
+          git config user.name "voinc-sync"
+          git config user.email "voinc-sync@users.noreply.github.com"
+
+          git checkout -B sync-upstream "$tag"
+          if git rev-parse -q --verify origin/voinc >/dev/null; then
+            git checkout origin/voinc -- .voinc
+            git add .voinc
+            git diff --cached --quiet || git commit -m ".voinc: fork tooling"
+          fi
+
+          ./.voinc/rebrand.sh
+          git add -A
+          git diff --cached --quiet || git commit -m "rebrand: apply .voinc/rebrand.sh (upstream $tag)"
+
+          if compgen -G '.voinc/patches/*.patch' >/dev/null; then
+            git apply --whitespace=nowarn .voinc/patches/*.patch
+            git add -A
+            git diff --cached --quiet || git commit -m ".voinc: apply patches"
+          fi
+
+      - name: Push and open the pull request
+        if: steps.tag.outputs.updated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="${{ steps.tag.outputs.tag }}"
+          git push --force origin sync-upstream
+
+          title="Sync upstream $tag"
+          body="$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
+            'Automated regeneration from upstream Hex.' \
+            '' \
+            "- Upstream release: [$tag](https://github.com/anomalyco/hex/releases/tag/$tag); \`main\` was fast-forwarded to it (pristine mirror)." \
+            '- This tree was regenerated mechanically: `.voinc/rebrand.sh`, then the hand patches in `.voinc/patches/`.' \
+            "- \`compile.yml\` builds the result. A failing patch usually means upstream changed the code a patch touches: fix the patch on this branch and push, or do the change in \`.voinc/rebrand.sh\` when it is mechanical branding." \
+            '- After merging, tag the merge commit `v<upstream version>-voinc.<n>` to build a release.')"
+
+          if gh pr view sync-upstream --json state --jq .state 2>/dev/null | grep -qx OPEN; then
+            gh pr edit sync-upstream --title "$title" --body "$body"
+          else
+            gh pr create --base voinc --head sync-upstream --title "$title" --body "$body"
+          fi

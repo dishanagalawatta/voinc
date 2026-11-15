@@ -21,7 +21,7 @@ Stable builds are published on the [GitHub releases page](https://github.com/dis
 Voinc is a community fork of [Hex](https://github.com/anomalyco/hex) by Anomaly — local voice dictation, MIT licensed. The fork tracks Hex's stable releases automatically:
 
 - `main` is a pristine mirror of the upstream release tags (fast-forward only).
-- the `voinc` branch is regenerated from each new upstream tag by applying `.voinc/rebrand.sh` plus the small patch set in `.voinc/patches/` — a monthly GitHub Action opens a pull request with the update.
+- the `voinc` branch is regenerated from each new upstream tag by applying `.voinc/rebrand.sh` plus the small patch set in `.voinc/patches/` — a daily GitHub Action opens a pull request with the update.
 - speech models are downloaded from the same sources upstream uses; updates are handled through GitHub releases rather than an in-app updater.
 
 See `.voinc/rebrand.sh` and `NOTICE.md` for details of the fork mechanics and attribution.

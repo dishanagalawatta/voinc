@@ -1,0 +1,1723 @@
+diff --git a/.github/workflows/aur-check.yml b/.github/workflows/aur-check.yml
+deleted file mode 100644
+index 7338d05d..00000000
+--- a/.github/workflows/aur-check.yml
++++ /dev/null
+@@ -1,44 +0,0 @@
+-name: AUR key check
+-
+-# Confirms the AUR accepts the release key (github-actions-voinc-aur) by listing
+-# the account's packages. Run it after adding or rotating the key.
+-on:
+-  workflow_dispatch:
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  check:
+-    runs-on: ubuntu-24.04
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          sparse-checkout: /.github/release/
+-          sparse-checkout-cone-mode: false
+-          persist-credentials: false
+-      # Step outputs only, for the one step that reads the key.
+-      - id: aws
+-        name: Configure AWS credentials
+-        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+-        with:
+-          role-to-assume: arn:aws:iam::604439173067:role/github/voinc-release
+-          role-session-name: voinc-${{ github.run_id }}
+-          role-duration-seconds: 900
+-          aws-region: us-east-1
+-          output-env-credentials: false
+-          output-credentials: true
+-      - name: List the AUR account's packages with the key
+-        shell: bash
+-        env:
+-          AWS_ACCESS_KEY_ID: ${{ steps.aws.outputs.aws-access-key-id }}
+-          AWS_SECRET_ACCESS_KEY: ${{ steps.aws.outputs.aws-secret-access-key }}
+-          AWS_SESSION_TOKEN: ${{ steps.aws.outputs.aws-session-token }}
+-        run: |
+-          bash .github/release/with-secrets.sh AUR_SSH_PRIVATE_KEY=shared/AUR_SSH_KEY \
+-            -- bash .github/release/push-aur.sh check | tee -a "$GITHUB_STEP_SUMMARY"
+diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml
+deleted file mode 100644
+index c84b2dd7..00000000
+--- a/.github/workflows/deploy.yml
++++ /dev/null
+@@ -1,191 +0,0 @@
+-name: Deploy
+-
+-# Builds site/ and deploys its Worker (the site at /voinc and the files at
+-# /voinc/files: built installers and appcast, the dev notes, and the frozen
+-# 2.3.1 bucket). Pull requests run no site check (CI is minimal; the deploy
+-# builds the site and checks every download link). A push (or a dispatch) on
+-# dev deploys the dev site (https://dev.anoma.ly/hex); on production, which
+-# moves only by a fast-forward from dev, the production site
+-# (https://anoma.ly/hex). The mode always follows the branch. Split like
+-# Release (docs/releasing.md):
+-#
+-# - build runs repository code (bun install, site/scripts/build.ts) with no
+-#   environment and no secrets, and uploads the Worker's Build Output with a
+-#   SHA256SUMS whose digest it reports.
+-# - deploy runs in the mode's infra environment (infra-dev or
+-#   infra-production, each admitting only its own branch) and mints a
+-#   short-lived Cloudflare token for that mode's Worker from the token issuer
+-#   after assuming the environment's role, github/voinc-infra-<mode>
+-#   (.github/release/cloudflare-token.sh). The AWS session is a step output
+-#   given only to the token step, and the token only to the Deploy step. It
+-#   checks out only .github/release/, verifies the artifact against that
+-#   digest, and runs only .github/release/deploy-site.sh, which pins the
+-#   Worker, routes, and bindings and deploys with the cf CLI locked in
+-#   .github/release/cf/.
+-# - verify checks the live site and every download link without secrets.
+-on:
+-  push:
+-    branches: [dev, production]
+-    paths:
+-      - "site/**"
+-      - ".github/workflows/deploy.yml"
+-      - ".github/release/deploy-site.sh"
+-      - ".github/release/cloudflare-token.sh"
+-      - ".github/release/cf/**"
+-      - ".github/release/install-linux.sh"
+-      - ".github/release/install-windows.ps1"
+-      - "packaging/macos/legacy-appcast.xml"
+-  workflow_dispatch:
+-
+-permissions:
+-  contents: read
+-
+-concurrency:
+-  group: site-${{ github.ref }}
+-  cancel-in-progress: true
+-
+-jobs:
+-  build:
+-    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/production'
+-    runs-on: ubuntu-24.04
+-    outputs:
+-      digest: ${{ steps.upload.outputs.digest }}
+-    defaults:
+-      run:
+-        working-directory: site
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          persist-credentials: false
+-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+-      - run: bun install --frozen-lockfile
+-      # The checks the Installers and Legacy appcast workflows ran before they
+-      # uploaded these files to the bucket. The site now serves them, so a
+-      # broken installer or appcast fails the deploy instead.
+-      - name: Check the legacy appcast
+-        run: |
+-          python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' ../packaging/macos/legacy-appcast.xml
+-          grep -Fq '<sparkle:informationalUpdate' ../packaging/macos/legacy-appcast.xml
+-          grep -Fq 'https://anoma.ly/hex' ../packaging/macos/legacy-appcast.xml
+-      - name: Test the installers
+-        run: |
+-          sh ../scripts/test-install-linux-release.sh
+-          pwsh -NoProfile -Command "[void][ScriptBlock]::Create((Get-Content -Raw ../.github/release/install-windows.ps1))"
+-      - name: Build
+-        env:
+-          MODE: ${{ github.ref_name == 'production' && 'production' || 'dev' }}
+-        run: |
+-          case "$MODE" in dev|production) ;; *) exit 1 ;; esac
+-          bun run build --mode "$MODE"
+-          # Vite's build manifest is not deployed, and artifacts drop hidden files.
+-          rm -r .cloudflare/output/v0/workers/default/bundle/.vite
+-      - id: upload
+-        uses: ./.github/release/upload
+-        with:
+-          name: site-${{ github.ref_name == 'production' && 'production' || 'dev' }}
+-          path: site/.cloudflare/output
+-          retention-days: 7
+-
+-  deploy:
+-    needs: build
+-    runs-on: ubuntu-24.04
+-    environment: infra-${{ github.ref_name == 'production' && 'production' || 'dev' }}
+-    permissions:
+-      contents: read
+-      id-token: write
+-    concurrency:
+-      group: site-deploy-${{ github.ref_name == 'production' && 'production' || 'dev' }}
+-      cancel-in-progress: false
+-    env:
+-      MODE: ${{ github.ref_name == 'production' && 'production' || 'dev' }}
+-    steps:
+-      - name: Require the branch for the mode
+-        env:
+-          REF: ${{ github.ref }}
+-        run: |
+-          case "$MODE:$REF" in
+-            production:refs/heads/production | dev:refs/heads/dev) ;;
+-            *) echo "::error::The $MODE site deploys only from its own branch, not $REF."; exit 1 ;;
+-          esac
+-      - name: Check out the release scripts
+-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          sparse-checkout: /.github/release/
+-          sparse-checkout-cone-mode: false
+-          persist-credentials: false
+-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+-        with:
+-          node-version: 22
+-          # Nothing from the Actions cache, which jobs running repository code share.
+-          package-manager-cache: false
+-      - name: Install the pinned cf CLI
+-        working-directory: .github/release/cf
+-        run: npm ci --ignore-scripts --no-audit --no-fund
+-      - name: Download
+-        uses: ./.github/release/download
+-        with:
+-          pattern: site-${{ env.MODE }}
+-          digests: site-${{ env.MODE }}=${{ needs.build.outputs.digest }}
+-      # Step outputs only: the token step gets the AWS session, and cf in the
+-      # Deploy step never does.
+-      - id: aws
+-        name: Configure AWS credentials
+-        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+-        with:
+-          role-to-assume: arn:aws:iam::604439173067:role/github/voinc-infra-${{ env.MODE }}
+-          role-session-name: voinc-${{ github.run_id }}
+-          role-duration-seconds: 900
+-          aws-region: us-east-1
+-          output-env-credentials: false
+-          output-credentials: true
+-      - name: Cloudflare token
+-        id: cloudflare-token
+-        env:
+-          CLOUDFLARE_TOKEN_URL: ${{ vars.CLOUDFLARE_TOKEN_URL }}
+-          AWS_ACCESS_KEY_ID: ${{ steps.aws.outputs.aws-access-key-id }}
+-          AWS_SECRET_ACCESS_KEY: ${{ steps.aws.outputs.aws-secret-access-key }}
+-          AWS_SESSION_TOKEN: ${{ steps.aws.outputs.aws-session-token }}
+-        run: bash .github/release/cloudflare-token.sh
+-      - name: Deploy
+-        env:
+-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+-          CLOUDFLARE_API_TOKEN: ${{ steps.cloudflare-token.outputs.token }}
+-        run: bash .github/release/deploy-site.sh "$MODE" "$RUNNER_TEMP/in/site-$MODE"
+-
+-  verify:
+-    needs: deploy
+-    runs-on: ubuntu-24.04
+-    defaults:
+-      run:
+-        working-directory: site
+-    env:
+-      MODE: ${{ github.ref_name == 'production' && 'production' || 'dev' }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          persist-credentials: false
+-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+-      - run: bun install --frozen-lockfile
+-      - name: Check the live site and every download link
+-        run: |
+-          host=$([ "$MODE" = dev ] && echo dev.anoma.ly || echo anoma.ly)
+-          for attempt in 1 2 3 4 5 6; do
+-            status=$(curl --silent --output /dev/null --write-out '%{http_code}' "https://$host/voinc/")
+-            [ "$status" = 200 ] && break
+-            sleep 10
+-          done
+-          test "$status" = 200
+-          bun scripts/release-data.ts --mode "$MODE"
+-          bun run check:downloads
+-      - name: Check the files the site serves
+-        run: |
+-          host=$([ "$MODE" = dev ] && echo dev.anoma.ly || echo anoma.ly)
+-          for name in install-linux.sh install-windows.ps1 appcast.xml; do
+-            curl -fsS "https://$host/voinc/files/$name?check=$GITHUB_RUN_ID" -o "$RUNNER_TEMP/$name"
+-          done
+-          cmp "$RUNNER_TEMP/install-linux.sh" ../.github/release/install-linux.sh
+-          cmp "$RUNNER_TEMP/install-windows.ps1" ../.github/release/install-windows.ps1
+-          cmp "$RUNNER_TEMP/appcast.xml" ../packaging/macos/legacy-appcast.xml
+diff --git a/.github/workflows/release-typescript.yml b/.github/workflows/release-typescript.yml
+deleted file mode 100644
+index 2fb702a2..00000000
+--- a/.github/workflows/release-typescript.yml
++++ /dev/null
+@@ -1,72 +0,0 @@
+-name: Release TypeScript SDK
+-
+-# Pending changesets on dev open (or update) the "chore: release TypeScript
+-# SDK" pull request into dev, which bumps versions and changelogs. Nothing is
+-# published from dev. Publishing happens when production is fast-forwarded to
+-# a dev commit whose SDK version is not on npm yet: changeset publish
+-# publishes it, pushes its tag, and creates its GitHub release.
+-on:
+-  push:
+-    branches: [dev, production]
+-    paths:
+-      - "sdk/**"
+-      - ".github/workflows/release-typescript.yml"
+-  workflow_dispatch:
+-
+-# Finish an in-flight publish before another run checks registry availability.
+-concurrency:
+-  group: release-typescript-${{ github.ref }}
+-  cancel-in-progress: false
+-
+-permissions:
+-  contents: write
+-  id-token: write
+-  pull-requests: write
+-
+-jobs:
+-  version:
+-    if: github.ref == 'refs/heads/dev'
+-    runs-on: ubuntu-latest
+-    defaults:
+-      run:
+-        working-directory: sdk
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+-      - run: bun install --frozen-lockfile --ignore-scripts
+-      - uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2
+-        with:
+-          cwd: sdk
+-          pr-title: "chore: release TypeScript SDK"
+-
+-  publish:
+-    if: github.ref == 'refs/heads/production'
+-    runs-on: ubuntu-latest
+-    defaults:
+-      run:
+-        working-directory: sdk
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+-        with:
+-          node-version: 24
+-          registry-url: https://registry.npmjs.org
+-      # Exact, never latest: trusted publishing needs npm 11.5+.
+-      - run: npm install --global npm@12.2.2
+-      - run: bun install --frozen-lockfile --ignore-scripts
+-      - run: |
+-          git config user.name "github-actions[bot]"
+-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+-      - run: bun run release
+-      - name: Push tags and create GitHub releases
+-        env:
+-          GH_TOKEN: ${{ github.token }}
+-        run: |
+-          for tag in $(git tag --points-at HEAD --list '@kitlangton/hex@*'); do
+-            git push origin "refs/tags/$tag"
+-            awk -v heading="## ${tag##*@}" '$0 == heading { on = 1; next } /^## / && on { exit } on' \
+-              typescript/CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+-            # The app's stable release is Latest; an SDK release never takes it.
+-            gh release create "$tag" --verify-tag --title "$tag" --notes-file "$RUNNER_TEMP/notes.md" --latest=false
+-          done
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+deleted file mode 100644
+index 08fa6113..00000000
+--- a/.github/workflows/release.yml
++++ /dev/null
+@@ -1,894 +0,0 @@
+-name: Release
+-
+-# Builds, signs, and publishes Voinc for macOS, Windows, and Linux from one
+-# exact commit to the Anomaly release service (docs/releasing.md,
+-# docs/plans/release-service.md), split the way OpenCode's release is:
+-#
+-# - build jobs (Build desktop, build-macos, Windows installers, the AUR and
+-#   Homebrew staging) run repository code: cargo, build.rs, makepkg,
+-#   brew. They have no environment, no secrets, and no id-token, and they
+-#   produce unsigned files.
+-# - sign and publish jobs run in the release environment. They check out only
+-#   .github/release/ and run only those scripts and SHA-pinned actions, on
+-#   artifacts they treat as data: they never build, install dependencies, or
+-#   execute repository code or the artifacts. Their credentials come from AWS
+-#   Secrets Manager through GitHub OIDC, not repository secrets, and are
+-#   step-scoped: the AWS session is only a step output of
+-#   configure-aws-credentials, passed to the one step that reads secrets
+-#   (.github/release/with-secrets.sh), so neither it nor a secret is ever in
+-#   the job's environment or $GITHUB_ENV.
+-# - every artifact carries a SHA256SUMS whose digest the job that made it
+-#   reports as an output; every job that downloads it checks that digest
+-#   (.github/release/verify-artifacts.sh), so nothing swapped in between
+-#   jobs is signed or published.
+-#
+-# This file and .github/release/ are the security boundary for releases, and
+-# a ruleset lets only Dax change .github/ (docs/releasing.md).
+-#
+-# There is one environment, release, like OpenCode's: no approval, deployment
+-# policy dev and production. The service authorizes the publish jobs by their
+-# OIDC token: dishanagalawatta/voinc, this file, environment release, the dev channel
+-# from dev and stable from production (anomalyco/release registry/voinc.json).
+-# Voinc never uses the service's dev stage.
+-#
+-# Channels (.github/release/plan.sh):
+-# - dev: every push to dev (except docs/site/Markdown-only) publishes
+-#   0.0.0-dev-<run number> on the dev channel, as OpenCode numbers dev builds;
+-#   a running release finishes and only the newest push waits behind it
+-#   (the ones between are skipped). Only signed platforms are
+-#   published. Versions are display text: installs follow the channel's
+-#   current release and never compare versions.
+-# - check: a dispatch from dev builds, signs, and verifies the same and
+-#   publishes nothing; its last job pushes and deletes a throwaway
+-#   v0.0.0-test-<run> tag to prove it can tag.
+-# - stable: a dispatch from production publishes the crate version with every
+-#   platform signed, the AUR, and Homebrew. Tags trigger nothing: only after
+-#   everything published does the last job tag v<version> on the released
+-#   commit and create the GitHub release, so a failed run leaves no tag. Deploy the production site afterwards with Deploy.
+-#
+-# A run always releases the commit it runs on (github.sha): there is no ref
+-# input, every job checks out github.sha, and plan.sh fails unless the commit
+-# it checked out is github.sha. So the scripts the release-environment jobs
+-# run are always this workflow's own commit of dev or production.
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      channel:
+-        description: check (build, sign, and verify; publish nothing), dev (the dev channel; run from dev), or stable (public)
+-        type: choice
+-        options: [check, dev, stable]
+-        default: check
+-  push:
+-    branches: [dev]
+-    # Docs and the site alone cut no dev build.
+-    paths-ignore: ["docs/**", "site/**", "**/*.md"]
+-
+-permissions:
+-  contents: read
+-
+-concurrency:
+-  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.channel || 'dev' }}
+-  # Releases never cancel each other: the running one finishes, and of the
+-  # pushes that land meanwhile only the newest waits (GitHub replaces an
+-  # older pending run in the group), so a busy dev branch still publishes.
+-  cancel-in-progress: false
+-
+-defaults:
+-  run:
+-    shell: bash
+-
+-env:
+-  VOINC_TEAM_ID: 5NZ4Q7NXJ4
+-
+-jobs:
+-  plan:
+-    runs-on: ubuntu-24.04
+-    outputs:
+-      version: ${{ steps.plan.outputs.version }}
+-      channel: ${{ steps.plan.outputs.channel }}
+-      service: ${{ steps.plan.outputs.service }}
+-      tag: ${{ steps.plan.outputs.tag }}
+-      notes-url: ${{ steps.plan.outputs.notes-url }}
+-      release-channel: ${{ steps.plan.outputs.release-channel }}
+-      release-version: ${{ steps.plan.outputs.release-version }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          sparse-checkout: |
+-            /.github/release/
+-            /Cargo.toml
+-            /docs/releases/
+-          sparse-checkout-cone-mode: false
+-          persist-credentials: false
+-      - id: plan
+-        run: SHA=$(git rev-parse HEAD) bash .github/release/plan.sh
+-        env:
+-          EVENT: ${{ github.event_name }}
+-          REF_NAME: ${{ github.ref_name }}
+-          CHANNEL: ${{ github.event_name == 'workflow_dispatch' && inputs.channel || 'dev' }}
+-          GH_TOKEN: ${{ github.token }}
+-
+-  # ---- Build: repository code; no environment, secrets, or id-token ----------
+-
+-  build:
+-    needs: plan
+-    uses: ./.github/workflows/build-desktop.yml
+-    with:
+-      sha: ${{ github.sha }}
+-      version: ${{ needs.plan.outputs.release-version }}
+-      channel: ${{ needs.plan.outputs.release-channel }}
+-
+-  # ---- Full test suites: check and stable only; repository code, no secrets ---
+-  # Pull requests only compile and dev pushes run no checks (CI is minimal),
+-  # so the candidate's full suites run here. A stable run publishes nothing
+-  # until all three pass.
+-
+-  check-linux:
+-    needs: plan
+-    if: needs.plan.outputs.channel == 'stable' || needs.plan.outputs.channel == 'check'
+-    uses: ./.github/workflows/check-linux.yml
+-    with:
+-      sha: ${{ github.sha }}
+-
+-  check-macos:
+-    needs: plan
+-    if: needs.plan.outputs.channel == 'stable' || needs.plan.outputs.channel == 'check'
+-    uses: ./.github/workflows/check-macos.yml
+-    with:
+-      sha: ${{ github.sha }}
+-
+-  check-windows:
+-    needs: plan
+-    if: needs.plan.outputs.channel == 'stable' || needs.plan.outputs.channel == 'check'
+-    uses: ./.github/workflows/check-windows.yml
+-    with:
+-      sha: ${{ github.sha }}
+-
+-  # Onboarding gates every stable release (AGENTS.md): every onboarding scene
+-  # against its approved golden, and a first run through the real tour in a
+-  # clean data folder (scripts/check-onboarding.sh, Linux; the macOS and
+-  # Windows scenes are fixtures of the same window, rendered here), from
+-  # repository code with no secrets. Publishing waits for this job and the
+-  # three suites above; its scene images go into the go/no-go given to Dax.
+-  onboarding:
+-    needs: plan
+-    if: needs.plan.outputs.channel == 'stable' || needs.plan.outputs.channel == 'check'
+-    runs-on: ubuntu-24.04
+-    timeout-minutes: 90
+-    permissions:
+-      contents: read
+-    env:
+-      CARGO_PROFILE_DEV_DEBUG: "0"
+-      BLA_VENDOR: OpenBLAS
+-      OPENSSL_NO_VENDOR: "1"
+-      CC: clang
+-      CXX: clang++
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          persist-credentials: false
+-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+-        with:
+-          toolchain: stable
+-      - name: Install native libraries
+-        run: |
+-          sudo apt-get update
+-          sudo apt-get install -y clang cmake pkg-config python3 libasound2-dev \
+-            libssl-dev libgtk-3-dev libxkbcommon-x11-dev libx11-xcb-dev \
+-            libfontconfig1-dev libfreetype-dev libxcursor-dev libxi-dev \
+-            libxrandr-dev libopenblas-dev libvulkan-dev glslc libshaderc-dev \
+-            mesa-vulkan-drivers
+-      - name: Check onboarding
+-        run: |
+-          status=0
+-          scripts/check-onboarding.sh "$RUNNER_TEMP/onboarding" || status=$?
+-          cat "$RUNNER_TEMP/onboarding/summary.md" >> "$GITHUB_STEP_SUMMARY" || true
+-          exit "$status"
+-      - name: Upload the scenes
+-        if: always()
+-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+-        with:
+-          name: onboarding-scenes
+-          path: |
+-            ${{ runner.temp }}/onboarding
+-            /tmp/rune-settings-*-actual.png
+-          if-no-files-found: ignore
+-
+-  # Voinc.app as the release identity (io.voinc.voinc), ad-hoc signed; sign-macos
+-  # signs it with the Developer ID.
+-  build-macos:
+-    needs: plan
+-    runs-on: macos-26
+-    timeout-minutes: 120
+-    env:
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      VOINC_BUILD_CHANNEL: ${{ needs.plan.outputs.release-channel }}
+-    outputs:
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          persist-credentials: false
+-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+-        with:
+-          toolchain: stable
+-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+-      - name: Install the Metal toolchain
+-        run: xcrun --sdk macosx metal --version || xcodebuild -downloadComponent MetalToolchain
+-      - name: Build Voinc.app
+-        run: |
+-          scripts/setup.sh
+-          scripts/set-crate-version.sh "$PWD" "$VOINC_VERSION"
+-          bundle=$(VOINC_RELEASE_UNSIGNED=1 scripts/build-app.sh)
+-          mkdir -p "$RUNNER_TEMP/macos"
+-          /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$bundle" "$RUNNER_TEMP/macos/Voinc.app.zip"
+-          # The DMG window's background and Finder layout: data for sign-macos.sh.
+-          cp packaging/macos/dmg/background.tiff "$RUNNER_TEMP/macos/dmg-background.tiff"
+-          cp packaging/macos/dmg/DS_Store "$RUNNER_TEMP/macos/dmg-DS_Store"
+-      - id: upload
+-        uses: ./.github/release/upload
+-        with:
+-          name: build-macos-arm64
+-          path: ${{ runner.temp }}/macos
+-
+-  # ---- Sign: release environment; only .github/release/ is checked out -------
+-
+-  # Signs Voinc.app inside-out with the Developer ID, notarizes and staples it,
+-  # and makes the updater zip and the DMG from the stapled app. Without the
+-  # Apple values, dev and check go on without macOS; stable fails.
+-  sign-macos:
+-    needs: [plan, build-macos]
+-    if: ${{ !cancelled() && needs.build-macos.result == 'success' }}
+-    runs-on: macos-26
+-    timeout-minutes: 90
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    env:
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      CHANNEL: ${{ needs.plan.outputs.channel }}
+-    outputs:
+-      signed: ${{ steps.credentials.outputs.available }}
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - &checkout-release
+-        name: Check out the release scripts
+-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          sparse-checkout: /.github/release/
+-          sparse-checkout-cone-mode: false
+-          persist-credentials: false
+-      # The certificate and notary key are read in the import step itself
+-      # (.github/release/with-secrets.sh), which fails if either is empty.
+-      - id: credentials
+-        name: Require the Apple values
+-        env:
+-          KEY_ID: ${{ vars.APPLE_NOTARY_KEY_ID }}
+-          ISSUER: ${{ vars.APPLE_NOTARY_ISSUER_ID }}
+-        run: |
+-          missing=
+-          [ -n "$KEY_ID" ] || missing="$missing APPLE_NOTARY_KEY_ID"
+-          [ -n "$ISSUER" ] || missing="$missing APPLE_NOTARY_ISSUER_ID"
+-          if [ -z "$missing" ]; then
+-            echo "available=true" >> "$GITHUB_OUTPUT"
+-          elif [ "$CHANNEL" = stable ]; then
+-            echo "::error::Stable releases need the macOS build, and the release environment lacks:$missing."
+-            exit 1
+-          else
+-            echo "available=false" >> "$GITHUB_OUTPUT"
+-            echo "No macOS targets: the release environment lacks$missing." >> "$GITHUB_STEP_SUMMARY"
+-          fi
+-      - name: Download
+-        if: steps.credentials.outputs.available == 'true'
+-        uses: ./.github/release/download
+-        with:
+-          pattern: build-macos-arm64
+-          digests: build-macos-arm64=${{ needs.build-macos.outputs.digest }}
+-      # AWS credentials only as this action's step outputs (never in the job's
+-      # environment), for the one step below that reads the secrets.
+-      - &aws-credentials
+-        id: aws
+-        name: Configure AWS credentials
+-        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+-        with:
+-          role-to-assume: arn:aws:iam::604439173067:role/github/voinc-release
+-          role-session-name: voinc-${{ github.run_id }}
+-          role-duration-seconds: 900
+-          aws-region: us-east-1
+-          output-env-credentials: false
+-          output-credentials: true
+-      - name: Import the certificate and notary key
+-        if: steps.credentials.outputs.available == 'true'
+-        env: &aws-env
+-          AWS_ACCESS_KEY_ID: ${{ steps.aws.outputs.aws-access-key-id }}
+-          AWS_SECRET_ACCESS_KEY: ${{ steps.aws.outputs.aws-secret-access-key }}
+-          AWS_SESSION_TOKEN: ${{ steps.aws.outputs.aws-session-token }}
+-        run: |
+-          bash .github/release/with-secrets.sh \
+-            APPLE_SIGNING_CERTIFICATE=shared/APPLE_SIGNING_CERTIFICATE \
+-            APPLE_NOTARY_KEY=shared/APPLE_NOTARY_KEY \
+-            -- bash .github/release/macos-credentials.sh "$RUNNER_TEMP/credentials"
+-      - name: Sign, notarize, and staple
+-        if: steps.credentials.outputs.available == 'true'
+-        run: bash .github/release/sign-macos.sh "$RUNNER_TEMP/in/build-macos-arm64/Voinc.app.zip" "$RUNNER_TEMP/out"
+-        env:
+-          VOINC_NOTARY_KEY_ID: ${{ vars.APPLE_NOTARY_KEY_ID }}
+-          VOINC_NOTARY_ISSUER: ${{ vars.APPLE_NOTARY_ISSUER_ID }}
+-      - name: Remove the credentials
+-        if: always() && steps.credentials.outputs.available == 'true'
+-        run: |
+-          security delete-keychain "$RUNNER_TEMP/credentials/signing.keychain-db" 2>/dev/null || true
+-          rm -rf "$RUNNER_TEMP/credentials"
+-      - id: upload
+-        if: steps.credentials.outputs.available == 'true'
+-        uses: ./.github/release/upload
+-        with:
+-          name: sign-macos
+-          path: ${{ runner.temp }}/out
+-
+-  # Authenticode-signs both architectures' voinc.exe and voinc.com through Azure
+-  # Artifact Signing.
+-  # Without the Azure values, dev and check go on without Windows; stable
+-  # fails.
+-  sign-windows:
+-    needs: [plan, build]
+-    if: ${{ !cancelled() && needs.build.result == 'success' }}
+-    runs-on: windows-latest
+-    timeout-minutes: 30
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    env: &windows-sign-env
+-      CHANNEL: ${{ needs.plan.outputs.channel }}
+-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+-      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+-      AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ vars.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+-      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ vars.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+-      AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE: ${{ vars.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE }}
+-    outputs:
+-      signed: ${{ steps.credentials.outputs.available }}
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - *checkout-release
+-      - &azure-credentials
+-        id: credentials
+-        name: Require the Azure values
+-        run: |
+-          missing=
+-          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_TRUSTED_SIGNING_ENDPOINT \
+-            AZURE_TRUSTED_SIGNING_ACCOUNT_NAME AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE; do
+-            [ -n "$(printenv "$name")" ] || missing="$missing $name"
+-          done
+-          if [ -z "$missing" ]; then
+-            echo "available=true" >> "$GITHUB_OUTPUT"
+-          elif [ "$CHANNEL" = stable ]; then
+-            echo "::error::Stable releases need signed Windows builds, and the release environment lacks:$missing."
+-            exit 1
+-          else
+-            echo "available=false" >> "$GITHUB_OUTPUT"
+-            echo "No Windows targets: the release environment lacks$missing." >> "$GITHUB_STEP_SUMMARY"
+-          fi
+-      - name: Download
+-        if: steps.credentials.outputs.available == 'true'
+-        uses: ./.github/release/download
+-        with:
+-          pattern: build-windows-*
+-          digests: build-windows-x86_64=${{ needs.build.outputs.windows-x64-digest }} build-windows-aarch64=${{ needs.build.outputs.windows-arm64-digest }}
+-      - name: Gather the executables
+-        if: steps.credentials.outputs.available == 'true'
+-        run: |
+-          temp=$(cygpath -u "$RUNNER_TEMP")
+-          mkdir -p "$temp/work" && cp "$temp"/in/build-windows-*/*.exe "$temp"/in/build-windows-*/*.com "$temp/work/"
+-      - &azure-login
+-        name: Sign in to Azure
+-        if: steps.credentials.outputs.available == 'true'
+-        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3
+-        with:
+-          client-id: ${{ env.AZURE_CLIENT_ID }}
+-          tenant-id: ${{ env.AZURE_TENANT_ID }}
+-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+-      - &azure-sign
+-        name: Sign
+-        if: steps.credentials.outputs.available == 'true'
+-        uses: azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2
+-        with:
+-          endpoint: ${{ env.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+-          signing-account-name: ${{ env.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+-          certificate-profile-name: ${{ env.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE }}
+-          files-folder: ${{ runner.temp }}\work
+-          files-folder-filter: exe,com
+-          file-digest: SHA256
+-          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+-          timestamp-digest: SHA256
+-          description: Voinc
+-          description-url: https://github.com/dishanagalawatta/voinc
+-          exclude-environment-credential: true
+-          exclude-workload-identity-credential: true
+-          exclude-managed-identity-credential: true
+-          exclude-shared-token-cache-credential: true
+-          exclude-visual-studio-credential: true
+-          exclude-visual-studio-code-credential: true
+-          exclude-azure-cli-credential: false
+-          exclude-azure-powershell-credential: true
+-          exclude-azure-developer-cli-credential: true
+-          exclude-interactive-browser-credential: true
+-          # Fetch the signing tools fresh: the Actions cache is shared with
+-          # build jobs that run repository code, so a restored entry could be
+-          # a poisoned module run here, in the release environment.
+-          cache-dependencies: false
+-      - &azure-verify
+-        name: Check the signatures
+-        if: steps.credentials.outputs.available == 'true'
+-        shell: pwsh
+-        run: .github/release/verify-authenticode.ps1 -Folders "$env:RUNNER_TEMP/work"
+-      - id: upload
+-        if: steps.credentials.outputs.available == 'true'
+-        uses: ./.github/release/upload
+-        with:
+-          name: sign-windows
+-          path: ${{ runner.temp }}/work
+-
+-  # Setup.exe around the signed executables (unsigned ones when Windows is not
+-  # signed), tested on native x64 and ARM64 runners. Repository code: a build.
+-  installers:
+-    needs: [plan, build, sign-windows]
+-    if: ${{ !cancelled() && needs.build.result == 'success' && needs.sign-windows.result == 'success' }}
+-    uses: ./.github/workflows/windows-installers.yml
+-    with:
+-      sha: ${{ github.sha }}
+-      version: ${{ needs.plan.outputs.release-version }}
+-      pattern: ${{ needs.sign-windows.outputs.signed == 'true' && 'sign-windows' || 'build-windows-*' }}
+-      digests: ${{ needs.sign-windows.outputs.signed == 'true' && format('sign-windows={0}', needs.sign-windows.outputs.digest) || format('build-windows-x86_64={0} build-windows-aarch64={1}', needs.build.outputs.windows-x64-digest, needs.build.outputs.windows-arm64-digest) }}
+-      artifact-name: build-windows-installers
+-
+-  sign-windows-installers:
+-    needs: [plan, sign-windows, installers]
+-    if: ${{ !cancelled() && needs.installers.result == 'success' && needs.sign-windows.outputs.signed == 'true' }}
+-    runs-on: windows-latest
+-    timeout-minutes: 30
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    env: *windows-sign-env
+-    outputs:
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - *checkout-release
+-      - *azure-credentials
+-      - name: Download
+-        uses: ./.github/release/download
+-        with:
+-          pattern: build-windows-installers
+-          digests: build-windows-installers=${{ needs.installers.outputs.digest }}
+-      - name: Gather the installers
+-        run: |
+-          temp=$(cygpath -u "$RUNNER_TEMP")
+-          mkdir -p "$temp/work" && cp "$temp"/in/build-windows-installers/*.exe "$temp/work/"
+-      - *azure-login
+-      - *azure-sign
+-      - *azure-verify
+-      - id: upload
+-        uses: ./.github/release/upload
+-        with:
+-          name: sign-windows-installers
+-          path: ${{ runner.temp }}/work
+-
+-  # ---- Verify: repository code on the signed files; no secrets ----------------
+-
+-  # What a user's Mac and the in-app updater check, and a launch.
+-  verify-macos:
+-    needs: [plan, sign-macos]
+-    if: ${{ !cancelled() && needs.sign-macos.result == 'success' && needs.sign-macos.outputs.signed == 'true' }}
+-    runs-on: macos-26
+-    timeout-minutes: 30
+-    env:
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          persist-credentials: false
+-      - uses: ./.github/release/download
+-        with:
+-          pattern: sign-macos
+-          digests: sign-macos=${{ needs.sign-macos.outputs.digest }}
+-      - name: Check the signed app and DMG
+-        run: |
+-          dmg="$RUNNER_TEMP/in/sign-macos/voinc-$VOINC_VERSION-macos-arm64.dmg"
+-          zip="$RUNNER_TEMP/in/sign-macos/voinc-$VOINC_VERSION-macos-arm64.zip"
+-          xcrun stapler validate "$dmg"
+-          spctl --assess --type open --context context:primary-signature --verbose=2 "$dmg"
+-          check=$(mktemp -d)
+-          hdiutil attach -quiet -nobrowse -readonly -mountpoint "$check/dmg" "$dmg"
+-          /usr/bin/ditto -x -k "$zip" "$check/update"
+-          build=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$check/dmg/Voinc.app/Contents/Info.plist")
+-          scripts/validate-app.sh "$check/dmg/Voinc.app" Voinc.app "$VOINC_VERSION" "$build"
+-          scripts/validate-app.sh "$check/update/Voinc.app" Voinc.app "$VOINC_VERSION" "$build"
+-          xcrun stapler validate "$check/update/Voinc.app"
+-          # What the in-app updater requires before it swaps the bundle in.
+-          codesign --verify --deep --strict -R="$(cat app/update-requirement.txt)" "$check/update/Voinc.app"
+-          spctl --assess --type execute --verbose=2 "$check/dmg/Voinc.app"
+-          diff -qr "$check/dmg/Voinc.app" "$check/update/Voinc.app"
+-          scripts/smoke-macos-app.sh "$check/dmg/Voinc.app"
+-          hdiutil detach -quiet "$check/dmg"
+-          codesign -dv "$check/update/Voinc.app" 2>&1 | grep -E '^(Identifier|TeamIdentifier|Authority=Developer)' >> "$GITHUB_STEP_SUMMARY"
+-
+-  # ---- Publish: release environment; only .github/release/ is checked out ----
+-
+-  # The only job that publishes to the release service; its OIDC token is the
+-  # credential. Publishes every signed platform (stable requires them all).
+-  publish:
+-    needs: [plan, build, sign-macos, verify-macos, sign-windows, installers, sign-windows-installers, onboarding, check-linux, check-macos, check-windows]
+-    if: >-
+-      ${{ !cancelled() && needs.plan.outputs.channel != 'check'
+-      && (needs.plan.outputs.channel != 'stable'
+-          || (needs.onboarding.result == 'success' && needs.check-linux.result == 'success'
+-              && needs.check-macos.result == 'success' && needs.check-windows.result == 'success'))
+-      && needs.build.result == 'success' && needs.installers.result == 'success'
+-      && needs.sign-windows.result == 'success'
+-      && (needs.plan.outputs.channel == 'dev'
+-          || (needs.sign-macos.result == 'success'
+-              && (needs.verify-macos.result == 'success' || needs.sign-macos.outputs.signed != 'true')))
+-      && (needs.sign-windows-installers.result == 'success' || needs.sign-windows.outputs.signed != 'true') }}
+-    runs-on: ubuntu-24.04
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    env: &publish-env
+-      RELEASE: ${{ needs.plan.outputs.service }}
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      VOINC_RELEASE_CHANNEL: ${{ needs.plan.outputs.release-channel }}
+-    outputs:
+-      linux-x64-url: ${{ steps.publish.outputs.linux-x64-url }}
+-      linux-arm64-url: ${{ steps.publish.outputs.linux-arm64-url }}
+-    steps:
+-      - *checkout-release
+-      - name: Download
+-        uses: ./.github/release/download
+-        with:
+-          # A dev release goes out without macOS when its signing or
+-          # verification fails (the run still fails, so it is seen); only a
+-          # verified macOS build is ever published.
+-          pattern: ${{ (needs.sign-macos.result == 'success' && needs.verify-macos.result == 'success') && '{build-linux-*,sign-macos,sign-windows,sign-windows-installers}' || '{build-linux-*,sign-windows,sign-windows-installers}' }}
+-          digests: >-
+-            build-linux-x86_64=${{ needs.build.outputs.linux-x64-digest }}
+-            build-linux-aarch64=${{ needs.build.outputs.linux-arm64-digest }}
+-            sign-macos=${{ needs.sign-macos.outputs.digest }}
+-            sign-windows=${{ needs.sign-windows.outputs.digest }}
+-            sign-windows-installers=${{ needs.sign-windows-installers.outputs.digest }}
+-      - name: Gather the release files
+-        run: bash .github/release/assemble.sh "$RUNNER_TEMP/in" "$RUNNER_TEMP/dist"
+-      - *aws-credentials
+-      - name: Sign the Linux executables
+-        env: *aws-env
+-        run: |
+-          bash .github/release/with-secrets.sh VOINC_RELEASE_SIGNING_KEY=voinc/release/RELEASE_SIGNING_KEY \
+-            -- bash .github/release/sign-linux.sh "$RUNNER_TEMP/dist"
+-      - id: publish
+-        name: Publish
+-        env:
+-          NOTES_URL: ${{ needs.plan.outputs.notes-url }}
+-        run: |
+-          bash .github/release/release-service.sh publish "$RUNNER_TEMP/dist" "$NOTES_URL"
+-          for target in linux-x64 linux-arm64; do
+-            echo "$target-url=${RELEASE%/release}$(jq -r --arg target "$target" '.release.targets[$target].url' "$RUNNER_TEMP/dist/manifest.json")" >> "$GITHUB_OUTPUT"
+-          done
+-          { echo '### Manifest'; echo '```json'; cat "$RUNNER_TEMP/dist/manifest.json"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+-      - name: Record the Nix flake and the Linux packages
+-        # The flake builds this commit from source, and the .deb and .rpm are
+-        # files of this release, so they serve the version now.
+-        if: needs.plan.outputs.channel == 'stable'
+-        run: |
+-          for kind in nix deb-x64 deb-arm64 rpm-x64 rpm-arm64; do
+-            bash .github/release/release-service.sh distribution "$kind" "$VOINC_VERSION"
+-          done
+-
+-  # Last, once every platform and the release service published: tags
+-  # v<version> on the released commit and mirrors the files to its GitHub
+-  # release, with the built-in token; a failed run leaves no tag. Tags trigger
+-  # nothing. A check run pushes and deletes a throwaway v0.0.0-test-<run> tag
+-  # to prove the token can tag.
+-  github:
+-    name: Tag and GitHub release
+-    needs: [plan, build, publish, sign-macos, verify-macos, sign-windows, installers, sign-windows-installers]
+-    if: >-
+-      ${{ !cancelled() && (
+-        (needs.plan.outputs.channel == 'stable' && needs.publish.result == 'success')
+-        || (needs.plan.outputs.channel == 'check' && needs.installers.result == 'success'
+-            && (needs.verify-macos.result == 'success' || needs.sign-macos.outputs.signed != 'true')) ) }}
+-    runs-on: ubuntu-24.04
+-    permissions:
+-      contents: write
+-    env:
+-      SHA: ${{ github.sha }}
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      VOINC_RELEASE_COMMIT: ${{ github.sha }}
+-      VOINC_RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+-      VOINC_RELEASE_SOURCE: ${{ github.workspace }}
+-    steps:
+-      # Credentials stay so the job can push the tag; it runs no repository
+-      # code beyond .github/release/.
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          sparse-checkout: |
+-            /.github/release/
+-            /docs/releases/
+-          sparse-checkout-cone-mode: false
+-      - name: Tag
+-        env:
+-          VOINC_RELEASE_TAG_TEST: ${{ needs.plan.outputs.channel == 'check' && '1' || '' }}
+-        run: bash .github/release/tag-release.sh
+-      - name: Download
+-        if: needs.plan.outputs.channel == 'stable'
+-        uses: ./.github/release/download
+-        with:
+-          pattern: "{build-linux-*,sign-macos,sign-windows,sign-windows-installers}"
+-          digests: >-
+-            build-linux-x86_64=${{ needs.build.outputs.linux-x64-digest }}
+-            build-linux-aarch64=${{ needs.build.outputs.linux-arm64-digest }}
+-            sign-macos=${{ needs.sign-macos.outputs.digest }}
+-            sign-windows=${{ needs.sign-windows.outputs.digest }}
+-            sign-windows-installers=${{ needs.sign-windows-installers.outputs.digest }}
+-      - name: Gather the release files
+-        if: needs.plan.outputs.channel == 'stable'
+-        run: bash .github/release/assemble.sh "$RUNNER_TEMP/in" "$RUNNER_TEMP/dist"
+-      - name: GitHub release
+-        if: needs.plan.outputs.channel == 'stable'
+-        env:
+-          GH_TOKEN: ${{ github.token }}
+-        run: bash .github/release/publish-github-release.sh "$RUNNER_TEMP/dist"
+-
+-  # Builds and installs voinc-bin from the published x64 file, without
+-  # secrets; its PKGBUILD also names the published arm64 file.
+-  aur-stage:
+-    name: AUR package
+-    needs: [plan, build, publish]
+-    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.plan.outputs.channel == 'stable' }}
+-    runs-on: ubuntu-24.04
+-    container: archlinux:base-devel
+-    env:
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      LINUX_X64_URL: ${{ needs.publish.outputs.linux-x64-url }}
+-      LINUX_ARM64_URL: ${{ needs.publish.outputs.linux-arm64-url }}
+-    outputs:
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - name: Install tools
+-        run: |
+-          pacman -Syu --noconfirm --needed git
+-          useradd --create-home builder
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          persist-credentials: false
+-      - uses: ./.github/release/download
+-        with:
+-          pattern: build-linux-*
+-          digests: >-
+-            build-linux-x86_64=${{ needs.build.outputs.linux-x64-digest }}
+-            build-linux-aarch64=${{ needs.build.outputs.linux-arm64-digest }}
+-      - name: Stage and test voinc-bin
+-        run: |
+-          x64="$RUNNER_TEMP/in/build-linux-x86_64/voinc-$VOINC_VERSION-linux-x64"
+-          arm64="$RUNNER_TEMP/in/build-linux-aarch64/voinc-$VOINC_VERSION-linux-arm64"
+-          # makepkg refuses root, so builder stages and builds in its own home from
+-          # copies; the runner's files in the workspace and RUNNER_TEMP keep their owner.
+-          src=/home/builder/src
+-          stage=/home/builder/aur
+-          mkdir "$src"
+-          cp -R scripts packaging LICENSE "$x64" "$arm64" "$src/"
+-          chown -R builder: "$src"
+-          runuser -u builder -- "$src/scripts/release-aur.sh" stage "$VOINC_VERSION" \
+-            "$src/${x64##*/}" "$LINUX_X64_URL" "$src/${arm64##*/}" "$LINUX_ARM64_URL" "$stage"
+-          runuser -u builder -- "$src/scripts/release-aur.sh" test "$stage"
+-          pacman -U --noconfirm "$stage"/voinc-bin-*.pkg.tar.zst
+-          test "$(voinc --version | awk 'NF { value=$NF } END { print value }')" = "$VOINC_VERSION"
+-          # The PKGBUILD's sources are the published files.
+-          curl -fsS "$LINUX_X64_URL" | cmp - "$x64"
+-          curl -fsS "$LINUX_ARM64_URL" | cmp - "$arm64"
+-          mkdir -p "$RUNNER_TEMP/aur-out"
+-          (cd "$stage" && cp PKGBUILD .SRCINFO io.voinc.voinc.desktop voinc.service LICENSE voinc-bin.install io.voinc.voinc-*.png "$RUNNER_TEMP/aur-out/")
+-          { echo '### AUR PKGBUILD'; echo '```'; cat "$stage/PKGBUILD"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+-      - id: upload
+-        uses: ./.github/release/upload
+-        with:
+-          name: build-aur
+-          path: ${{ runner.temp }}/aur-out
+-
+-  aur:
+-    name: AUR
+-    needs: [plan, aur-stage]
+-    if: ${{ !cancelled() && needs.aur-stage.result == 'success' }}
+-    runs-on: ubuntu-24.04
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    steps:
+-      - *checkout-release
+-      - uses: ./.github/release/download
+-        with:
+-          pattern: build-aur
+-          digests: build-aur=${{ needs.aur-stage.outputs.digest }}
+-      - *aws-credentials
+-      - name: Push to the AUR
+-        env: *aws-env
+-        run: |
+-          bash .github/release/with-secrets.sh AUR_SSH_PRIVATE_KEY=shared/AUR_SSH_KEY \
+-            -- bash .github/release/push-aur.sh "$RUNNER_TEMP/in/build-aur"
+-
+-  # Tells AUR installs about the version only once the AUR serves it.
+-  record-aur:
+-    needs: [plan, aur]
+-    if: ${{ !cancelled() && needs.aur.result == 'success' }}
+-    runs-on: ubuntu-24.04
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    env: *publish-env
+-    steps:
+-      - *checkout-release
+-      - run: bash .github/release/release-service.sh distribution aur "$VOINC_VERSION"
+-
+-  # Renders the cask from the published DMG and checks it with brew, without
+-  # secrets.
+-  homebrew-stage:
+-    name: Homebrew cask
+-    needs: [plan, publish]
+-    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.plan.outputs.channel == 'stable' }}
+-    runs-on: macos-15
+-    env:
+-      RELEASE: ${{ needs.plan.outputs.service }}
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      RELEASE_CHANNEL: ${{ needs.plan.outputs.release-channel }}
+-    outputs:
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          persist-credentials: false
+-      - name: Render the cask from the published DMG
+-        run: |
+-          curl -fsS "$RELEASE/voinc/desktop/$RELEASE_CHANNEL.json" -o "$RUNNER_TEMP/manifest.json"
+-          version=$(jq -er .release.version "$RUNNER_TEMP/manifest.json")
+-          test "$version" = "$VOINC_VERSION"
+-          dmg=$(jq -ec '.release.targets["macos-arm64-dmg"]' "$RUNNER_TEMP/manifest.json") || {
+-            echo "::error::Voinc $version has no macos-arm64-dmg build."
+-            exit 1
+-          }
+-          url="${RELEASE%/release}$(printf '%s' "$dmg" | jq -r .url)"
+-          sha256=$(printf '%s' "$dmg" | jq -r .sha256)
+-          mkdir -p "$RUNNER_TEMP/cask"
+-          scripts/release-homebrew.sh render "$version" "$url" "$sha256" "$RUNNER_TEMP/cask/voinc.rb"
+-          { echo '### Casks/voinc.rb'; echo '```ruby'; cat "$RUNNER_TEMP/cask/voinc.rb"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+-      - name: Check it with brew
+-        env:
+-          HOMEBREW_NO_AUTO_UPDATE: "1"
+-          HOMEBREW_NO_INSTALL_FROM_API: "1"
+-        run: |
+-          brew tap anomalyco/tap
+-          cp "$RUNNER_TEMP/cask/voinc.rb" "$(brew --repo anomalyco/tap)/Casks/voinc.rb"
+-          # Homebrew 6 refuses to load casks from third-party taps until they
+-          # are trusted; this runner trusts our own tap. Older Homebrew has no
+-          # `brew trust` and no such check.
+-          if brew trust --help > /dev/null 2>&1; then brew trust anomalyco/tap; fi
+-          brew style --cask anomalyco/tap/voinc
+-          # Skipped audits: the DMG URL names its own SHA-256 rather than the
+-          # version, so a pinned sha256 is right; and the token "voinc" belongs to
+-          # this tap's cask, not homebrew/core's unrelated voinc formula.
+-          brew audit --cask --strict --online \
+-            --except=sha256_no_check_if_unversioned,token_conflicts anomalyco/tap/voinc
+-      - id: upload
+-        uses: ./.github/release/upload
+-        with:
+-          name: build-homebrew
+-          path: ${{ runner.temp }}/cask
+-
+-  homebrew:
+-    name: Homebrew
+-    needs: [plan, homebrew-stage]
+-    if: ${{ !cancelled() && needs.homebrew-stage.result == 'success' }}
+-    runs-on: ubuntu-24.04
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    env:
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-    steps:
+-      - *checkout-release
+-      - uses: ./.github/release/download
+-        with:
+-          pattern: build-homebrew
+-          digests: build-homebrew=${{ needs.homebrew-stage.outputs.digest }}
+-      - *aws-credentials
+-      - name: Push to anomalyco/homebrew-tap
+-        env: *aws-env
+-        run: |
+-          bash .github/release/with-secrets.sh HOMEBREW_TAP_DEPLOY_KEY=shared/HOMEBREW_TAP_DEPLOY_KEY \
+-            -- bash .github/release/push-homebrew.sh "$RUNNER_TEMP/in/build-homebrew/voinc.rb" "$VOINC_VERSION"
+-
+-  # Tells Homebrew installs about the version only once the tap serves it.
+-  record-brew:
+-    needs: [plan, homebrew]
+-    if: ${{ !cancelled() && needs.homebrew.result == 'success' }}
+-    runs-on: ubuntu-24.04
+-    environment: release
+-    permissions:
+-      contents: read
+-      id-token: write
+-    env: *publish-env
+-    steps:
+-      - *checkout-release
+-      - run: bash .github/release/release-service.sh distribution brew "$VOINC_VERSION"
+-
+-  # ---- Dev notes: what each dev build changed ---------------------------------
+-
+-  # The PRs merged since the previous dev build, from their titles, without
+-  # secrets (scripts/release-dev-notes.sh).
+-  dev-notes-stage:
+-    needs: plan
+-    if: needs.plan.outputs.channel == 'dev'
+-    runs-on: ubuntu-24.04
+-    env:
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      SHA: ${{ github.sha }}
+-    outputs:
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ github.sha }}
+-          fetch-depth: 0
+-          filter: blob:none
+-          persist-credentials: false
+-      - name: Write the notes
+-        run: |
+-          mkdir -p "$RUNNER_TEMP/notes"
+-          bash scripts/release-dev-notes.sh "$VOINC_VERSION" "$SHA" "$RUNNER_TEMP/notes/dev-notes.json"
+-          { echo '### Dev notes'; jq -r '.builds[0].items[] | "- \(.title) (\(.url))"' "$RUNNER_TEMP/notes/dev-notes.json"; } >> "$GITHUB_STEP_SUMMARY"
+-      - id: upload
+-        uses: ./.github/release/upload
+-        with:
+-          name: build-dev-notes
+-          path: ${{ runner.temp }}/notes
+-
+-  # Once the build is the dev channel's release, its notes replace
+-  # dev-notes.json on the one-commit `dev-notes` branch, which
+-  # https://anoma.ly/hex/files/dev-notes.json, https://anoma.ly/hex/dev, and
+-  # the app's update item read. The job needs only the last commit's
+-  # GITHUB_TOKEN, so it runs outside the release environment and holds no
+-  # bucket credential.
+-  dev-notes:
+-    needs: [plan, publish, dev-notes-stage]
+-    if: >-
+-      ${{ !cancelled() && needs.plan.outputs.channel == 'dev'
+-      && needs.publish.result == 'success' && needs.dev-notes-stage.result == 'success' }}
+-    runs-on: ubuntu-24.04
+-    permissions:
+-      contents: write
+-    env:
+-      VOINC_VERSION: ${{ needs.plan.outputs.release-version }}
+-      SHA: ${{ github.sha }}
+-    steps:
+-      - *checkout-release
+-      - uses: ./.github/release/download
+-        with:
+-          pattern: build-dev-notes
+-          digests: build-dev-notes=${{ needs.dev-notes-stage.outputs.digest }}
+-      - name: Publish the notes
+-        env:
+-          GH_TOKEN: ${{ github.token }}
+-        run: bash .github/release/publish-dev-notes.sh "$RUNNER_TEMP/in/build-dev-notes/dev-notes.json" "$VOINC_VERSION" "$SHA"
+diff --git a/.github/workflows/sync-upstream.yml b/.github/workflows/sync-upstream.yml
+new file mode 100644
+index 00000000..d2721899
+--- /dev/null
++++ b/.github/workflows/sync-upstream.yml
+@@ -0,0 +1,103 @@
++name: Sync upstream
++
++# Tracks Hex's stable release tags: when anomalyco/hex publishes a new
++# vX.Y.Z, fast-forward `main` to it, regenerate the `voinc` branch from it
++# (.voinc/rebrand.sh, then .voinc/patches/*.patch), and open a pull request
++# into `voinc`. Schedules read this file from the default branch, so `voinc`
++# must stay the repository's default branch.
++
++on:
++  schedule:
++    - cron: "23 6 * * *"
++  workflow_dispatch:
++
++permissions:
++  contents: write
++  pull-requests: write
++
++concurrency:
++  group: sync-upstream
++  cancel-in-progress: false
++
++jobs:
++  sync:
++    runs-on: ubuntu-latest
++    steps:
++      - name: Check out this branch with full history
++        uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++
++      - name: Find the newest upstream stable tag
++        id: tag
++        run: |
++          set -euo pipefail
++          git remote add upstream https://github.com/anomalyco/hex.git
++          git fetch upstream 'refs/tags/v*:refs/tags/v*' --quiet
++          tag="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
++          if [ -z "$tag" ]; then
++            echo "::error::no upstream stable tag found"
++            exit 1
++          fi
++          if [ "$(git rev-parse "$tag^{commit}")" = "$(git rev-parse origin/main^{commit})" ]; then
++            echo "Already in sync with upstream $tag."
++            echo "updated=false" >> "$GITHUB_OUTPUT"
++            exit 0
++          fi
++          echo "New upstream stable release: $tag"
++          echo "updated=true" >> "$GITHUB_OUTPUT"
++          echo "tag=$tag" >> "$GITHUB_OUTPUT"
++
++      - name: Fast-forward main to the new tag
++        if: steps.tag.outputs.updated == 'true'
++        run: |
++          git push origin "${{ steps.tag.outputs.tag }}:refs/heads/main"
++
++      - name: Regenerate the voinc branch
++        if: steps.tag.outputs.updated == 'true'
++        run: |
++          set -euo pipefail
++          tag="${{ steps.tag.outputs.tag }}"
++          git config user.name "voinc-sync"
++          git config user.email "voinc-sync@users.noreply.github.com"
++
++          git checkout -B sync-upstream "$tag"
++          if git rev-parse -q --verify origin/voinc >/dev/null; then
++            git checkout origin/voinc -- .voinc
++            git add .voinc
++            git diff --cached --quiet || git commit -m ".voinc: fork tooling"
++          fi
++
++          ./.voinc/rebrand.sh
++          git add -A
++          git diff --cached --quiet || git commit -m "rebrand: apply .voinc/rebrand.sh (upstream $tag)"
++
++          if compgen -G '.voinc/patches/*.patch' >/dev/null; then
++            git apply --whitespace=nowarn .voinc/patches/*.patch
++            git add -A
++            git diff --cached --quiet || git commit -m ".voinc: apply patches"
++          fi
++
++      - name: Push and open the pull request
++        if: steps.tag.outputs.updated == 'true'
++        env:
++          GH_TOKEN: ${{ github.token }}
++        run: |
++          set -euo pipefail
++          tag="${{ steps.tag.outputs.tag }}"
++          git push --force origin sync-upstream
++
++          title="Sync upstream $tag"
++          body="$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
++            'Automated regeneration from upstream Hex.' \
++            '' \
++            "- Upstream release: [$tag](https://github.com/anomalyco/hex/releases/tag/$tag); \`main\` was fast-forwarded to it (pristine mirror)." \
++            '- This tree was regenerated mechanically: `.voinc/rebrand.sh`, then the hand patches in `.voinc/patches/`.' \
++            "- \`compile.yml\` builds the result. A failing patch usually means upstream changed the code a patch touches: fix the patch on this branch and push, or do the change in \`.voinc/rebrand.sh\` when it is mechanical branding." \
++            '- After merging, tag the merge commit `v<upstream version>-voinc.<n>` to build a release.')"
++
++          if gh pr view sync-upstream --json state --jq .state 2>/dev/null | grep -qx OPEN; then
++            gh pr edit sync-upstream --title "$title" --body "$body"
++          else
++            gh pr create --base voinc --head sync-upstream --title "$title" --body "$body"
++          fi
+diff --git a/.github/workflows/test-builds.yml b/.github/workflows/test-builds.yml
+deleted file mode 100644
+index e2d789a7..00000000
+--- a/.github/workflows/test-builds.yml
++++ /dev/null
+@@ -1,140 +0,0 @@
+-name: Test builds
+-
+-# Downloadable, unsigned builds of dev for teammates to try: Voinc Test.app
+-# for Apple silicon Macs, Windows x64 and ARM64 executables and installers,
+-# and the Linux x64 and ARM64 executables with their .deb and .rpm. Nothing is published, signed with a
+-# release key, or uploaded anywhere but this run's artifacts. See
+-# docs/test-builds.md.
+-on:
+-  push:
+-    branches: [dev]
+-  workflow_dispatch:
+-
+-permissions:
+-  contents: read
+-
+-concurrency:
+-  group: test-builds-${{ github.ref }}
+-  cancel-in-progress: true
+-
+-jobs:
+-  resolve:
+-    runs-on: ubuntu-24.04
+-    outputs:
+-      sha: ${{ steps.resolve.outputs.sha }}
+-      short: ${{ steps.resolve.outputs.short }}
+-      version: ${{ steps.resolve.outputs.version }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+-        with:
+-          persist-credentials: false
+-      - id: resolve
+-        run: |
+-          {
+-            echo "sha=$(git rev-parse HEAD)"
+-            echo "short=$(git rev-parse --short=7 HEAD)"
+-            echo "version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "voinc") | .version')"
+-          } >> "$GITHUB_OUTPUT"
+-
+-  desktop:
+-    needs: resolve
+-    uses: ./.github/workflows/build-desktop.yml
+-    with:
+-      sha: ${{ needs.resolve.outputs.sha }}
+-      version: ${{ needs.resolve.outputs.version }}
+-      test-build: true
+-      artifact-prefix: voinc-test-${{ needs.resolve.outputs.short }}
+-      retention-days: 14
+-
+-  installers:
+-    needs: [resolve, desktop]
+-    uses: ./.github/workflows/windows-installers.yml
+-    with:
+-      sha: ${{ needs.resolve.outputs.sha }}
+-      version: ${{ needs.resolve.outputs.version }}
+-      pattern: voinc-test-${{ needs.resolve.outputs.short }}-windows-*
+-      digests: voinc-test-${{ needs.resolve.outputs.short }}-windows-x86_64=${{ needs.desktop.outputs.windows-x64-digest }} voinc-test-${{ needs.resolve.outputs.short }}-windows-aarch64=${{ needs.desktop.outputs.windows-arm64-digest }}
+-      artifact-name: voinc-test-${{ needs.resolve.outputs.short }}-windows-installers
+-      retention-days: 14
+-
+-  macos:
+-    name: macOS arm64
+-    needs: resolve
+-    runs-on: macos-26
+-    timeout-minutes: 90
+-    env:
+-      VOINC_TEST_BUILD: "1"
+-      VOINC_VERSION: ${{ needs.resolve.outputs.version }}
+-      DMG: voinc-test-${{ needs.resolve.outputs.short }}-arm64.dmg
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+-        with:
+-          ref: ${{ needs.resolve.outputs.sha }}
+-          persist-credentials: false
+-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+-        with:
+-          toolchain: stable
+-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+-        with:
+-          key: test-build
+-          cache-on-failure: true
+-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+-      - name: Install the Metal toolchain
+-        run: xcrun --sdk macosx metal --version || xcodebuild -downloadComponent MetalToolchain
+-      - name: Build Voinc Test.app
+-        run: |
+-          scripts/setup.sh
+-          bundle=$(scripts/build-app.sh)
+-          "$bundle/Contents/MacOS/voinc" --version
+-          scripts/smoke-macos-app.sh "$bundle"
+-          mkdir -p dist/staging
+-          /usr/bin/ditto "$bundle" "dist/staging/$(basename "$bundle")"
+-          ln -s /Applications dist/staging/Applications
+-          # hdiutil on the hosted runners intermittently fails (Resource busy)
+-          # after the launch check, so it gets a few tries, with its error shown.
+-          for attempt in 1 2 3 4 5; do
+-            hdiutil create -fs APFS -format ULFO -volname "Voinc Test" -srcfolder dist/staging "dist/$DMG" && break
+-            [ "$attempt" -lt 5 ] || exit 1
+-            echo "hdiutil create failed (attempt $attempt); retrying" >&2
+-            rm -f "dist/$DMG"
+-            sleep 10
+-          done
+-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+-        with:
+-          name: voinc-test-${{ needs.resolve.outputs.short }}-macos-arm64
+-          path: dist/${{ env.DMG }}
+-          retention-days: 14
+-          if-no-files-found: error
+-
+-  summary:
+-    needs: [resolve, desktop, installers, macos]
+-    if: ${{ !cancelled() }}
+-    runs-on: ubuntu-24.04
+-    permissions:
+-      actions: read
+-    steps:
+-      - name: List the downloads
+-        env:
+-          GH_TOKEN: ${{ github.token }}
+-          SHORT: ${{ needs.resolve.outputs.short }}
+-          VERSION: ${{ needs.resolve.outputs.version }}
+-          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+-        run: |
+-          link() {
+-            id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+-              --jq ".artifacts[] | select(.name == \"voinc-test-$SHORT-$1\") | .id")
+-            if [ -n "$id" ]; then
+-              echo "[voinc-test-$SHORT-$1]($RUN/artifacts/$id)"
+-            else
+-              echo "voinc-test-$SHORT-$1 (build failed)"
+-            fi
+-          }
+-          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+-          ## Voinc test builds of $SHORT (version $VERSION)
+-
+-          Unsigned builds for testing; they never update themselves. Sign in to GitHub to download. Kept 14 days. Full instructions: [docs/test-builds.md]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/dev/docs/test-builds.md).
+-
+-          - **macOS (Apple silicon):** $(link macos-arm64). Quit Voinc, open the DMG, drag **Voinc Test** to Applications, run \`xattr -dr com.apple.quarantine "/Applications/Voinc Test.app"\`, then open it and grant the permissions again.
+-          - **Windows:** installers $(link windows-installers); bare executables x64 $(link windows-x86_64), ARM64 $(link windows-aarch64). Quit Voinc from the tray, run \`voinc-setup-$VERSION-windows-<x64|arm64>.exe\`, and choose More info, Run anyway at the SmartScreen warning. The bare \`voinc-*.exe\` also runs without installing.
+-          - **Linux:** x86_64 $(link linux-x86_64), ARM64 $(link linux-aarch64), each the bare executable plus a .deb and .rpm. Run \`voinc quit\`, \`chmod +x voinc-*-linux-<x64|arm64>\`, start it with \`./voinc-*-linux-<x64|arm64> service\`, and open the window with \`./voinc-*-linux-<x64|arm64>\` in another terminal.
+-          EOF
+diff --git a/.github/workflows/windows-installer.yml b/.github/workflows/windows-installer.yml
+deleted file mode 100644
+index 4563b4b2..00000000
+--- a/.github/workflows/windows-installer.yml
++++ /dev/null
+@@ -1,114 +0,0 @@
+-name: Windows installer
+-
+-# Builds and silently tests voinc-setup-<version>-windows-<x64|arm64>.exe
+-# around the executables of the stable release on anoma.ly/release, so
+-# installer changes are tested on real Windows runners without a full
+-# release. Before the first stable release on the service there is nothing to
+-# wrap, and the run says so. Release builds and tests the installers for
+-# every build itself. Run it by hand after an installer change; pull requests
+-# only compile the app (compile.yml).
+-on:
+-  workflow_dispatch:
+-
+-permissions:
+-  contents: read
+-
+-concurrency:
+-  group: windows-installer-${{ github.ref }}
+-  cancel-in-progress: true
+-
+-jobs:
+-  published:
+-    name: Fetch the published release
+-    runs-on: ubuntu-24.04
+-    outputs:
+-      version: ${{ steps.fetch.outputs.version }}
+-      available: ${{ steps.fetch.outputs.available }}
+-    steps:
+-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+-        with:
+-          persist-credentials: false
+-      - id: fetch
+-        name: Download the published Windows executables and check them against the manifest
+-        run: |
+-          release=https://anoma.ly/release
+-          manifest="$release/voinc/desktop/stable.json"
+-          if ! curl --fail --silent --show-error --proto '=https' "$manifest" -o manifest.json; then
+-            echo "::notice::$manifest has no stable Voinc release yet; nothing to test."
+-            echo "available=false" >> "$GITHUB_OUTPUT"
+-            exit 0
+-          fi
+-          echo "available=true" >> "$GITHUB_OUTPUT"
+-          version=$(jq -er .release.version manifest.json)
+-          mkdir -p dist
+-          for label in x64 arm64; do
+-            url="${release%/release}$(jq -er --arg t "windows-$label" '.release.targets[$t].url' manifest.json)"
+-            file="dist/voinc-$version-windows-$label.exe"
+-            curl --fail --silent --show-error --proto '=https' "$url" -o "$file"
+-            test "$(sha256sum < "$file" | cut -d' ' -f1)" = "$(jq -r --arg t "windows-$label" '.release.targets[$t].sha256' manifest.json)"
+-            # voinc.com, the console entry point, from releases that have one.
+-            if jq -e --arg t "windows-$label-cli" '.release.targets[$t]' manifest.json > /dev/null; then
+-              url="${release%/release}$(jq -er --arg t "windows-$label-cli" '.release.targets[$t].url' manifest.json)"
+-              file="dist/voinc-$version-windows-$label.com"
+-              curl --fail --silent --show-error --proto '=https' "$url" -o "$file"
+-              test "$(sha256sum < "$file" | cut -d' ' -f1)" = "$(jq -r --arg t "windows-$label-cli" '.release.targets[$t].sha256' manifest.json)"
+-            fi
+-          done
+-          echo "Testing installers around Voinc $version from $manifest." >> "$GITHUB_STEP_SUMMARY"
+-          echo "version=$version" >> "$GITHUB_OUTPUT"
+-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+-        if: steps.fetch.outputs.available == 'true'
+-        with:
+-          name: published
+-          path: dist/
+-          if-no-files-found: error
+-
+-  installer:
+-    name: Installer ${{ matrix.arch }}
+-    needs: published
+-    if: needs.published.outputs.available == 'true'
+-    runs-on: ${{ matrix.runner }}
+-    timeout-minutes: 30
+-    strategy:
+-      fail-fast: false
+-      matrix:
+-        include:
+-          - arch: x86_64
+-            label: x64
+-            runner: windows-latest
+-          - arch: aarch64
+-            label: arm64
+-            runner: windows-11-arm
+-    env:
+-      VOINC_VERSION: ${{ needs.published.outputs.version }}
+-    steps:
+-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+-        with:
+-          persist-credentials: false
+-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+-        with:
+-          name: published
+-          path: published
+-      - name: Build the installer
+-        shell: pwsh
+-        run: |
+-          $exe = (Resolve-Path "published/voinc-$env:VOINC_VERSION-windows-${{ matrix.label }}.exe").Path
+-          $console = Resolve-Path "published/voinc-$env:VOINC_VERSION-windows-${{ matrix.label }}.com" -ErrorAction SilentlyContinue | ForEach-Object Path
+-          "VOINC_EXE=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append
+-          "VOINC_CONSOLE=$console" | Out-File -FilePath $env:GITHUB_ENV -Append
+-          scripts/build-windows-installer.ps1 -Executable $exe -Console $console -Version $env:VOINC_VERSION -Arch ${{ matrix.arch }} -OutDir installers
+-      - name: Install, reinstall, install over another version, and uninstall silently
+-        shell: pwsh
+-        run: scripts/test-windows-installer.ps1 -Installer "installers/voinc-setup-$env:VOINC_VERSION-windows-${{ matrix.label }}.exe" -Executable $env:VOINC_EXE -Console $env:VOINC_CONSOLE -Version $env:VOINC_VERSION
+-      - name: Upload installer logs
+-        if: always()
+-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+-        with:
+-          name: installer-logs-${{ matrix.label }}
+-          path: ${{ runner.temp }}/voinc-installer-logs
+-          if-no-files-found: ignore
+-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+-        with:
+-          name: voinc-setup-${{ matrix.label }}
+-          path: installers/
+-          if-no-files-found: error
+diff --git a/.github/workflows/windows-installers.yml b/.github/workflows/windows-installers.yml
+deleted file mode 100644
+index c8d9611a..00000000
+--- a/.github/workflows/windows-installers.yml
++++ /dev/null
+@@ -1,117 +0,0 @@
+-name: Windows installers
+-
+-# Builds voinc-setup-<version>-windows-<x64|arm64>.exe (packaging/windows/voinc.iss)
+-# around the Windows executables (voinc.exe and voinc.com) in the artifacts that match `pattern`, then
+-# installs, reinstalls, installs over another version, and uninstalls each
+-# silently on native x64 and ARM64 runners. Release passes the signed
+-# executables and signs the installers afterwards; Test builds passes the
+-# unsigned ones. Repository code runs here, so there is no environment, no
+-# secret, and no id-token; artifacts are checked against the digests their
+-# jobs reported (.github/release/verify-artifacts.sh).
+-on:
+-  workflow_call:
+-    inputs:
+-      sha:
+-        required: true
+-        type: string
+-      version:
+-        required: true
+-        type: string
+-      pattern:
+-        description: Artifact name pattern of the executables
+-        required: true
+-        type: string
+-      digests:
+-        description: Space-separated name=digest pairs for those artifacts
+-        required: true
+-        type: string
+-      artifact-name:
+-        description: The installers' artifact
+-        required: true
+-        type: string
+-      retention-days:
+-        type: number
+-        default: 0
+-    outputs:
+-      digest:
+-        value: ${{ jobs.package.outputs.digest }}
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  package:
+-    name: Build the installers
+-    runs-on: windows-latest
+-    timeout-minutes: 30
+-    env:
+-      VOINC_VERSION: ${{ inputs.version }}
+-    outputs:
+-      digest: ${{ steps.upload.outputs.digest }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ inputs.sha }}
+-          persist-credentials: false
+-      - uses: ./.github/release/download
+-        with:
+-          pattern: ${{ inputs.pattern }}
+-          digests: ${{ inputs.digests }}
+-      - name: Build the installers around the executables
+-        shell: pwsh
+-        run: |
+-          $out = New-Item -ItemType Directory -Force "$env:RUNNER_TEMP/installers"
+-          foreach ($arch in 'x86_64', 'aarch64') {
+-            $label = if ($arch -eq 'x86_64') { 'x64' } else { 'arm64' }
+-            $exe = @(Get-ChildItem "$env:RUNNER_TEMP/in" -Recurse -Filter "voinc-$env:VOINC_VERSION-windows-$label.exe")
+-            if ($exe.Count -ne 1) { throw "Expected one voinc-$env:VOINC_VERSION-windows-$label.exe, found $($exe.Count)." }
+-            $console = @(Get-ChildItem "$env:RUNNER_TEMP/in" -Recurse -Filter "voinc-$env:VOINC_VERSION-windows-$label.com")
+-            if ($console.Count -ne 1) { throw "Expected one voinc-$env:VOINC_VERSION-windows-$label.com, found $($console.Count)." }
+-            scripts/build-windows-installer.ps1 -Executable $exe[0].FullName -Console $console[0].FullName -Version $env:VOINC_VERSION -Arch $arch -OutDir $out
+-          }
+-          Get-ChildItem $out | Where-Object { $_.Name -notlike 'voinc-setup-*.exe' } | Remove-Item -Recurse -Force
+-      - id: upload
+-        uses: ./.github/release/upload
+-        with:
+-          name: ${{ inputs.artifact-name }}
+-          path: ${{ runner.temp }}/installers
+-          retention-days: ${{ inputs.retention-days }}
+-
+-  test:
+-    name: Test the ${{ matrix.label }} installer
+-    needs: package
+-    runs-on: ${{ matrix.runner }}
+-    timeout-minutes: 30
+-    strategy:
+-      fail-fast: false
+-      matrix:
+-        include:
+-          - label: x64
+-            runner: windows-latest
+-          - label: arm64
+-            runner: windows-11-arm
+-    env:
+-      VOINC_VERSION: ${{ inputs.version }}
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ inputs.sha }}
+-          persist-credentials: false
+-      - uses: ./.github/release/download
+-        with:
+-          pattern: "{${{ inputs.pattern }},${{ inputs.artifact-name }}}"
+-          digests: ${{ inputs.digests }} ${{ inputs.artifact-name }}=${{ needs.package.outputs.digest }}
+-      - name: Install, reinstall, install over another version, and uninstall silently
+-        shell: pwsh
+-        run: |
+-          $exe = @(Get-ChildItem "$env:RUNNER_TEMP/in" -Recurse -Filter "voinc-$env:VOINC_VERSION-windows-${{ matrix.label }}.exe")[0].FullName
+-          $console = @(Get-ChildItem "$env:RUNNER_TEMP/in" -Recurse -Filter "voinc-$env:VOINC_VERSION-windows-${{ matrix.label }}.com")[0].FullName
+-          $setup = @(Get-ChildItem "$env:RUNNER_TEMP/in" -Recurse -Filter "voinc-setup-$env:VOINC_VERSION-windows-${{ matrix.label }}.exe")[0].FullName
+-          scripts/test-windows-installer.ps1 -Installer $setup -Executable $exe -Console $console -Version $env:VOINC_VERSION
+-      - name: Upload installer logs
+-        if: failure()
+-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+-        with:
+-          name: windows-installer-logs-${{ matrix.label }}
+-          path: ${{ runner.temp }}/voinc-installer-logs
+-          if-no-files-found: ignore
