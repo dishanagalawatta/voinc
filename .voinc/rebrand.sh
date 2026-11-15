@@ -64,12 +64,16 @@ docs/plans/capture-in-hex.md|docs/plans/capture-in-voinc.md
 EOF
 
 # Any remaining product-named files at a path-segment start: hex.<ext>, hex-<name>
-# (crates/capture's internal hex.rs module and historical plan images stay).
+# (crates/capture's internal hex.rs module, the rune-ui plan images, and the
+# always-pristine trees — site, sdk, release-notes — stay).
 while IFS= read -r -d '' f; do
   case "$f" in
     crates/capture/*) continue ;;
     docs/plans/rune-ui/*) continue ;;
     .voinc/*) continue ;;
+    site/*) continue ;;
+    sdk/*) continue ;;
+    release-notes/*) continue ;;
   esac
   d=$(printf '%s' "$f" | sed -E 's#(^|/)hex([.-])#\1voinc\2#g')
   if [ "$f" != "$d" ] && [ ! -e "$d" ]; then
@@ -78,7 +82,7 @@ while IFS= read -r -d '' f; do
     say "  $f -> $d"
     renamed=$((renamed + 1))
   fi
-done < <(git ls-files -z | grep -zZ '(^|/)hex[.-]' || true)
+done < <(git ls-files -z | grep -zZ -E '(^|/)hex[.-]' || true)
 
 say "  ($renamed files renamed)"
 
@@ -122,6 +126,7 @@ if [ "${#FILES[@]}" -gt 0 ]; then
     s{\bHEX_}{VOINC_}g;                                                    # env var prefix
     s{hex:notes}{voinc:notes}g;                                            # meeting Markdown marker
     s{hex://}{voinc://}g;                                                  # deep-link scheme
+    s{\bdefineHexConfig\b}{defineVoincConfig}g;                            # the exported config helper name
     s{\bHex\b}{Voinc}g;                                                    # display name
     s{\bHEX\b}{VOINC}g;                                                    # display name caps
     s{(?<![0-9A-Za-z_])hex(?![0-9A-Za-z_:])}{voinc}g;                      # binary name, paths, CLI, dirs
