@@ -905,7 +905,7 @@ fn main() -> Result<()> {
     // Then, before anything prints, join the terminal that ran `voinc`.
     windows::attach_parent_console();
     if let Err(error) = dll_search {
-        eprintln!("hex: SetDefaultDllDirectories failed: {error}");
+        eprintln!("voinc: SetDefaultDllDirectories failed: {error}");
     }
     windows::vulkan::check();
     windows::gpu_fallback::choose();

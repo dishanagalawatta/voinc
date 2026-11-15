@@ -61,6 +61,21 @@ index e164ad25..adb3b134 100644
          assert!(is_hex_virtual_device_name("voinc microphone"));
          assert!(!is_hex_virtual_device_name("MacBook Pro Microphone"));
          assert!(!is_hex_virtual_device_name("Shure MV7"));
+diff --git a/src/control/cli.rs b/src/control/cli.rs
+index 4f0527c1..3510cae4 100644
+--- a/src/control/cli.rs
++++ b/src/control/cli.rs
+@@ -1285,7 +1285,9 @@ fn start_reply() -> ControlReply {
+     }
+     let executable = match std::env::current_exe() {
+         Ok(executable) => executable,
+-        Err(error) => return ControlReply::error("failed", format!("couldn't find voinc: {error}")),
++        Err(error) => {
++            return ControlReply::error("failed", format!("couldn't find voinc: {error}"));
++        }
+     };
+     let mut command = std::process::Command::new(executable);
+     command
 diff --git a/src/control/cli/transcribe.rs b/src/control/cli/transcribe.rs
 index b523dd55..fc29e6b5 100644
 --- a/src/control/cli/transcribe.rs
@@ -351,7 +366,7 @@ index 08afb09b..b400bce7 100644
  
  /// A meeting title short enough for one menu line.
 diff --git a/src/main.rs b/src/main.rs
-index ffb51544..075aaf4d 100644
+index 571b60de..ae417cd0 100644
 --- a/src/main.rs
 +++ b/src/main.rs
 @@ -855,7 +855,12 @@ mod tests {

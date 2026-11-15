@@ -135,6 +135,8 @@ if [ "${#FILES[@]}" -gt 0 ]; then
     s{\bHex\b}{Voinc}g;                                                    # display name
     s{\bHEX\b}{VOINC}g;                                                    # display name caps
     s{(?<![0-9A-Za-z_])hex(?![0-9A-Za-z_:])}{voinc}g;                      # binary name, paths, CLI, dirs
+    s{"hex: }{"voinc: }g;                                                  # quoted error prefixes: the CLI and the console helper
+    s{ find hex: }{ find voinc: }g;                                        # the same prefix mid-sentence
     # Fork additions. The onboarding scene DSL keyword is `voinc` (its .scene
     # fixtures and keyword arms follow the general rule above), so finish what
     # the `:` lookahead keeps in that one file: the struct-field declarations
@@ -148,9 +150,6 @@ if [ "${#FILES[@]}" -gt 0 ]; then
     }
     if ($ARGV =~ m{/linux/gnome_shortcuts\.rs$}) {
       s{(fn install\(settings: &AppSettings, )hex: }{${1}voinc: }g;
-    }
-    if ($ARGV =~ m{/crates/console/src/main\.rs$}) {
-      s{"hex: }{"voinc: }g;    # the console helper's error prefix
     }
     s{rune::color::voinc\(}{rune::color::hex(}g;
     # --- restore protected tokens ---

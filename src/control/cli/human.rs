@@ -32,7 +32,7 @@ pub(crate) fn print(reply: ControlReply, output: Output) -> u8 {
         ControlReply::ScrawlCaptureDetail(detail) => print!("{}", human_capture_detail(&detail)),
         ControlReply::ScrawlCaptureRoute { explanation } => print!("{explanation}"),
         ControlReply::Transcript { text } => println!("{text}"),
-        ControlReply::Error { message, .. } => eprintln!("hex: {message}"),
+        ControlReply::Error { message, .. } => eprintln!("voinc: {message}"),
     }
     code
 }

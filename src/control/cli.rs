@@ -447,7 +447,7 @@ pub fn run(command: ControlCli) -> u8 {
             output,
         } => {
             if let Err(error) = super::check_flags(action, print, raw) {
-                eprintln!("hex: {}", error.message);
+                eprintln!("voinc: {}", error.message);
                 return 2;
             }
             send(ControlCommand::Dictation { action, print, raw }, output)
@@ -1285,7 +1285,9 @@ fn start_reply() -> ControlReply {
     }
     let executable = match std::env::current_exe() {
         Ok(executable) => executable,
-        Err(error) => return ControlReply::error("failed", format!("couldn't find hex: {error}")),
+        Err(error) => {
+            return ControlReply::error("failed", format!("couldn't find voinc: {error}"));
+        }
     };
     let mut command = std::process::Command::new(executable);
     command
@@ -1456,7 +1458,7 @@ fn logs(process: bool, lines: usize, follow: bool) -> u8 {
 }
 
 fn fail(message: &str) -> u8 {
-    eprintln!("hex: {message}");
+    eprintln!("voinc: {message}");
     EXIT_REFUSED
 }
 

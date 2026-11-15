@@ -158,7 +158,7 @@ with tempfile.TemporaryDirectory(prefix="voinc-instance-", dir=os.environ.get("T
         # with one line rather than an error report.
         refused = run("dictation", "toggle")
         assert refused.returncode != 0 and "not listening" in refused.stderr, refused.stderr
-        assert refused.stderr.startswith("hex: ") and refused.stderr.count("\n") == 1, refused.stderr
+        assert refused.stderr.startswith("voinc: ") and refused.stderr.count("\n") == 1, refused.stderr
 
         # Version 1 (service/Settings) clients get a version error, not a hang.
         with connection() as client:
