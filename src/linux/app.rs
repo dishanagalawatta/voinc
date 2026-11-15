@@ -1174,15 +1174,26 @@ impl LinuxDesktopHost {
         let worker_stage = stage.clone();
         let worker = std::thread::spawn(move || {
             (|| {
-                if automatic {
-                    crate::transcription::models::verify_installed(definition, &worker_canceled)?;
-                } else {
-                    crate::transcription::models::download_with_stage_progress(
-                        definition,
-                        &worker_canceled,
-                        &worker_progress,
-                        &worker_stage,
-                    )?;
+                // A GGUF model verifies or downloads its artifact; anything
+                // else (Google Transcribe) installs another way — its key, on
+                // its Labs card — and goes straight to loading.
+                if matches!(
+                    definition.runtime,
+                    crate::transcription::models::ModelRuntime::Gguf(_)
+                ) {
+                    if automatic {
+                        crate::transcription::models::verify_installed(
+                            definition,
+                            &worker_canceled,
+                        )?;
+                    } else {
+                        crate::transcription::models::download_with_stage_progress(
+                            definition,
+                            &worker_canceled,
+                            &worker_progress,
+                            &worker_stage,
+                        )?;
+                    }
                 }
                 if worker_canceled.load(Ordering::Relaxed) {
                     return Err(color_eyre::eyre::eyre!("model activation canceled"));

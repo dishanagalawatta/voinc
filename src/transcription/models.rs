@@ -1156,8 +1156,20 @@ pub fn download_with_stage_progress(
     downloaded_bytes: &AtomicU64,
     stage: &AtomicU8,
 ) -> Result<PathBuf> {
-    let ModelRuntime::Gguf(artifact) = model.runtime else {
-        bail!("{} is installed and managed by macOS", model.name);
+    let artifact = match model.runtime {
+        ModelRuntime::Gguf(artifact) => artifact,
+        // Google Transcribe installs with the person's API key; there is no
+        // artifact to fetch.
+        ModelRuntime::Gemini => bail!(
+            "{} has no download: its Gemini API key is its install (Labs › Google Transcribe)",
+            model.name
+        ),
+        #[cfg(target_os = "macos")]
+        ModelRuntime::AppleSpeech => {
+            bail!("{} is provided by macOS and needs no download", model.name)
+        }
+        #[cfg(not(target_os = "macos"))]
+        ModelRuntime::AppleSpeech => bail!("{} runs only on macOS", model.name),
     };
     // An import has nothing to download: Voinc checks its own copy. A catalog
     // model another app already downloaded is checked and used where it is.
