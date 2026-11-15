@@ -10,7 +10,7 @@ impl Feature {
         match self {
             Self::Meetings => "Record calls and keep transcripts (its own pane)",
             Self::VoiceFilter => {
-                "Hex Microphone virtual input and real-time voice filters (its own pane)"
+                "Voinc Microphone virtual input and real-time voice filters (its own pane)"
             }
             Self::Playground => "Scene and story browser in the window",
             Self::LiveText => "Show provisional words beside the HUD while dictating",
@@ -52,7 +52,7 @@ impl Feature {
                 "Remove filler words such as um and uh from dictations, without an AI model"
             }
             Self::SubtitleExport => {
-                "Export meeting transcripts as SRT or VTT subtitles with hex meetings show"
+                "Export meeting transcripts as SRT or VTT subtitles with voinc meetings show"
             }
             Self::SecondDictationShortcut => {
                 "Another shortcut that dictates like the main one (second_dictation_hotkey), such as a key on an external keyboard"
@@ -92,7 +92,7 @@ impl Feature {
                 "Use Menu, Pause, or Scroll Lock alone as a shortcut, such as Caps Lock remapped to Menu"
             }
             Self::HistoryStats => {
-                "Add a Stats button to History that shows a summary of your retained dictations, with hex history stats"
+                "Add a Stats button to History that shows a summary of your retained dictations, with voinc history stats"
             }
             Self::RecentDictations => {
                 "Copy one of your last five dictations from the menu bar, under Paste Last Dictation"
@@ -101,7 +101,7 @@ impl Feature {
                 "Shorten long pauses before a whole dictation goes to the model, so slow computers paste sooner"
             }
             Self::StopWhenCallEnds => {
-                "Stop a meeting recording Hex started on its own 30 s after the call app leaves the microphone and goes quiet"
+                "Stop a meeting recording Voinc started on its own 30 s after the call app leaves the microphone and goes quiet"
             }
             Self::OutputFixes => {
                 "Offer Vocabulary and Fix this beside Output's Try result, to correct a wrong result"
@@ -114,7 +114,7 @@ impl Feature {
                 "Show only downloaded speech models in the picker, with the space they take"
             }
             Self::SectionKeyAlone => {
-                "Use the § key, left of 1 on ISO keyboards, alone as a shortcut; Hex takes § from every app while it's bound"
+                "Use the § key, left of 1 on ISO keyboards, alone as a shortcut; Voinc takes § from every app while it's bound"
             }
             Self::KeepRecordings => {
                 "Keep the audio of dictations saved to History, so you can transcribe them again with another model"
@@ -125,7 +125,7 @@ impl Feature {
                 "Show a link to this build's release notes in the sidebar footer"
             }
             Self::HideMenuBarIcon => {
-                "Hide Hex's menu bar icon; shortcuts keep working, and opening Hex again shows Settings"
+                "Hide Voinc's menu bar icon; shortcuts keep working, and opening Voinc again shows Settings"
             }
             Self::MovableMeetingCapsules => {
                 "Drag meeting capsules such as Meeting transcript ready out of the way; they come back in the corner you left them"
@@ -161,7 +161,7 @@ impl Feature {
                 "Offer to record calls in Signal, Telegram, WeChat, LINE, Webex, Element and the Phone app, and name calls on more websites."
             }
             Self::AnnotateReplay => {
-                "Save the last 15 seconds of your screen with hex capture replay or capture.replay_hotkey; macOS shows the screen-recording dot the whole time it's on (macOS 27+)"
+                "Save the last 15 seconds of your screen with voinc capture replay or capture.replay_hotkey; macOS shows the screen-recording dot the whole time it's on (macOS 27+)"
             }
             Self::MeetingImport => {
                 "Import an audio file into Meetings and transcribe it on this Mac"
@@ -173,31 +173,31 @@ impl Feature {
                 "Write the meeting's notes to their own file next to the transcript, sharing its name, with a link back to the transcript"
             }
             Self::QuitClosesWindow => {
-                "⌘Q closes the Settings window instead of quitting Hex; dictation keeps running, and the menu bar icon still quits"
+                "⌘Q closes the Settings window instead of quitting Voinc; dictation keeps running, and the menu bar icon still quits"
             }
             Self::ExpireMeetingAudio => {
                 "Choose how long to keep meeting audio. Transcripts, notes, and summaries follow Keep meetings."
             }
             Self::CapsLockDictation => {
-                "Press Caps Lock to start and stop dictation; its light shows when Hex records and transcribes"
+                "Press Caps Lock to start and stop dictation; its light shows when Voinc records and transcribes"
             }
             Self::OpenCodeInWsl => {
                 "Use an OpenCode service running in your default WSL distribution for Modes rewriting and the Modes model picker; looking for it can start WSL"
             }
             Self::TranscribeFiles => {
-                "Turn a WAV recording into text with hex transcribe <file> and your dictation model"
+                "Turn a WAV recording into text with voinc transcribe <file> and your dictation model"
             }
             Self::ApiProcessing => {
-                "Let apps using Hex's local API ask for transcripts with your Global mode's corrections, rewrite, and transformations applied"
+                "Let apps using Voinc's local API ask for transcripts with your Global mode's corrections, rewrite, and transformations applied"
             }
             Self::ApiTimestamps => {
-                "Let apps using Hex's local API ask for each segment's or word's start and end times in the transcript, as the speech model heard them"
+                "Let apps using Voinc's local API ask for each segment's or word's start and end times in the transcript, as the speech model heard them"
             }
             Self::SpeakersOnly => {
                 "Apply \"While dictating\" only when sound plays through speakers; headphones are left alone"
             }
             Self::PauseMenu => {
-                "Add Pause Hex to the menu bar. While paused, Hex ignores its shortcuts so other apps get the keys"
+                "Add Pause Voinc to the menu bar. While paused, Voinc ignores its shortcuts so other apps get the keys"
             }
         }
     }

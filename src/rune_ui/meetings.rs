@@ -27,7 +27,7 @@ use crate::desktop::i18n::{tr, tr_fill, tr_named};
 mod fixture;
 
 static MORE_ICON: rune::Icon = rune::Icon {
-    name: "hex-more",
+    name: "voinc-more",
     view: 16.0,
     body: r#"<circle cx="3.5" cy="8" r="1.25" fill="currentColor"/><circle cx="8" cy="8" r="1.25" fill="currentColor"/><circle cx="12.5" cy="8" r="1.25" fill="currentColor"/>"#,
 };
@@ -68,7 +68,7 @@ pub(super) struct Chapter {
     pub(super) summary: String,
     pub(super) start_ms: u64,
     /// What Copy section copies, from the same transcript lines as the menu
-    /// bar and `hex meetings show --chapter`.
+    /// bar and `voinc meetings show --chapter`.
     pub(super) markdown: String,
 }
 
@@ -1282,12 +1282,12 @@ mod tests {
     fn platform_icons_fall_back_to_a_neutral_one() {
         let pane = MeetingsPane::platforms_fixture();
         let name = |id: &str| platform_icon(pane.meeting(id).unwrap()).name;
-        assert_eq!(name("preview-live"), "hex-provider-zoom");
-        assert_eq!(name("preview-meet"), "hex-provider-meet");
-        assert_eq!(name("preview-teams"), "hex-provider-teams");
-        assert_eq!(name("preview-huddle"), "hex-provider-slack");
-        assert_eq!(name("preview-design"), "hex-row-call");
-        assert_eq!(name("preview-failed"), "hex-row-call");
+        assert_eq!(name("preview-live"), "voinc-provider-zoom");
+        assert_eq!(name("preview-meet"), "voinc-provider-meet");
+        assert_eq!(name("preview-teams"), "voinc-provider-teams");
+        assert_eq!(name("preview-huddle"), "voinc-provider-slack");
+        assert_eq!(name("preview-design"), "voinc-row-call");
+        assert_eq!(name("preview-failed"), "voinc-row-call");
     }
 
     /// Labs › Follow live transcript: only a recording meeting's transcript

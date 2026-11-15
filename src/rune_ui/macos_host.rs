@@ -1,7 +1,7 @@
 //! The macOS window's host: the runtime thread `macos_rune` starts in this
 //! process, which owns model preparation and publishes the listener, model,
 //! update, and settings state, plus the OS-only work the panes ask for
-//! (permissions, the login item, Hex Microphone, meetings).
+//! (permissions, the login item, Voinc Microphone, meetings).
 //!
 //! Shortcut capture stays in the window: an AppKit local event
 //! monitor records the chord, because a modifier-only binding such as Option
@@ -48,7 +48,7 @@ pub(super) use crate::macos_rune::{Request, ShortcutTarget};
 pub(super) const HOST_SAVES_SHORTCUTS: bool = false;
 pub(super) const RECORDS_KEY_EVENTS: bool = false;
 pub(super) const TERMINAL_PASTE: bool = false;
-/// Quit Hex lives in the menu bar and the app menu (⌘Q).
+/// Quit Voinc lives in the menu bar and the app menu (⌘Q).
 pub(super) const QUIT_IN_WINDOW: bool = false;
 
 /// How often the native host re-reads permissions and driver state.
@@ -104,7 +104,7 @@ impl Backend {
             ) => crate::macos_rune::update_action(&action),
             request => match &self.runtime {
                 Some(runtime) => runtime.send(request),
-                None => Err(eyre!("Hex's runtime is not running")),
+                None => Err(eyre!("Voinc's runtime is not running")),
             },
         }
     }
@@ -130,7 +130,7 @@ impl Backend {
     pub(super) fn error(&self) -> Option<String> {
         self.runtime
             .is_none()
-            .then(|| "Hex's runtime is not running".into())
+            .then(|| "Voinc's runtime is not running".into())
     }
 
     pub(super) fn state(&self) -> Option<HostState> {
@@ -643,7 +643,7 @@ impl MacHost {
     }
 
     fn runtime(&self) -> Result<RuntimeHandle, String> {
-        crate::macos_rune::runtime().ok_or_else(|| "Hex's runtime is not running".into())
+        crate::macos_rune::runtime().ok_or_else(|| "Voinc's runtime is not running".into())
     }
 
     fn meeting(&mut self, request: MeetingRequest) -> Result<(), String> {
@@ -729,7 +729,7 @@ impl NativeHost for MacHost {
             }
             PlatformRequest::Permission(PermissionAction::Restart) => {
                 if !crate::desktop::onboarding::spawn_relaunch() {
-                    return Err("could not restart Hex".into());
+                    return Err("could not restart Voinc".into());
                 }
                 crate::macos_rune::quit();
             }
@@ -767,7 +767,7 @@ impl NativeHost for MacHost {
                     tracing::warn!(%error, "could not record the onboarding relaunch");
                 }
                 if !crate::desktop::onboarding::spawn_relaunch() {
-                    return Err("could not relaunch Hex".into());
+                    return Err("could not relaunch Voinc".into());
                 }
                 crate::macos_rune::quit();
             }
@@ -967,12 +967,12 @@ struct CalendarFeed {
     reader: Option<CalendarReader>,
     connect_error: Option<String>,
     /// macOS's last answer in this process. EventKit's status can keep
-    /// saying "not determined" after it until Hex relaunches; once the reader
+    /// saying "not determined" after it until Voinc relaunches; once the reader
     /// sees a decision, that is current and this is forgotten.
     answered: Option<CalendarAccess>,
-    /// The person asked Hex to connect (Connect, or Open settings from the
+    /// The person asked Voinc to connect (Connect, or Open settings from the
     /// blocked card) and it is not saved yet, so full access granted in System
-    /// Settings afterwards connects. A grant Hex did not start never does.
+    /// Settings afterwards connects. A grant Voinc did not start never does.
     asked: bool,
 }
 
@@ -1048,7 +1048,7 @@ impl CalendarFeed {
         self.asked = true;
         let (sender, receiver) = mpsc::sync_channel(1);
         let spawned = std::thread::Builder::new()
-            .name("hex-calendar-connect".into())
+            .name("voinc-calendar-connect".into())
             .spawn(move || {
                 let _ = sender.send(crate::calendar::request_access());
             });
@@ -1064,7 +1064,7 @@ impl CalendarFeed {
         }
     }
 
-    /// Open settings on the blocked card: switching Hex on there connects.
+    /// Open settings on the blocked card: switching Voinc on there connects.
     fn opening_privacy_settings(&mut self) {
         tracing::info!("calendar: opening Privacy & Security › Calendars");
         self.asked = true;
@@ -1112,7 +1112,7 @@ impl CalendarFeed {
 
     /// Takes a reader snapshot: forgets the answer once EventKit reports a
     /// decision, and connects when full access arrives after the person asked
-    /// Hex to connect (refused the prompt, then switched Hex on in System
+    /// Voinc to connect (refused the prompt, then switched Voinc on in System
     /// Settings).
     fn read(
         &mut self,
@@ -1166,7 +1166,7 @@ impl CalendarFeed {
             let (sender, snapshots) = mpsc::sync_channel(1);
             let (stop, stopped) = mpsc::sync_channel(1);
             let spawned = std::thread::Builder::new()
-                .name("hex-calendar-read".into())
+                .name("voinc-calendar-read".into())
                 .spawn(move || calendar_reader(sender, stopped));
             match spawned {
                 Ok(_) => {

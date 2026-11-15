@@ -1,6 +1,6 @@
 import UIKit
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 final class ShiftStateMachineTests: XCTestCase {
     func testTapTurnsShiftOnForOneCharacter() {

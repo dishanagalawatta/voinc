@@ -1,4 +1,4 @@
-//! Shortcut text for `hex settings`: reading and writing the modifier-plus-key
+//! Shortcut text for `voinc settings`: reading and writing the modifier-plus-key
 //! form, and why a bare special key still needs its Labs toggle.
 
 use crate::app_settings::{
@@ -24,7 +24,7 @@ pub(super) fn check_shortcut(
     {
         return Err(invalid(
             name,
-            "mouse buttons need Labs › Mouse shortcuts: hex labs on mouse-shortcuts",
+            "mouse buttons need Labs › Mouse shortcuts: voinc labs on mouse-shortcuts",
         ));
     }
     if let Some(why) = special_key_refusal(candidate, binding) {
@@ -35,7 +35,7 @@ pub(super) fn check_shortcut(
         return Err(crate::control::ControlError::new(
             "shortcut-in-use",
             format!(
-                "{} is already in use by another Hex shortcut",
+                "{} is already in use by another Voinc shortcut",
                 format_hotkey(binding)
             ),
         ));
@@ -146,13 +146,13 @@ pub(super) fn special_key_refusal(
     // The § key alone needs Labs › Section key alone (Linux).
     if cfg!(target_os = "linux") && binding.is_lone_section_key() && !settings.section_key_allowed()
     {
-        return Some("section needs Labs › Section key alone: hex labs on section-key".into());
+        return Some("section needs Labs › Section key alone: voinc labs on section-key".into());
     }
     if cfg!(target_os = "windows") {
         let key = binding.key.as_ref()?;
         return (binding.is_lone_navigation_key() && !settings.special_keys_allowed()).then(|| {
             format!(
-                "{} alone needs Labs › Special keys alone: hex labs on special-keys",
+                "{} alone needs Labs › Special keys alone: voinc labs on special-keys",
                 key.label.to_lowercase().replace(' ', "")
             )
         });
@@ -164,7 +164,7 @@ pub(super) fn special_key_refusal(
     let name = key.label.to_lowercase().replace(' ', "");
     if cfg!(target_os = "linux") {
         return Some(format!(
-            "{name} needs Labs › Special keys alone: hex labs on special-keys"
+            "{name} needs Labs › Special keys alone: voinc labs on special-keys"
         ));
     }
     binding

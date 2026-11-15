@@ -1,6 +1,6 @@
 import CoreGraphics
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 final class KeyboardLayoutTests: XCTestCase {
     private let portraitWidths: [CGFloat] = [320, 375, 393, 402, 430, 440]
@@ -122,18 +122,18 @@ final class KeyboardLayoutTests: XCTestCase {
     }
 
     func testBottomRowPutsHexRightOfSpace() {
-        XCTAssertEqual(bottomRow(KeyboardLayout(width: 393)), [.layerSwitch(.numbers), .space, .hex, .returnKey])
+        XCTAssertEqual(bottomRow(KeyboardLayout(width: 393)), [.layerSwitch(.numbers), .space, .voinc, .returnKey])
         XCTAssertEqual(
             bottomRow(KeyboardLayout(width: 375, showsGlobe: true)),
-            [.layerSwitch(.numbers), .globe, .space, .hex, .returnKey]
+            [.layerSwitch(.numbers), .globe, .space, .voinc, .returnKey]
         )
         XCTAssertEqual(
             bottomRow(KeyboardLayout(width: 393, layer: .numbers, field: .email)),
-            [.layerSwitch(.letters), .character("@"), .space, .character("."), .hex, .returnKey]
+            [.layerSwitch(.letters), .character("@"), .space, .character("."), .voinc, .returnKey]
         )
         XCTAssertEqual(
             bottomRow(KeyboardLayout(width: 393, field: .url)),
-            [.layerSwitch(.numbers), .character("/"), .space, .character("."), .hex, .returnKey]
+            [.layerSwitch(.numbers), .character("/"), .space, .character("."), .voinc, .returnKey]
         )
     }
 
@@ -191,9 +191,9 @@ final class FullKeyboardSettingsTests: XCTestCase {
         XCTAssertFalse(settings.isEnabled)
         XCTAssertTrue(settings.autocorrect)
 
-        settings.applyLaunchArguments(["HEX"])
+        settings.applyLaunchArguments(["VOINC"])
         XCTAssertFalse(settings.isEnabled)
-        settings.applyLaunchArguments(["HEX", FullKeyboardSettings.launchArgument])
+        settings.applyLaunchArguments(["VOINC", FullKeyboardSettings.launchArgument])
         XCTAssertTrue(settings.isEnabled)
 
         settings.autocorrect = false

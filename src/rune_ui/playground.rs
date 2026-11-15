@@ -1,4 +1,4 @@
-//! The playground (Labs › Playground): Rune's playground in Hex's window,
+//! The playground (Labs › Playground): Rune's playground in Voinc's window,
 //! opened from its sidebar item or ⇧⌘D (Ctrl+Shift+D off macOS). It swaps
 //! the window for a folded list of
 //! prototypes (the onboarding options, live meeting notes, and on macOS
@@ -229,7 +229,7 @@ const PATHS: &[(&str, &str)] = &[
     ("mac-labs-settings", "Window/General/Labs settings"),
     ("mac-production", "Window/General/Production build"),
     ("mac-activity", "Window/Activity/Activity"),
-    ("mac-onboarding", "Window/Onboarding/Setting up Hex"),
+    ("mac-onboarding", "Window/Onboarding/Setting up Voinc"),
     (
         "mac-onboarding-permissions",
         "Window/Onboarding/Permissions",
@@ -256,9 +256,9 @@ const PATHS: &[(&str, &str)] = &[
         "mac-onboarding-reopen",
         "Window/Onboarding/Your turn · reopen",
     ),
-    ("mac-onboarding-ready", "Window/Onboarding/Hex is ready"),
+    ("mac-onboarding-ready", "Window/Onboarding/Voinc is ready"),
     ("portal", "Linux & Windows/Settings · portal shortcuts"),
-    ("commands", "Linux & Windows/Settings · hex commands"),
+    ("commands", "Linux & Windows/Settings · voinc commands"),
     ("portal-mouse", "Linux & Windows/Settings · mouse button"),
     ("windows-settings", "Linux & Windows/Settings · Windows"),
     ("windows-labs", "Linux & Windows/Labs · Windows"),
@@ -350,7 +350,7 @@ fn playground() -> Playground<Ui> {
     let playground = Playground::new()
         .enabled(true)
         .bar(false)
-        .sizes(&[("Hex window", WINDOW_SIZE)])
+        .sizes(&[("Voinc window", WINDOW_SIZE)])
         .group_order(GROUPS)
         .start_folded(true);
     let playground = super::onboarding_kit::stories(playground);
@@ -551,7 +551,7 @@ mod tests {
         assert!(rt.playground_state::<Ui>().is_none(), "⇧⌘D closed it");
     }
 
-    /// Every HUD story, on every variant, opens from its `hex://story` link.
+    /// Every HUD story, on every variant, opens from its `voinc://story` link.
     #[cfg(target_os = "macos")]
     #[test]
     fn every_hud_story_and_variant_opens_from_its_link() {
@@ -566,7 +566,7 @@ mod tests {
                 for ending in endings {
                     open_link(
                         &mut rt,
-                        &format!("hex://story/prototypes/hud/{story}?variant={look}-{ending}"),
+                        &format!("voinc://story/prototypes/hud/{story}?variant={look}-{ending}"),
                     );
                 }
             }
@@ -575,11 +575,11 @@ mod tests {
             for variant in ["hud-lab", "notch", "pretend-notch", "menu-bar", "below"] {
                 open_link(
                     &mut rt,
-                    &format!("hex://story/prototypes/hud/{story}?variant={variant}"),
+                    &format!("voinc://story/prototypes/hud/{story}?variant={variant}"),
                 );
             }
         }
-        open_link(&mut rt, "hex://story/hud/processing?variant=menu-bar");
+        open_link(&mut rt, "voinc://story/hud/processing?variant=menu-bar");
         for control in [
             "dot-scope-reset",
             "dot-scope-copy",
@@ -597,7 +597,7 @@ mod tests {
     }
 
     /// Every capture-capsule story, on every flow after a capture, opens
-    /// from its `hex://story` link.
+    /// from its `voinc://story` link.
     #[cfg(all(hex_capture, target_os = "macos"))]
     #[test]
     fn every_capsule_story_and_flow_opens_from_its_link() {
@@ -620,20 +620,20 @@ mod tests {
             for flow in ["tuned", "list", "toast", "menu-bar", "cursor", "notch"] {
                 open_link(
                     &mut rt,
-                    &format!("hex://story/prototypes/capture-capsule/{story}?variant={flow}"),
+                    &format!("voinc://story/prototypes/capture-capsule/{story}?variant={flow}"),
                 );
             }
         }
         for variant in ["Side%20by%20side", "1", "2", "3"] {
             open_link(
                 &mut rt,
-                &format!("hex://story/prototypes/capture-capsule/notch?variant={variant}"),
+                &format!("voinc://story/prototypes/capture-capsule/notch?variant={variant}"),
             );
         }
         for variant in ["braid", "bars", "line"] {
             open_link(
                 &mut rt,
-                &format!("hex://story/prototypes/capture-capsule/family?variant={variant}"),
+                &format!("voinc://story/prototypes/capture-capsule/family?variant={variant}"),
             );
         }
     }
@@ -642,7 +642,7 @@ mod tests {
     /// variant isn't there.
     #[cfg(target_os = "macos")]
     fn open_link(rt: &mut rune::Runtime<Ui>, link: &str) {
-        let link = super::super::story_link::parse(link, "hex").expect(link);
+        let link = super::super::story_link::parse(link, "voinc").expect(link);
         rt.open_playground(&link.story, link.variant.as_deref());
         assert!(
             rt.playground_state::<Ui>().is_none(),

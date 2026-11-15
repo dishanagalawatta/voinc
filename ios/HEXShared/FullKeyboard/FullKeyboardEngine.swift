@@ -153,7 +153,7 @@ final class FullKeyboardEngine {
             if next == .letters { shift.reset() }
             rebuildLayout()
             if next == .letters { refreshAutoCapitalization() }
-        case .character, .space, .returnKey, .hex, .globe:
+        case .character, .space, .returnKey, .voinc, .globe:
             break
         }
         touches[id] = touch
@@ -200,7 +200,7 @@ final class FullKeyboardEngine {
                 rebuildLayout()
                 refreshAutoCapitalization()
             }
-        case .delete, .hex, .globe:
+        case .delete, .voinc, .globe:
             break
         }
         onChange?()

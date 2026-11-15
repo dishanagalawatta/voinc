@@ -1,10 +1,10 @@
-// A GUI program on Windows, so launching Hex opens no console window (#850).
+// A GUI program on Windows, so launching Voinc opens no console window (#850).
 // Commands run from a terminal attach to it (`windows::attach_parent_console`).
 #![cfg_attr(all(target_os = "windows", not(test)), windows_subsystem = "windows")]
 
-/// The version Hex reports: the release version, or `0.0.0-dev-local-<commit>`
+/// The version Voinc reports: the release version, or `0.0.0-dev-local-<commit>`
 /// for a build outside the Release workflow (build.rs).
-const VERSION: &str = env!("HEX_BUILD_VERSION");
+const VERSION: &str = env!("VOINC_BUILD_VERSION");
 
 #[cfg(target_os = "macos")]
 mod accessibility;
@@ -87,15 +87,15 @@ use color_eyre::eyre::eyre;
 #[cfg(target_os = "macos")]
 #[derive(Parser)]
 #[command(
-    name = "hex",
+    name = "voinc",
     version = crate::VERSION,
     about = "Local, observable voice control",
     long_about = "Local, observable voice control.\n\n\
         Control commands (status, dictation, meetings record, settings, model, window, …) drive \
-        the one running Hex over its owner-only local API and never launch it, except `start` \
+        the one running Voinc over its owner-only local API and never launch it, except `start` \
         and `restart`. Every one takes --json for a versioned reply (docs/cli.md). Exit codes: \
-        0 done or nothing to change, 1 refused or failed, 2 usage, 3 Hex isn't running.",
-    after_help = "Run `hex <command> --help` for details, or `hex settings list` for every setting."
+        0 done or nothing to change, 1 refused or failed, 2 usage, 3 Voinc isn't running.",
+    after_help = "Run `voinc <command> --help` for details, or `voinc settings list` for every setting."
 )]
 struct Cli {
     #[command(subcommand)]
@@ -216,7 +216,7 @@ enum DevCommand {
         #[arg(required = true)]
         wavs: Vec<PathBuf>,
     },
-    /// Render offline audio through the Hex Microphone voice filter.
+    /// Render offline audio through the Voinc Microphone voice filter.
     VoiceFilter {
         #[command(subcommand)]
         command: VoiceFilterCommand,
@@ -307,7 +307,7 @@ fn main() -> Result<()> {
         rune::prewarm_gpu();
     }
     // A window of its own: no data folder, log, lock, or settings, so it
-    // runs beside the installed Hex.
+    // runs beside the installed Voinc.
     #[cfg(hex_capture)]
     if let Some(Command::CapsulePlayground { rune_args }) = &cli.command {
         keyboard::initialize_layout()?;
@@ -315,7 +315,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
     // Control and read commands (status, settings, history, meetings, mcp,
-    // labs, …) talk to the running Hex or read files: no data folder, log,
+    // labs, …) talk to the running Voinc or read files: no data folder, log,
     // lock, GUI, or permission setup of their own, so an agent may run them
     // over SSH while the app is running.
     let cli = match cli.command {
@@ -373,8 +373,8 @@ fn main() -> Result<()> {
             output,
         );
     }
-    // A headless render (`hex app -- --snap …`) draws fixtures: no data
-    // folder, log, lock, or settings, so it never touches the user's Hex.
+    // A headless render (`voinc app -- --snap …`) draws fixtures: no data
+    // folder, log, lock, or settings, so it never touches the user's Voinc.
     if let Some(Command::App { rune_args, .. }) = &cli.command
         && !rune_args.is_empty()
     {
@@ -384,7 +384,7 @@ fn main() -> Result<()> {
     let log_dir = app_paths::init_process_logging(&SHUTDOWN)?;
 
     let event_path = log_dir.join("live.ndjson");
-    let bundled_service = executable_name.as_deref() == Some(std::ffi::OsStr::new("hex-service"));
+    let bundled_service = executable_name.as_deref() == Some(std::ffi::OsStr::new("voinc-service"));
     let command = cli.command.unwrap_or({
         if bundled_watcher {
             Command::App {
@@ -607,14 +607,14 @@ fn open_app(event_path: PathBuf, device: Option<String>, hidden: bool) -> Result
     )
 }
 
-/// A copy installed as `hex-meetings-mcp` only serves meetings: its
-/// arguments are those of `hex mcp`, and it never falls back to listening.
+/// A copy installed as `voinc-meetings-mcp` only serves meetings: its
+/// arguments are those of `voinc mcp`, and it never falls back to listening.
 #[cfg(target_os = "macos")]
 fn mcp_alias_arguments(mut arguments: Vec<std::ffi::OsString>) -> Vec<std::ffi::OsString> {
     let alias = arguments
         .first()
         .and_then(|program| std::path::Path::new(program).file_stem())
-        .is_some_and(|stem| stem == "hex-meetings-mcp");
+        .is_some_and(|stem| stem == "voinc-meetings-mcp");
     if alias && arguments.get(1).is_none_or(|argument| argument != "mcp") {
         arguments.insert(1, "mcp".into());
     }
@@ -623,10 +623,10 @@ fn mcp_alias_arguments(mut arguments: Vec<std::ffi::OsString>) -> Vec<std::ffi::
 
 #[cfg(target_os = "macos")]
 fn is_bundled_app_executable(name: Option<&std::ffi::OsStr>) -> bool {
-    name.is_some_and(|name| name == "hex")
+    name.is_some_and(|name| name == "voinc")
 }
 
-/// Whether this launch runs the app: `hex app` without `--hidden` or Rune's
+/// Whether this launch runs the app: `voinc app` without `--hidden` or Rune's
 /// own (headless) flags, or the bundled executable with no command. A
 /// menu-bar-only or login launch counts too, though it opens no window and
 /// Rune drops the prewarmed GPU: whether the window opens depends on
@@ -658,18 +658,18 @@ mod tests {
             .command
         };
         assert!(matches!(
-            parse(&["/Users/kit/.local/bin/hex-meetings-mcp"]),
+            parse(&["/Users/kit/.local/bin/voinc-meetings-mcp"]),
             Some(Command::Control(ControlCli::Mcp { meetings_dir: None }))
         ));
         assert!(matches!(
-            parse(&["hex-meetings-mcp", "--meetings-dir", "/tmp/mirror"]),
+            parse(&["voinc-meetings-mcp", "--meetings-dir", "/tmp/mirror"]),
             Some(Command::Control(ControlCli::Mcp { meetings_dir: Some(directory) })) if directory.ends_with("mirror")
         ));
         assert!(matches!(
-            parse(&["hex-meetings-mcp", "mcp"]),
+            parse(&["voinc-meetings-mcp", "mcp"]),
             Some(Command::Control(ControlCli::Mcp { .. }))
         ));
-        assert!(parse(&["hex"]).is_none());
+        assert!(parse(&["voinc"]).is_none());
     }
 
     #[cfg(debug_assertions)]
@@ -682,7 +682,7 @@ mod tests {
             ("hud-lab", DeveloperPane::HudLab),
             ("history", DeveloperPane::History),
         ] {
-            let cli = Cli::try_parse_from(["hex", "dev", "show", pane]).unwrap();
+            let cli = Cli::try_parse_from(["voinc", "dev", "show", pane]).unwrap();
             let Some(Command::Dev {
                 command: DevCommand::Show { pane },
             }) = cli.command
@@ -691,8 +691,8 @@ mod tests {
             };
             assert_eq!(pane, expected);
         }
-        assert!(Cli::try_parse_from(["hex", "dev", "show", "hudlab"]).is_err());
-        assert!(Cli::try_parse_from(["hex", "dev", "hud", "recording"]).is_ok());
+        assert!(Cli::try_parse_from(["voinc", "dev", "show", "hudlab"]).is_err());
+        assert!(Cli::try_parse_from(["voinc", "dev", "hud", "recording"]).is_ok());
     }
 
     #[test]
@@ -706,17 +706,17 @@ mod tests {
         #[cfg(hex_capture)]
         {
             assert!(matches!(
-                parse(&["hex", "capture", "stop", "--json"]),
+                parse(&["voinc", "capture", "stop", "--json"]),
                 Ok(Some(Command::Control(ControlCli::Annotate { command: crate::control::cli::CaptureCommand::Stop { output } }))) if output.json
             ));
             assert!(matches!(
-                parse(&["hex", "capture", "send", "latest", "--to", "ses_1"]),
+                parse(&["voinc", "capture", "send", "latest", "--to", "ses_1"]),
                 Ok(Some(Command::Control(ControlCli::Annotate {
                     command: crate::control::cli::CaptureCommand::Send { capture, to: Some(to), .. }
                 }))) if capture == "latest" && to == "ses_1"
             ));
             assert!(matches!(
-                parse(&["hex", "capture", "send", "latest", "--always"]),
+                parse(&["voinc", "capture", "send", "latest", "--always"]),
                 Ok(Some(Command::Control(ControlCli::Annotate {
                     command: crate::control::cli::CaptureCommand::Send {
                         to: None,
@@ -725,19 +725,19 @@ mod tests {
                     }
                 })))
             ));
-            assert!(parse(&["hex", "capture", "route", "latest", "--explain"]).is_ok());
+            assert!(parse(&["voinc", "capture", "route", "latest", "--explain"]).is_ok());
         }
         assert!(matches!(
-            parse(&["hex", "status", "--json"]),
+            parse(&["voinc", "status", "--json"]),
             Ok(Some(Command::Control(ControlCli::Status { output }))) if output.json
         ));
         assert!(matches!(
-            parse(&["hex", "dictation", "toggle"]),
+            parse(&["voinc", "dictation", "toggle"]),
             Ok(Some(Command::Control(ControlCli::Dictation { .. })))
         ));
         assert!(matches!(
             parse(&[
-                "hex",
+                "voinc",
                 "settings",
                 "set",
                 "release_microphone_while_idle",
@@ -746,17 +746,17 @@ mod tests {
             Ok(Some(Command::Control(ControlCli::Settings { .. })))
         ));
         assert!(matches!(
-            parse(&["hex", "window", "show", "history"]),
+            parse(&["voinc", "window", "show", "history"]),
             Ok(Some(Command::Control(ControlCli::Window { .. })))
         ));
         for verb in ["reset", "restart"] {
             assert!(matches!(
-                parse(&["hex", "onboarding", verb]),
+                parse(&["voinc", "onboarding", verb]),
                 Ok(Some(Command::Control(ControlCli::Onboarding { .. })))
             ));
         }
         assert!(matches!(
-            parse(&["hex", "history", "clear", "--yes"]),
+            parse(&["voinc", "history", "clear", "--yes"]),
             Ok(Some(Command::Control(ControlCli::History(
                 transcript_cli::HistoryArgs {
                     action: Some(transcript_cli::HistoryAction::Clear { yes: true, .. }),
@@ -765,28 +765,28 @@ mod tests {
             ))))
         ));
         assert!(matches!(
-            parse(&["hex", "history", "--json"]),
+            parse(&["voinc", "history", "--json"]),
             Ok(Some(Command::Control(ControlCli::History(
                 transcript_cli::HistoryArgs { action: None, .. }
             ))))
         ));
-        assert!(parse(&["hex", "history", "--limit", "5", "clear", "--yes"]).is_err());
+        assert!(parse(&["voinc", "history", "--limit", "5", "clear", "--yes"]).is_err());
         assert!(matches!(
-            parse(&["hex", "meetings", "record", "--title", "Design sync"]),
+            parse(&["voinc", "meetings", "record", "--title", "Design sync"]),
             Ok(Some(Command::Control(ControlCli::Meetings {
                 command: transcript_cli::MeetingsCommand::Record { title: Some(_), .. }
             })))
         ));
         assert!(matches!(
-            parse(&["hex", "commands", "check"]),
+            parse(&["voinc", "commands", "check"]),
             Ok(Some(Command::Control(ControlCli::Commands {
                 command: CommandsCommand::Check
             })))
         ));
-        assert!(parse(&["hex", "meetings", "cancel"]).is_err());
+        assert!(parse(&["voinc", "meetings", "cancel"]).is_err());
         assert!(matches!(
             parse(&[
-                "hex",
+                "voinc",
                 "vocabulary",
                 "add",
                 "cappuccino",
@@ -801,12 +801,12 @@ mod tests {
             })))
         ));
         assert!(matches!(
-            parse(&["hex", "vocabulary", "list", "--json"]),
+            parse(&["voinc", "vocabulary", "list", "--json"]),
             Ok(Some(Command::Control(ControlCli::Vocabulary {
                 command: crate::control::cli::VocabularyCommand::List { output }
             }))) if output.json
         ));
-        assert!(parse(&["hex", "vocabulary", "remove"]).is_err());
+        assert!(parse(&["voinc", "vocabulary", "remove"]).is_err());
     }
 
     #[test]
@@ -814,25 +814,25 @@ mod tests {
         use super::labs::LabsCommand;
 
         assert!(matches!(
-            Cli::try_parse_from(["hex", "labs", "on", "live-text"]).map(|cli| cli.command),
+            Cli::try_parse_from(["voinc", "labs", "on", "live-text"]).map(|cli| cli.command),
             Ok(Some(Command::Control(ControlCli::Labs {
                 command: Some(LabsCommand::On { feature })
             }))) if feature == "live-text"
         ));
         assert!(matches!(
-            Cli::try_parse_from(["hex", "labs"]).map(|cli| cli.command),
+            Cli::try_parse_from(["voinc", "labs"]).map(|cli| cli.command),
             Ok(Some(Command::Control(ControlCli::Labs { command: None })))
         ));
-        assert!(Cli::try_parse_from(["hex", "labs", "off"]).is_err());
+        assert!(Cli::try_parse_from(["voinc", "labs", "off"]).is_err());
         #[cfg(target_os = "macos")]
         assert!(matches!(
-            Cli::try_parse_from(["hex", "labs", "link", "live-text"]).map(|cli| cli.command),
+            Cli::try_parse_from(["voinc", "labs", "link", "live-text"]).map(|cli| cli.command),
             Ok(Some(Command::Control(ControlCli::Labs {
                 command: Some(LabsCommand::Link { feature })
             }))) if feature == "live-text"
         ));
         assert!(matches!(
-            Cli::try_parse_from(["hex", "experiments", "enable", "live-text"])
+            Cli::try_parse_from(["voinc", "experiments", "enable", "live-text"])
                 .map(|cli| cli.command),
             Ok(Some(Command::Control(ControlCli::Experiments { .. })))
         ));
@@ -840,8 +840,8 @@ mod tests {
 
     #[test]
     fn the_packaged_executable_launches_the_app() {
-        assert!(is_bundled_app_executable(Some("hex".as_ref())));
-        assert!(!is_bundled_app_executable(Some("hex-service".as_ref())));
+        assert!(is_bundled_app_executable(Some("voinc".as_ref())));
+        assert!(!is_bundled_app_executable(Some("voinc-service".as_ref())));
     }
 
     #[test]
@@ -852,14 +852,14 @@ mod tests {
                 is_bundled_app_executable(std::path::Path::new(&arguments[0]).file_stem());
             opens_app(Cli::parse_from(arguments).command.as_ref(), bundled)
         };
-        assert!(opens(&["hex"]));
-        assert!(opens(&["/Applications/Hex.app/Contents/MacOS/hex"]));
-        assert!(opens(&["hex", "app"]));
-        assert!(opens(&["hex", "app", "--device", "MacBook Pro Microphone"]));
-        assert!(!opens(&["hex", "app", "--", "--snap", "/tmp/a.png"]));
-        assert!(!opens(&["hex", "app", "--hidden"]));
-        assert!(!opens(&["hex-service"]));
-        assert!(!opens(&["hex-meetings-mcp"]));
+        assert!(opens(&["voinc"]));
+        assert!(opens(&["/Applications/Voinc.app/Contents/MacOS/voinc"]));
+        assert!(opens(&["voinc", "app"]));
+        assert!(opens(&["voinc", "app", "--device", "MacBook Pro Microphone"]));
+        assert!(!opens(&["voinc", "app", "--", "--snap", "/tmp/a.png"]));
+        assert!(!opens(&["voinc", "app", "--hidden"]));
+        assert!(!opens(&["voinc-service"]));
+        assert!(!opens(&["voinc-meetings-mcp"]));
         for command in [
             &["status"][..],
             &["quit"],
@@ -871,7 +871,7 @@ mod tests {
             &["capture", "status"],
             &["dev", "dashboard"],
         ] {
-            let arguments = [&["hex"][..], command].concat();
+            let arguments = [&["voinc"][..], command].concat();
             assert!(!opens(&arguments), "{command:?}");
         }
     }
@@ -885,7 +885,7 @@ fn main() -> Result<()> {
     // its realtime module asks the desktop portal for a realtime budget and
     // then limits this process's realtime CPU time to it; the portal caches
     // that budget once at its own startup and can report zero, which makes
-    // the kernel kill Hex. Hex never takes realtime scheduling through the
+    // the kernel kill Voinc. Voinc never takes realtime scheduling through the
     // portal or rtkit.
     // SAFETY: Before any other thread exists to read the environment.
     unsafe { std::env::set_var("DISABLE_RTKIT", "1") };
@@ -897,7 +897,7 @@ fn main() -> Result<()> {
 fn main() -> Result<()> {
     // DLL search hardening first: the CPU check's message box loads DLLs.
     let dll_search = windows::restrict_dll_search();
-    // Then, before anything prints, join the terminal that ran `hex`.
+    // Then, before anything prints, join the terminal that ran `voinc`.
     windows::attach_parent_console();
     if let Err(error) = dll_search {
         eprintln!("hex: SetDefaultDllDirectories failed: {error}");

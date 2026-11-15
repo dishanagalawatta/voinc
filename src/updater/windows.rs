@@ -1,8 +1,8 @@
 //! Windows installs: the per-user version layout our installers receipt
-//! (`%APPDATA%\hex\install.json`) updates itself by staging the
-//! new `hex.exe` and its console entry point `hex.com` (crates/console) into
+//! (`%APPDATA%\voinc\install.json`) updates itself by staging the
+//! new `voinc.exe` and its console entry point `voinc.com` (crates/console) into
 //! their own version directory and switching the `current-version` pointer.
-//! `bin\hex.com`, the copy PATH names, follows. Before anything runs, every
+//! `bin\voinc.com`, the copy PATH names, follows. Before anything runs, every
 //! download must carry a valid Authenticode signature from Anomaly's
 //! Artifact Signing identity. Administrators turn updates off with the
 //! `DisableUpdates` policy value.
@@ -35,21 +35,21 @@ pub const DOWNLOAD_TARGET: &str = "windows-arm64-setup";
 /// Anomaly (as on OpenCode's signed Windows builds); updates signed by
 /// anyone else are refused.
 pub const AUTHENTICODE_SIGNER: &str = "Anomaly Innovations, Inc https://anoma.ly/";
-/// `HKLM` (or `HKCU`) `\SOFTWARE\Policies\Anomaly\Hex`, value `DisableUpdates`.
-const POLICY_KEY: &str = r"SOFTWARE\Policies\Anomaly\Hex";
-/// The Apps & Features entry that packaging/windows/hex.iss registers.
+/// `HKLM` (or `HKCU`) `\SOFTWARE\Policies\Anomaly\Voinc`, value `DisableUpdates`.
+const POLICY_KEY: &str = r"SOFTWARE\Policies\Anomaly\Voinc";
+/// The Apps & Features entry that packaging/windows/voinc.iss registers.
 const UNINSTALL_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{6ED48C92-5177-41F4-B8D6-37B7B02CFDF4}_is1";
 
-/// The activated `hex.exe`.
+/// The activated `voinc.exe`.
 #[derive(Clone, Debug)]
 pub struct Staged(PathBuf);
 
-/// Why this copy of Hex can't update itself; the window says so beside
+/// Why this copy of Voinc can't update itself; the window says so beside
 /// Download update, with what to do.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Ineligible {
     /// Not running from `<support>\versions\<version>`: a downloaded or
-    /// copied `hex.exe`, or a build.
+    /// copied `voinc.exe`, or a build.
     NotInstalled,
     /// The data folder is outside the user's own profile.
     OutsideProfile,
@@ -61,13 +61,13 @@ impl Ineligible {
     fn message(self) -> &'static str {
         match self {
             Self::NotInstalled => {
-                "This copy of Hex can't update itself because the Hex installer didn't install it. Install Hex from anoma.ly/hex to get updates in the app."
+                "This copy of Voinc can't update itself because the Voinc installer didn't install it. Install Voinc from anoma.ly/hex to get updates in the app."
             }
             Self::OutsideProfile => {
-                "This copy of Hex can't update itself because it's installed outside your user folder. Reinstall Hex from anoma.ly/hex to get updates in the app."
+                "This copy of Voinc can't update itself because it's installed outside your user folder. Reinstall Voinc from anoma.ly/hex to get updates in the app."
             }
             Self::Receipt => {
-                "This copy of Hex can't update itself because its install record is from another installer. Reinstall Hex from anoma.ly/hex to get updates in the app."
+                "This copy of Voinc can't update itself because its install record is from another installer. Reinstall Voinc from anoma.ly/hex to get updates in the app."
             }
         }
     }
@@ -80,13 +80,13 @@ pub fn method() -> Method {
     match eligibility() {
         Ok(channel) => Method::Direct { channel },
         Err(why) => {
-            tracing::warn!(?why, "this Hex can't update itself");
+            tracing::warn!(?why, "this Voinc can't update itself");
             Method::Unknown
         }
     }
 }
 
-/// What the window shows when this Hex can't update itself.
+/// What the window shows when this Voinc can't update itself.
 pub fn blocked() -> Option<&'static str> {
     eligibility().err().map(Ineligible::message)
 }
@@ -196,7 +196,7 @@ pub fn updates_disabled_by_policy() -> bool {
         })
 }
 
-/// Stages `file` (hex.exe) and `console` (hex.com), when the release has
+/// Stages `file` (voinc.exe) and `console` (voinc.com), when the release has
 /// one, as `version`.
 pub fn stage(file: &Path, console: Option<&Path>, version: &str) -> Result<Staged> {
     verify_authenticode(file, AUTHENTICODE_SIGNER)?;
@@ -212,8 +212,8 @@ pub fn stage(file: &Path, console: Option<&Path>, version: &str) -> Result<Stage
         .open(support.join("updates").join("update.lock"))?;
     lock.try_lock_exclusive()
         .wrap_err("another Windows update is already in progress")?;
-    let staging = support.join("updates").join("hex.exe.staging");
-    let console_staging = support.join("updates").join("hex.com.staging");
+    let staging = support.join("updates").join("voinc.exe.staging");
+    let console_staging = support.join("updates").join("voinc.com.staging");
     let _ = fs::remove_file(&staging);
     let _ = fs::remove_file(&console_staging);
     fs::copy(file, &staging)?;
@@ -230,18 +230,18 @@ pub fn stage(file: &Path, console: Option<&Path>, version: &str) -> Result<Stage
         }
     }
     let executable = activation?;
-    // A release without hex.com keeps the one in bin, which finds hex.exe
+    // A release without voinc.com keeps the one in bin, which finds voinc.exe
     // through current-version.
     if console.is_some()
-        && let Err(error) = publish_console(&support, &executable.with_file_name("hex.com"))
+        && let Err(error) = publish_console(&support, &executable.with_file_name("voinc.com"))
     {
-        tracing::warn!(%error, "could not put the updated hex.com on PATH");
+        tracing::warn!(%error, "could not put the updated voinc.com on PATH");
     }
     if let Err(error) = crate::windows::login_item::repoint(&executable) {
-        tracing::warn!(%error, "could not repoint Launch at login to the updated Hex");
+        tracing::warn!(%error, "could not repoint Launch at login to the updated Voinc");
     }
     if let Err(error) = repoint_start_menu_shortcut(&executable) {
-        tracing::warn!(%error, "could not repoint the Start Menu shortcut to the updated Hex");
+        tracing::warn!(%error, "could not repoint the Start Menu shortcut to the updated Voinc");
     }
     if let Err(error) = update_uninstall_entry(version) {
         tracing::warn!(%error, "could not update the Apps & Features version");
@@ -257,11 +257,11 @@ pub fn verify_authenticode(file: &Path, signer: &str) -> Result<()> {
             "-NoProfile",
             "-NonInteractive",
             "-Command",
-            "$s = Get-AuthenticodeSignature -LiteralPath $env:HEX_UPDATE_FILE; \
+            "$s = Get-AuthenticodeSignature -LiteralPath $env:VOINC_UPDATE_FILE; \
              [Console]::Out.Write(\"$($s.Status)`n\"); \
              if ($s.SignerCertificate) { [Console]::Out.Write($s.SignerCertificate.GetNameInfo('SimpleName', $false)) }",
         ])
-        .env("HEX_UPDATE_FILE", file)
+        .env("VOINC_UPDATE_FILE", file)
         // A PowerShell 7 parent's module path breaks Windows PowerShell's
         // own modules, Microsoft.PowerShell.Security among them.
         .env_remove("PSModulePath")
@@ -286,7 +286,7 @@ fn repoint_start_menu_shortcut(executable: &Path) -> Result<()> {
     let Some(appdata) = dirs::config_dir() else {
         return Ok(());
     };
-    let shortcut = appdata.join(r"Microsoft\Windows\Start Menu\Programs\Hex.lnk");
+    let shortcut = appdata.join(r"Microsoft\Windows\Start Menu\Programs\Voinc.lnk");
     if !shortcut.exists() {
         return Ok(());
     }
@@ -296,14 +296,14 @@ fn repoint_start_menu_shortcut(executable: &Path) -> Result<()> {
             "-WindowStyle",
             "Hidden",
             "-Command",
-            "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:HEX_SHORTCUT); \
-             if ($s.Description -eq 'Hex managed install') { \
-             $s.TargetPath = $env:HEX_EXECUTABLE; \
-             $s.WorkingDirectory = (Split-Path -Parent $env:HEX_EXECUTABLE); \
+            "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:VOINC_SHORTCUT); \
+             if ($s.Description -eq 'Voinc managed install') { \
+             $s.TargetPath = $env:VOINC_EXECUTABLE; \
+             $s.WorkingDirectory = (Split-Path -Parent $env:VOINC_EXECUTABLE); \
              $s.Save() }",
         ])
-        .env("HEX_SHORTCUT", &shortcut)
-        .env("HEX_EXECUTABLE", executable)
+        .env("VOINC_SHORTCUT", &shortcut)
+        .env("VOINC_EXECUTABLE", executable)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -316,7 +316,7 @@ fn repoint_start_menu_shortcut(executable: &Path) -> Result<()> {
 }
 
 /// Show the activated version in Apps & Features when Setup.exe installed
-/// Hex; script installs have no entry and are left alone.
+/// Voinc; script installs have no entry and are left alone.
 fn update_uninstall_entry(version: &str) -> Result<()> {
     use winreg::RegKey;
     use winreg::enums::{HKEY_CURRENT_USER, KEY_WRITE};
@@ -349,53 +349,53 @@ fn validate_executable(path: &Path, version: &str) -> Result<()> {
     Ok(())
 }
 
-/// `hex.com --version` runs the `hex.exe` beside it and reports its version.
+/// `voinc.com --version` runs the `voinc.exe` beside it and reports its version.
 fn validate_console(path: &Path, version: &str) -> Result<()> {
     let output = background_process::command(path)
         .arg("--version")
         .stdin(Stdio::null())
         .output()
-        .wrap_err("could not start the downloaded hex.com")?;
+        .wrap_err("could not start the downloaded voinc.com")?;
     if !output.status.success()
         || String::from_utf8_lossy(&output.stdout)
             .split_whitespace()
             .last()
             != Some(version)
     {
-        bail!("the downloaded hex.com doesn't run this version's hex.exe");
+        bail!("the downloaded voinc.com doesn't run this version's voinc.exe");
     }
     Ok(())
 }
 
-/// Whether this install lacks `hex.com` beside the running `hex.exe` or in
-/// `bin`: Setup and updaters before it installed only `hex.exe`.
+/// Whether this install lacks `voinc.com` beside the running `voinc.exe` or in
+/// `bin`: Setup and updaters before it installed only `voinc.exe`.
 pub fn console_missing() -> bool {
     let (Ok(executable), Ok(support)) = (std::env::current_exe(), crate::app_paths::support_dir())
     else {
         return false;
     };
-    !executable.with_file_name("hex.com").is_file()
-        || !support.join("bin").join("hex.com").is_file()
+    !executable.with_file_name("voinc.com").is_file()
+        || !support.join("bin").join("voinc.com").is_file()
 }
 
-/// Adds a release's verified `hex.com` beside the running `hex.exe` and on
-/// PATH, for an install whose updater predates it. hex.com only starts the
-/// `hex.exe` beside it, so any release's copy serves this version.
+/// Adds a release's verified `voinc.com` beside the running `voinc.exe` and on
+/// PATH, for an install whose updater predates it. voinc.com only starts the
+/// `voinc.exe` beside it, so any release's copy serves this version.
 pub fn install_console(file: &Path) -> Result<()> {
     verify_authenticode(file, AUTHENTICODE_SIGNER)?;
     let support = crate::app_paths::support_dir()?;
-    let beside = std::env::current_exe()?.with_file_name("hex.com");
+    let beside = std::env::current_exe()?.with_file_name("voinc.com");
     replace_file(file, &beside)?;
     validate_console(&beside, crate::VERSION)?;
     publish_console(&support, &beside)
 }
 
-/// Copies `console` to `bin\hex.com` and keeps `bin` on the user's PATH,
-/// where a terminal finds `hex` across updates.
+/// Copies `console` to `bin\voinc.com` and keeps `bin` on the user's PATH,
+/// where a terminal finds `voinc` across updates.
 fn publish_console(support: &Path, console: &Path) -> Result<()> {
     let bin = support.join("bin");
     fs::create_dir_all(&bin)?;
-    replace_file(console, &bin.join("hex.com"))?;
+    replace_file(console, &bin.join("voinc.com"))?;
     add_to_path(&bin)
 }
 
@@ -461,7 +461,7 @@ fn add_to_path(folder: &Path) -> Result<()> {
     let vtype = existing.map_or(REG_EXPAND_SZ, |value| value.vtype);
     environment
         .set_raw_value("Path", &RegValue { bytes, vtype })
-        .wrap_err("could not add Hex to PATH")?;
+        .wrap_err("could not add Voinc to PATH")?;
     let name: Vec<u16> = "Environment".encode_utf16().chain([0]).collect();
     // SAFETY: `name` is NUL-terminated and outlives the call; a hung window
     // is skipped after the timeout.
@@ -494,7 +494,7 @@ fn sync_file(path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Stage the executable, and hex.com beside it when there is one, into its
+/// Stage the executable, and voinc.com beside it when there is one, into its
 /// version directory and switch the `current-version` pointer atomically;
 /// the running version's files are never touched, and every version but the
 /// new, running, and previous one is pruned.
@@ -507,16 +507,16 @@ pub(super) fn activate(
     let versions = support.join("versions");
     let version_dir = versions.join(version);
     fs::create_dir_all(&version_dir)?;
-    let executable = version_dir.join("hex.exe");
-    let staged = version_dir.join("hex.exe.partial");
+    let executable = version_dir.join("voinc.exe");
+    let staged = version_dir.join("voinc.exe.partial");
     let _ = fs::remove_file(&staged);
     fs::rename(staging, &staged)?;
     // FlushFileBuffers requires write access on Windows, unlike fsync.
     sync_file(&staged)?;
     fs::rename(&staged, &executable)?;
     if let Some(console) = console {
-        let installed = version_dir.join("hex.com");
-        let staged = version_dir.join("hex.com.partial");
+        let installed = version_dir.join("voinc.com");
+        let staged = version_dir.join("voinc.com.partial");
         let _ = fs::remove_file(&staged);
         fs::rename(console, &staged)?;
         sync_file(&staged)?;
@@ -544,7 +544,7 @@ pub(super) fn activate(
             && is_version_name(name)
             && let Err(error) = fs::remove_dir_all(entry.path())
         {
-            tracing::warn!(%error, path = %entry.path().display(), "could not prune an old Hex version");
+            tracing::warn!(%error, path = %entry.path().display(), "could not prune an old Voinc version");
         }
     }
     Ok(executable)
@@ -562,13 +562,13 @@ pub fn restart_into(staged: &Staged) -> Result<()> {
             "-Command",
             &restart_script(std::process::id()),
         ])
-        .env("HEX_EXECUTABLE", &staged.0)
+        .env("VOINC_EXECUTABLE", &staged.0)
         .env_remove("PSModulePath")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-        .wrap_err("could not schedule the updated Hex version")?;
+        .wrap_err("could not schedule the updated Voinc version")?;
     Ok(())
 }
 
@@ -580,7 +580,7 @@ fn restart_script(pid: u32) -> String {
     format!(
         "$old = Get-Process -Id {pid} -ErrorAction SilentlyContinue; \
          if ($old -and -not $old.WaitForExit(300000)) {{ exit 1 }}; \
-         Start-Process -FilePath $env:HEX_EXECUTABLE -ArgumentList 'app'"
+         Start-Process -FilePath $env:VOINC_EXECUTABLE -ArgumentList 'app'"
     )
 }
 
@@ -588,15 +588,15 @@ fn restart_script(pid: u32) -> String {
 mod tests {
     use super::*;
 
-    /// A profile with `<profile>\hex\versions\3.3.0\hex.exe`, the layout both
+    /// A profile with `<profile>\voinc\versions\3.3.0\voinc.exe`, the layout both
     /// Setup.exe and install-windows.ps1 create (#1352).
     fn installed(name: &str) -> (PathBuf, PathBuf, PathBuf) {
-        let profile = std::env::temp_dir().join(format!("hex-win-{name}-{}", std::process::id()));
+        let profile = std::env::temp_dir().join(format!("voinc-win-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&profile);
-        let support = profile.join("hex");
+        let support = profile.join("voinc");
         fs::create_dir_all(support.join(r"versions\3.3.0")).unwrap();
-        let executable = support.join(r"versions\3.3.0\hex.exe");
-        fs::write(&executable, b"hex").unwrap();
+        let executable = support.join(r"versions\3.3.0\voinc.exe");
+        fs::write(&executable, b"voinc").unwrap();
         let canonical = |path: &Path| path.canonicalize().unwrap();
         (
             canonical(&profile),
@@ -609,8 +609,8 @@ mod tests {
     fn the_installed_layout_is_eligible_and_others_say_why() {
         let (profile, support, executable) = installed("layout");
         assert_eq!(check_layout(&executable, &support, &profile), Ok(()));
-        let loose = profile.join("hex.exe");
-        fs::write(&loose, b"hex").unwrap();
+        let loose = profile.join("voinc.exe");
+        fs::write(&loose, b"voinc").unwrap();
         assert_eq!(
             check_layout(&loose.canonicalize().unwrap(), &support, &profile),
             Err(Ineligible::NotInstalled)
@@ -626,10 +626,10 @@ mod tests {
     #[test]
     fn both_installers_receipts_verify_and_an_ansi_one_is_repaired() {
         let (profile, support, _) = installed("receipt");
-        let root = profile.join("hex");
+        let root = profile.join("voinc");
         let receipt = |root: &str| {
             format!(
-                r#"{{"app":"hex","artifact":"desktop","channel":"dev","method":"direct","root":"{}"}}"#,
+                r#"{{"app":"voinc","artifact":"desktop","channel":"dev","method":"direct","root":"{}"}}"#,
                 root.replace('\\', "\\\\")
             )
         };
@@ -665,7 +665,7 @@ mod tests {
         // A record another installer wrote is left alone.
         fs::write(
             root.join("install.json"),
-            r#"{"app":"hex","artifact":"desktop","channel":"stable","method":"msix","root":"x"}"#,
+            r#"{"app":"voinc","artifact":"desktop","channel":"stable","method":"msix","root":"x"}"#,
         )
         .unwrap();
         assert_eq!(repair_receipt(&root), Err(Ineligible::Receipt));
@@ -674,14 +674,14 @@ mod tests {
 
     #[test]
     fn activation_switches_the_pointer_without_removing_the_old_version() {
-        let root = std::env::temp_dir().join(format!("hex-win-activate-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("voinc-win-activate-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(root.join("versions/1.0.0")).unwrap();
-        fs::write(root.join("versions/1.0.0/hex.exe"), b"old").unwrap();
+        fs::write(root.join("versions/1.0.0/voinc.exe"), b"old").unwrap();
         fs::create_dir_all(root.join("versions/0.9.0")).unwrap();
-        fs::write(root.join("versions/0.9.0/hex.exe"), b"older").unwrap();
+        fs::write(root.join("versions/0.9.0/voinc.exe"), b"older").unwrap();
         fs::write(root.join("current-version"), "1.0.0\n").unwrap();
-        let staging = root.join("hex.exe.staging");
+        let staging = root.join("voinc.exe.staging");
         fs::write(&staging, b"new").unwrap();
 
         let executable = activate(&root, "1.1.0", &staging, None).unwrap();
@@ -694,7 +694,7 @@ mod tests {
             "1.1.0"
         );
         assert_eq!(
-            fs::read(root.join("versions/1.0.0/hex.exe")).unwrap(),
+            fs::read(root.join("versions/1.0.0/voinc.exe")).unwrap(),
             b"old"
         );
         assert!(!root.join("versions/0.9.0").exists());
@@ -703,10 +703,10 @@ mod tests {
 
     #[test]
     fn path_entries_match_without_case_or_a_trailing_backslash() {
-        let path = r"C:\Windows;C:\Users\Jo\AppData\Roaming\hex\bin\;D:\tools";
-        assert!(path_contains(path, r"c:\users\jo\appdata\roaming\HEX\bin"));
-        assert!(!path_contains(path, r"C:\Users\Jo\AppData\Roaming\hex"));
-        assert!(!path_contains("", r"C:\hex\bin"));
+        let path = r"C:\Windows;C:\Users\Jo\AppData\Roaming\voinc\bin\;D:\tools";
+        assert!(path_contains(path, r"c:\users\jo\appdata\roaming\VOINC\bin"));
+        assert!(!path_contains(path, r"C:\Users\Jo\AppData\Roaming\voinc"));
+        assert!(!path_contains("", r"C:\voinc\bin"));
     }
 
     #[test]
@@ -720,10 +720,10 @@ mod tests {
                 .args([
                     "-NoProfile",
                     "-Command",
-                    "$s = Get-AuthenticodeSignature -LiteralPath $env:HEX_UPDATE_FILE; \
+                    "$s = Get-AuthenticodeSignature -LiteralPath $env:VOINC_UPDATE_FILE; \
                      if ($s.Status -eq 'Valid') { $s.SignerCertificate.GetNameInfo('SimpleName', $false) }",
                 ])
-                .env("HEX_UPDATE_FILE", path)
+                .env("VOINC_UPDATE_FILE", path)
                 .env_remove("PSModulePath")
                 .output()
                 .unwrap();
@@ -743,7 +743,7 @@ mod tests {
         assert!(verify_authenticode(&signed, AUTHENTICODE_SIGNER).is_err());
 
         let unsigned =
-            std::env::temp_dir().join(format!("hex-unsigned-{}.exe", std::process::id()));
+            std::env::temp_dir().join(format!("voinc-unsigned-{}.exe", std::process::id()));
         fs::write(&unsigned, b"MZ not a signed program").unwrap();
         assert!(verify_authenticode(&unsigned, &signer).is_err());
         let _ = fs::remove_file(unsigned);

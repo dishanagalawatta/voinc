@@ -103,7 +103,7 @@ const BAD_PASTEBOARD_FLAVOR: i32 = -25133;
 const DUPLICATE_PASTEBOARD_FLAVOR: i32 = -25134;
 const PASTE_SETTLE_DELAY: Duration = Duration::from_millis(100);
 // Chromium 155 and 156 on macOS can drop a ⌘V that races its own pasteboard
-// change notification, however long Hex waits first (#136, #212). The bug
+// change notification, however long Voinc waits first (#136, #212). The bug
 // arrived with Chromium CL 8217390 and is fixed by CL 8503629 in 157.
 const CLIPBOARD_RACE_CHROMIUM: RangeInclusive<u32> = 155..=156;
 const SYSTEM_TRANSLATED_FLAVOR: u32 = 1 << 8;
@@ -331,7 +331,7 @@ impl Paster {
                     snapshot
                 };
                 if self.clipboard.changeCount() != previous_change_count {
-                    return Err(eyre!("clipboard changed while Hex was preserving it"));
+                    return Err(eyre!("clipboard changed while Voinc was preserving it"));
                 }
                 Ok((restore, previous, previous_change_count))
             },
@@ -947,7 +947,7 @@ mod tests {
 
     #[test]
     fn detects_the_chromium_major_version_from_the_bundle_framework() {
-        let root = std::env::temp_dir().join(format!("hex-chromium-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("voinc-chromium-{}", std::process::id()));
         let bundle = |name: &str, frameworks: &[(&str, &[&str])]| {
             let bundle = root.join(name);
             for (framework, versions) in frameworks {
@@ -1224,10 +1224,10 @@ mod tests {
         let clipboard = NSPasteboard::pasteboardWithUniqueName();
         let expected = [
             vec![
-                ("com.hex.fixture.text", b"text".to_vec()),
-                ("com.hex.fixture.rich", b"rich text".to_vec()),
+                ("com.voinc.fixture.text", b"text".to_vec()),
+                ("com.voinc.fixture.rich", b"rich text".to_vec()),
             ],
-            vec![("com.hex.fixture.image", vec![1, 2, 3, 4])],
+            vec![("com.voinc.fixture.image", vec![1, 2, 3, 4])],
         ];
         let items = expected
             .iter()
@@ -1258,7 +1258,7 @@ mod tests {
         let item = NSPasteboardItem::new();
         assert!(item.setData_forType(
             &NSData::with_bytes(b"first"),
-            &NSString::from_str("com.hex.fixture.first")
+            &NSString::from_str("com.voinc.fixture.first")
         ));
         clipboard.clearContents();
         write_items(&clipboard, &[item]).unwrap();
@@ -1275,7 +1275,7 @@ mod tests {
         let item = NSPasteboardItem::new();
         assert!(item.setData_forType(
             &NSData::with_bytes(b"second"),
-            &NSString::from_str("com.hex.fixture.second")
+            &NSString::from_str("com.voinc.fixture.second")
         ));
         clipboard.clearContents();
         write_items(&clipboard, &[item]).unwrap();

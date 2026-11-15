@@ -1,6 +1,6 @@
 # Dictation
 
-Hold the configured shortcut, speak, and release. Hex transcribes locally and
+Hold the configured shortcut, speak, and release. Voinc transcribes locally and
 inserts the result at the current focus. New captures do not cancel accepted
 work. Only Toggle mode has a cancel: its cancel shortcut, Escape by default,
 discards the recording (#786, #1022); every other intentional dictation
@@ -59,19 +59,19 @@ Control or Escape never changes AlphaShift, so it never toggles dictation. Each
 press also clears the system Caps Lock state, so following keys stay
 lowercase, and the key's light comes on once the capture's microphone delivers
 audio, solid while any capture records (including a normal-shortcut or Annotate
-capture), blinks at 350 ms while Hex transcribes or processes, and is off
+capture), blinks at 350 ms while Voinc transcribes or processes, and is off
 otherwise. Its Labs › Recording light option can make recording blink slowly at
-700 ms instead of staying solid. Turning the lab off or quitting Hex clears the
+700 ms instead of staying solid. Turning the lab off or quitting Voinc clears the
 light and restores normal Caps Lock behaviour. The light needs Input Monitoring
-(which Hex already asks for); without it dictation still works and the light
+(which Voinc already asks for); without it dictation still works and the light
 stays under macOS's control. Implemented November 7, 2026, not verified on
 hardware; details and checks in [labs.md](labs.md).
 
 Wayland's XDG shortcut syntax has no mouse-button trigger. Use the desktop's
-mouse bindings to run `hex dictation start`/`stop` (hold) or `hex dictation toggle`
-(toggle), or `hex paste-last`. Existing mouse
+mouse bindings to run `voinc dictation start`/`stop` (hold) or `voinc dictation toggle`
+(toggle), or `voinc paste-last`. Existing mouse
 bindings from X11 appear ungranted on Wayland; they do not prevent keyboard
-shortcuts from registering. Hex does not use raw input devices or XWayland to
+shortcuts from registering. Voinc does not use raw input devices or XWayland to
 bypass the compositor. See the [XDG shortcut specification](https://specifications.freedesktop.org/shortcuts/latest/).
 
 **Fixed November 1, 2026 (issue 846):** the portal path refused navigation and
@@ -88,9 +88,9 @@ Linux with Labs › Special keys alone on (`labs.standalone_special_keys`, off
 by default; issue 767): Menu, Pause, and Scroll Lock may be any shortcut's
 key, alone like a function key or with modifiers, for example Caps Lock
 remapped to Menu with GNOME's keyboard options and
-`hex settings set dictation_hotkey menu` (also `pause`, `scrolllock`). They
+`voinc settings set dictation_hotkey menu` (also `pause`, `scrolllock`). They
 reach X11 grabs as keysyms 0xff67/0xff13/0xff14 and the portal as `Menu`,
-`Pause`, `Scroll_Lock`. Off, `hex settings` refuses them, the window's
+`Pause`, `Scroll_Lock`. Off, `voinc settings` refuses them, the window's
 recorder refuses them, and a saved shortcut on one goes back to its default
 when settings load or the toggle turns off. On, the window's recorder takes
 them too (#1187). Details and checks in [labs.md](labs.md).
@@ -98,11 +98,11 @@ them too (#1187). Details and checks in [labs.md](labs.md).
 Linux with Labs › Section key alone on (`labs.section_key_alone`, off by
 default; issue 1050): the ISO § key, left of 1, may be a shortcut with no
 modifier. The window's recorder takes § pressed alone and shows §, and
-`hex settings set dictation_hotkey §` (or `section`) saves it. It reaches X11
+`voinc settings set dictation_hotkey §` (or `section`) saves it. It reaches X11
 grabs as keysym 0xa7 and the portal as `section`. Off, the recorder answers
-"Add a modifier" as before, `hex settings` refuses it, and a saved § shortcut
+"Add a modifier" as before, `voinc settings` refuses it, and a saved § shortcut
 without a modifier goes back to its default when settings load or the toggle
-turns off. While bound, § is Hex's in every app. Details and checks in
+turns off. While bound, § is Voinc's in every app. Details and checks in
 [labs.md](labs.md).
 
 Checks: `mouse_buttons_record_with_or_without_modifiers`,
@@ -159,14 +159,14 @@ chord evidence; any other key still is. Check:
 **Implemented November 7, 2026 (issue 37), unverified:** remapping Caps Lock to
 Control makes macOS's HID keyboard filter rewrite its usage (0x39) to Right
 Control (0xE4) before CoreGraphics sees it, so a Right Control shortcut also
-started from Caps Lock. Hex now reads the raw HID modifier state below that
+started from Caps Lock. Voinc now reads the raw HID modifier state below that
 filter (`IOHIDManager`, opened without seizing the keyboards), and when Caps
 Lock is physically held while a side-specific modifier bit has no matching
 physical key, it drops the side and keeps the general modifier flag, which
 matches as either side. A real Right Control press (physical usage 0xE4) is
-untouched. Hex never requests Input Monitoring, so the tracker runs only when
-Hex already has it: turn Hex on under System Settings › Privacy & Security ›
-Input Monitoring and restart Hex. `IOHIDCheckAccess` gates the tracker; without
+untouched. Voinc never requests Input Monitoring, so the tracker runs only when
+Voinc already has it: turn Voinc on under System Settings › Privacy & Security ›
+Input Monitoring and restart Voinc. `IOHIDCheckAccess` gates the tracker; without
 that permission it stays off (logged once), the flags are unchanged, and Right
 Control still starts from a remapped Caps Lock. The shortcut recorder applies
 the same normalization only while the listener's input monitor is running, so
@@ -212,7 +212,7 @@ side, so ⌥⌘ works from either hand. On macOS, Labs › Sided modifier chords
 modifier-only chord instead, so Right ⌘ + Right ⌥ records as `R⌥ R⌘` and the
 left keys don't press it; matching was already sided. While recording, every held key shows with
 its side (`L⌥ R⌥ ⌘` on the Mac, `Left Alt` elsewhere), so an accidental extra
-key is visible before release. `hex settings` takes
+key is visible before release. `voinc settings` takes
 `left-option+right-option`. Settings store `{"keys": [...]}`; files with the
 old `modifiers`/`key` shape load as the same chord and are written back once.
 Windows matches sides through its low-level hook and accepts one modifier
@@ -227,7 +227,7 @@ Windows modifier-only shortcut                           // dictate.windows-lone
   │   (the key reaches the app; locked and toggle captures keep recording)
   ├── Alt or Windows released -> Swallowed, VK 0xE8 tapped, release replayed
   │   -> No menu bar or Start menu; Share shortcut skips the mask
-  └── Hex's own injected keys (paste, mask) -> Skipped by the hook (HEX_INJECTED)
+  └── Voinc's own injected keys (paste, mask) -> Skipped by the hook (VOINC_INJECTED)
 ```
 
 On layouts where Right Alt is AltGr, Windows adds a Left Ctrl press, so Right
@@ -240,7 +240,7 @@ mask and AltGr behavior have not run on a Windows PC.
 **Fixed November 4, 2026 (issue 1254):** a Windows key chord holding Alt or
 Windows (Alt+0, say) swallows its key, so the app saw Alt pressed and released
 alone. Chrome took that as a menu tap and moved focus to its menu button, and
-the paste landed there instead of the page. When Hex swallows the key of a
+the paste landed there instead of the page. When Voinc swallows the key of a
 chord (dictation, Dictate without processing, Terminal paste shortcut, Paste
 Last, Annotate) that holds
 Alt or Windows, that modifier's release is now masked like a modifier-only
@@ -266,8 +266,8 @@ Checks: the `both_options_*` tests and
 
 **Added November 9, 2026:** while another app holds Secure Event Input (a
 password field, a terminal's Secure Keyboard Entry, an app that never turned it
-off), macOS stops handing key presses to Hex's event tap; modifier changes
-still arrive. Hex polls `IsSecureEventInputEnabled()` every 0.25 s and, only
+off), macOS stops handing key presses to Voinc's event tap; modifier changes
+still arrive. Voinc polls `IsSecureEventInputEnabled()` every 0.25 s and, only
 while it is on, registers the key shortcuts that start something as Carbon
 hotkeys (`suppression/secure_input.rs`). A Carbon hotkey takes its key before
 the session tap, so registering only then keeps the tap's chord rules the rest
@@ -300,7 +300,7 @@ flags, missing-release bookkeeping, and Annotate's arm-then-record through
 held secure input fired a Carbon press and release, and a listen-only session
 tap saw only the modifier changes. Not run with a physical keyboard press.
 
-**CLI:** `hex listen` uses saved settings; `--device` is authoritative. This is
+**CLI:** `voinc listen` uses saved settings; `--device` is authoritative. This is
 the CLI listener, not Settings. Do not run it beside an existing listener.
 
 **Separate targets:** Host-owned API capture has its own ownership protocol and
@@ -329,10 +329,10 @@ Output > Without processing > Dictate without processing   // raw.shortcut
 │   │   finishes it nor counts toward its double tap
 │   └── Queueing and ordered output -> shared with dictation
 ├── Finish -> transcript pasted as heard (trimmed)          // raw.paste
-│   ├── History -> kind Raw ("raw" in `hex history --json`)
+│   ├── History -> kind Raw ("raw" in `voinc history --json`)
 │   └── Paste Last -> pastes it (it is the last dictation)
 ├── Clear (trash) -> unbound again
-└── hex dictation start|toggle --raw -> the same, without a shortcut
+└── voinc dictation start|toggle --raw -> the same, without a shortcut
     └── A printing stop (`stop --print`) of it prints the transcript as heard
 ```
 
@@ -346,9 +346,9 @@ was not compiled or run here (Linux check, Windows cross-clippy only).
 With Labs › Transform typed text on (`labs.typed_text`, off by default),
 Settings › Output adds one section whose shortcut is unbound until recorded.
 The shortcut reads the text already typed in the focused field, runs the
-focused app's Output steps on it, and pastes the result over it. `hex
+focused app's Output steps on it, and pastes the result over it. `voinc
 typed-text` runs the same job for desktops without the shortcuts portal, and
-refuses clearly while the lab is off or Hex isn't listening. The lab's switch
+refuses clearly while the lab is off or Voinc isn't listening. The lab's switch
 and binding are saved like any other Labs feature; the listener registers the
 shortcut only while the lab is on, and restarts registration when either
 changes. The job sends Ctrl+A and Ctrl+C, so it is not meant for terminals.
@@ -359,9 +359,9 @@ Output > Typed text                        // labs.md
 ├── Labs on -> the section, with the same recorder as Dictate without processing
 │   └── typed_text_hotkey unbound by default -> nothing registered or reserved
 │       ├── Record one -> saved, and conflicts with the other active shortcuts
-│       └── Clear (trash) or `hex settings set typed_text_hotkey none` -> unbound
+│       └── Clear (trash) or `voinc settings set typed_text_hotkey none` -> unbound
 ├── Settings -> saved to settings.json as typed_text_hotkey
-└── Shortcut pressed while idle, or `hex typed-text` -> one job on the output worker
+└── Shortcut pressed while idle, or `voinc typed-text` -> one job on the output worker
     ├── Terminal paste on -> refused before any key: its Ctrl+V would
     │   become Ctrl+Shift+V; the job logs why and sends nothing
     ├── take the clipboard for the job: cancel any paste restore still pending
@@ -386,7 +386,7 @@ Output > Typed text                        // labs.md
     ├── otherwise Ctrl+V over the selection; a paste failure restores the
     │   clipboard, and a success restores it 500 ms later unless something newer
     │   replaced the result first
-    └── a clipboard Hex could not snapshot still clears and runs, but its result
+    └── a clipboard Voinc could not snapshot still clears and runs, but its result
         stays on the clipboard
 ```
 
@@ -432,7 +432,7 @@ Labs > Terminal paste shortcut > recorder   // dictate.terminal-paste-shortcut
 │   └── Record a shortcut -> the listener registers it while the lab is on
 │       ├── Windows: the hook's terminal-paste trigger
 │       └── Linux: an X11 grab, or a portal entry "Terminal paste shortcut"
-├── Linux has no `hex` command for it (unlike Dictate without processing):
+├── Linux has no `voinc` command for it (unlike Dictate without processing):
 │   without X11 grabs or the desktop's shortcuts portal it stays unregistered
 ├── Hold / double-tap lock / Toggle -> as the dictation shortcut
 │   ├── The shortcut that started a capture owns it: dictation and Dictate
@@ -507,8 +507,8 @@ A dictation pastes into whichever app is frontmost when its transcript is
 ready. With Labs › Return to app on (`labs.return_to_app`, off by default):
 
 ```ts
-Dictation shortcut, Caps Lock, or `hex dictation start` starts
-  -> The frontmost app's pid is recorded (never Hex's own)
+Dictation shortcut, Caps Lock, or `voinc dictation start` starts
+  -> The frontmost app's pid is recorded (never Voinc's own)
 Paste job -> Carries it through inference and processing        // dictate.return-to-app
 ├── Same app in front -> Paste as usual
 ├── Another app in front -> Activate it, poll 10 ms up to 500 ms,
@@ -550,7 +550,7 @@ overridden; not run with Cohere on real audio).
 
 ### Vocabulary Quality Checks
 
-`hex benchmark-transcription` accepts a scoring vocabulary and expected terms,
+`voinc benchmark-transcription` accepts a scoring vocabulary and expected terms,
 and reports recall, excess vocabulary occurrences and WER by corpus group, plus
 overall latency. Its companion scorer also reports per-group latency.
 The [fixture guide](../../tests/fixtures/vocabulary/README.md) describes
@@ -592,11 +592,11 @@ raw timestamp, how it was read, and its arrival delay. The `discarded` event in
 
 **Fixed October 22, 2026:** a global shortcut registered with Carbon (Spaceman's
 Option-1 to Option-0 workspace keys, for example) consumes its key before the
-session taps, so Hex saw only the Option press and release. Holding Option past
+session taps, so Voinc saw only the Option press and release. Holding Option past
 300 ms while switching workspaces recorded and pasted whatever the microphone
 heard, and two quick switches could double-tap lock. A listen-only HID tap now
 reports key presses as chord evidence only; session events still own key state,
-and Escape and Hex's own shortcuts are excluded. Evidence that overtakes its
+and Escape and Voinc's own shortcuts are excluded. Evidence that overtakes its
 press still prevents the capture. Command-Tab likewise swallows Tab's release,
 which caused the routine `resynchronized stale input tracking` warnings, now
 logged with `key_codes`. Until October 26 an Option press within 100 ms of
@@ -615,7 +615,7 @@ before Space (or both at once) can leave the GlobalShortcuts portal without a
 and released again. Linux now treats a press that arrives while the shortcut
 is still held as a key repeat only within 1 s of the previous press; a later
 press is new and finishes the Hold capture whose release was lost, and that
-press's own repeats and release start nothing. Hex never infers a release from
+press's own repeats and release start nothing. Voinc never infers a release from
 silence or a timeout. Checks:
 `a_hold_whose_release_never_arrives_finishes_on_the_next_new_press` and
 `a_balanced_release_finishes_a_repeating_hold` in
@@ -626,7 +626,7 @@ GNOME).
 until the X server reported no modifiers held. XWayland's modifier state goes
 stale while a Wayland window has focus and only a later key event clears it,
 so a finished dictation sat in Transcribing for about a minute. The paste now
-waits for held modifiers only while one of Hex's shortcuts is down (a newer
+waits for held modifiers only while one of Voinc's shortcuts is down (a newer
 capture owns them); otherwise it waits at most 2 s, logs that modifiers still
 read as held, and pastes. Checks:
 `stale_modifiers_without_a_held_shortcut_stop_holding_the_paste` and
@@ -641,7 +641,7 @@ ext-data-control nor wlr-data-control. Labs › Restore clipboard on GNOME
 restores it through XWayland's CLIPBOARD selection, which Mutter bridges to
 Wayland apps both ways. It applies only on a Wayland session without
 data-control and only while this user's Xwayland process already runs with
-`DISPLAY` set, so Hex never starts XWayland; the generation and
+`DISPLAY` set, so Voinc never starts XWayland; the generation and
 still-holds-the-paste rules are unchanged. While it is off there, Settings ›
 Output shows a note pointing to it. Checks:
 `xwayland_restores_only_by_opt_in_without_data_control`,
@@ -672,7 +672,7 @@ The input method exists from that intentional start until Finish or Cancel,
 which includes post-release processing; a short tap or chord that never
 becomes intentional creates none. It does not need a stream: a CPU engine or
 a model that cannot stream shows no provisional words, but the finished text
-still goes in through the input method instead of the clipboard. Hex's own
+still goes in through the input method instead of the clipboard. Voinc's own
 first-run practice field on Linux is an ordinary focused field, so it takes
 the preedit and the final commit too while Live typing is on. A newer
 capture's Begin takes over from an older job, whose Finish then returns false
@@ -696,7 +696,7 @@ Pending → Abandoned when it gives up. Only one can win. If the caller wins,
 it waits up to 250 ms for the owner's clear; after that it pastes anyway, so
 a wedged compositor can leave a preedit visible until it tears the input
 method down. After an abandoned Finish, Live typing starts no new captures
-and pastes instead until Hex restarts; a session that had already begun
+and pastes instead until Voinc restarts; a session that had already begun
 still finishes and cancels. A residual protocol race remains: a `done` event can arrive
 after `dispatch_pending` and before `commit(serial)`, so a commit can use a
 serial one behind; the affected preedit or commit is then ignored by the
@@ -724,12 +724,12 @@ enforce the serial today). Checks (unit tests only):
 a real compositor**: no GTK/Qt field or Sway/Hyprland run; KWin and Mutter
 fall back to paste by design.
 
-**Fixed November 3, 2026 (issue 1158):** on Linux with PipeWire, Hex's
+**Fixed November 3, 2026 (issue 1158):** on Linux with PipeWire, Voinc's
 microphone stream (held open while the microphone is kept ready) was named
 by the ALSA plugin after the binary, with spaces and varying by packaging,
 so audio idle inhibitors couldn't be told to ignore it and the screen never
-locked. Every ALSA stream Hex opens now carries `application.name` and
-`node.name` `hex` (`PIPEWIRE_ALSA`, set at startup beside
+locked. Every ALSA stream Voinc opens now carries `application.name` and
+`node.name` `voinc` (`PIPEWIRE_ALSA`, set at startup beside
 `state.restore-target`). Check: `streams_carry_a_stable_name_without_spaces`
 in [linux/input_route.rs](../../src/linux/input_route.rs) (property string
 only; not run against PipeWire or an inhibitor).
@@ -738,7 +738,7 @@ only; not run against PipeWire or an inhibitor).
 of speech or background audio from before the press was transcribed. The
 press was placed at the end of the newest microphone chunk, and ALSA's default
 period can be most of a second, so the 450 ms pre-roll counted from there.
-Hex now asks for a 20 ms period (falling back to the device default), places
+Voinc now asks for a 20 ms period (falling back to the device default), places
 presses and releases on the stream clock (`StreamClock` in
 [linux/dictation.rs](../../src/linux/dictation.rs)), and keeps exactly the
 pre-roll before the press, dropping earlier audio from chunks still to arrive
@@ -818,7 +818,7 @@ setting rather than the route. Checks:
 or Windows desktop with headphones.
 
 **Fixed November 2, 2026 (issue 978):** a Windows paste refused to run when
-the clipboard held only a format Hex can't snapshot (an app's private
+the clipboard held only a format Voinc can't snapshot (an app's private
 format), failing every dictation with "the current clipboard format cannot be
 preserved safely". The transcript now pastes anyway; that clipboard just isn't
 restored afterwards, and `process.log` says why. Check:
@@ -838,7 +838,7 @@ consumed, so other apps saw an Option dictation as an Option tap on release. A
 Raycast hotkey on an Option tap activated Slack on every dictation, switching
 Kit out of a fullscreen Space before the paste. Tap detectors (Raycast,
 Karabiner's `to_if_alone`, AutoHotkey's Start-menu mask) cancel a tap when any
-key goes down while the modifier is held. Once Hex owns a modifier-only press
+key goes down while the modifier is held. Once Voinc owns a modifier-only press
 it now posts one press of key code 0x44 under the modifiers held at that
 moment, once per press and only while exactly the shortcut's modifiers are
 still physically down (any other modifier already breaks the tap):
@@ -858,18 +858,18 @@ Keyed shortcuts (consumed), Globe/Fn (system tap)  -> Nothing
 The breaker never reaches the focused app:
 
 ```ts
-Posted at HID with Hex's marker
+Posted at HID with Voinc's marker
   ├── HID taps, session taps            -> See a key: tap cancelled
   ├── NSEvent global monitors           -> See a key: tap cancelled
-  ├── Hex's HID tap and its key tap     -> Marker: not a key, chord, or HID evidence
-  └── Hex's annotated-session key tap   -> Dropped
+  ├── Voinc's HID tap and its key tap     -> Marker: not a key, chord, or HID evidence
+  └── Voinc's annotated-session key tap   -> Dropped
       -> The focused app never gets it, so it never beeps (a non-text
          view, or any text view with ⌘ held, beeps at an unhandled key)
 ```
 
 0x44 is a hole in the virtual key codes (between keypad `*` and `+`): no
 keyboard sends it, it has no system action, and of the 264 layouts macOS ships
-only Unicode Hex Input maps it (to U+0000, never with Option alone). Source:
+only Unicode Voinc Input maps it (to U+0000, never with Option alone). Source:
 `DictationHotkey::break_chord` and `event_callback` in
 [suppression.rs](../../src/suppression.rs), `post_chord_breaker` in
 [keyboard.rs](../../src/keyboard.rs), called from the listener loop once no
@@ -880,15 +880,15 @@ input is pending. Checks:
 `marked_chord_breaker_never_reaches_the_shortcut_machines_or_the_app`.
 
 Observed October 27, 2026 on a macOS 27.0.1 VM (`macvm`), with a stand-in for
-Hex (the same marked HID post, dropped by a head-inserted annotated-session
-default tap) rather than Hex itself: an Option hold reached a test app as an
+Voinc (the same marked HID post, dropped by a head-inserted annotated-session
+default tap) rather than Voinc itself: an Option hold reached a test app as an
 unhandled `keyDown` that beeped in a plain view when the breaker passed
 through; when dropped, the app received nothing, while an Option-tap detector
 on a HID tap, a session tap, and an NSEvent global monitor each saw the key and
 cancelled its tap. Without the breaker all three fired. Unproven: Raycast
 itself (its binary uses both event taps and a global monitor), a detector on
-an annotated-session tap placed after Hex's (it never sees the key), and a
-physical keyboard. If Hex's key tap is briefly disabled by a timeout, the
+an annotated-session tap placed after Voinc's (it never sees the key), and a
+physical keyboard. If Voinc's key tap is briefly disabled by a timeout, the
 breaker reaches the app.
 
 ### Shortcut Mode
@@ -913,7 +913,7 @@ Tap
   ├── Release 300 ms or more after the press -> Finish (with the release tail)
   ├── Sooner -> Keeps recording, as above
   └── Linux: key repeats keep the first press's time; the dictation shortcut
-      and Dictate without processing alike; hex dictation commands unchanged
+      and Dictate without processing alike; voinc dictation commands unchanged
   Linux: release never arrives (Hyprland Lua bind, Alt up before Z)
   ├── Press 1 s or more after the last press -> Finish
   └── Sooner -> Ignored as a key repeat (KWin repeats held shortcuts)
@@ -923,8 +923,8 @@ The one choice is stored in the three settings it replaced
 (`shortcut_mode`, `double_tap_lock`, `double_tap_only`); of their eight
 combinations only four behave differently, and `Trigger::of` in
 [shortcut_mode.rs](../../src/rune_ui/shortcut_mode.rs) folds the rest onto
-them (`redundant_and_invalid_combinations_fold_away`). `hex settings` still
-sets each one. Linux with only `hex` commands shows no row: the commands
+them (`redundant_and_invalid_combinations_fold_away`). `voinc settings` still
+sets each one. Linux with only `voinc` commands shows no row: the commands
 ignore it.
 
 Tap (`toggle`) reuses the lock state on every platform: each press behaves as the
@@ -938,7 +938,7 @@ each platform's settings; files without it load as Hold. Checks:
 `a_capture_that_would_lock_finishes_when_the_desktop_drops_its_release`, and
 `a_repeating_held_press_never_finishes_the_capture` in
 [linux/input.rs](../../src/linux/input.rs), whose one state machine serves X11
-grabs, Wayland portal shortcuts, and the `hex dictation` commands alike. The
+grabs, Wayland portal shortcuts, and the `voinc dictation` commands alike. The
 dropped release was observed on 2026-10-28 on Hyprland 0.56.2 with
 xdg-desktop-portal-hyprland 1.4.1: uinput Alt+Z sent no `Deactivated` when Alt
 came up first (the fix itself has not been run there yet). Only
@@ -963,7 +963,7 @@ General > Shortcut mode                               // dictate.shortcut-explai
   ├── Tab -> each available option, Done; focus stays inside
   ├── Done, Return, Escape, or a press outside -> Closes; focus returns to
   │   the row
-  ├── Change pane, menu bar, or `hex window show` -> Closes
+  ├── Change pane, menu bar, or `voinc window show` -> Closes
   └── Reduce Motion -> One whole take, still, no wakes; turned off while
       open, the tape starts again when the window regains focus
 ```
@@ -988,7 +988,7 @@ Double-tap chosen), and `shortcut-mode-chord` (Ctrl+Alt+Space) goldens
 (frozen at 1.8 s into the tape). The animation itself has been seen only in
 headless frames, not on a real window.
 
-On Linux, `hex dictation start` and `stop` bypass every Shortcut mode: start records unless something already records, stop
+On Linux, `voinc dictation start` and `stop` bypass every Shortcut mode: start records unless something already records, stop
 finishes, and `toggle` does whichever applies. Bound to a key's press and
 release they give hold-to-dictate; a shortcut press still finishes a capture a
 command started.
@@ -1050,7 +1050,7 @@ Release or locked finishing press                     // dictate.release-tail
      └── Stream stalls/fails -> Finish within tail + 100 ms with what arrived
   -> Not short taps, voice controls, programmatic stop, or meetings
   -> Linux and Windows wait the same tail; Linux ends at the release it observes
-     (an X11 key release, a portal Deactivated, or `hex dictation stop`)
+     (an X11 key release, a portal Deactivated, or `voinc dictation stop`)
   -> A press inside the tail starts after the old clip finishes, with its own pre-roll
 
 Release that will transcribe                          // dictate.stop-tone
@@ -1088,11 +1088,11 @@ Source: `DictationCapture` in [dictation.rs](../../src/dictation.rs); checks:
 streamed and not, with the tail). These cover sample-buffer/timestamp logic, not
 a microphone recording. The physical release stays exact; the 200 ms tail is an
 explicit extension of the trim boundary. The opt-in `release_boundary_harness`
-([dictation/tail_tests.rs](../../src/dictation/tail_tests.rs); `HEX_TAIL_MODEL`,
-`HEX_TAIL_WAVS`) and `evaluate_dictation_corpus`
+([dictation/tail_tests.rs](../../src/dictation/tail_tests.rs); `VOINC_TAIL_MODEL`,
+`VOINC_TAIL_WAVS`) and `evaluate_dictation_corpus`
 ([dictation/corpus_tests.rs](../../src/dictation/corpus_tests.rs);
 [`scripts/dictation-corpus.sh`](../../scripts/dictation-corpus.sh),
-`HEX_DICTATION_CORPUS_DIR`) replay recordings through the capture timeline at
+`VOINC_DICTATION_CORPUS_DIR`) replay recordings through the capture timeline at
 release offsets (`-300 ms` to `+200 ms`) and onset offsets (`-300 ms` to
 `+100 ms`). On 2026-10-15, before the tail, across 102 clips (70 real voice
 recordings, 20 macOS `say` clips, and 12 ElevenLabs `eleven_v4` clips) with
@@ -1122,7 +1122,7 @@ macOS change compiles and passes Clippy on hailmary (2026-10-22); physical tone
 timing and the unmute-then-tone order on a Mac audio device remain unverified.
 Linux and Windows play the stop tone at the release too. On Linux this used
 to follow the tail too: on 2026-10-22, an isolated service on apollo (ALSA
-Loopback microphone and speaker, `hex dictation stop`) measured the stop tone
+Loopback microphone and speaker, `voinc dictation stop`) measured the stop tone
 requested 203 ms after the release was handled before the fix and within the same
 loop pass after it (about 40 ms after the CLI mark, mostly process start), with
 the tail still collected for 203 ms afterwards; the output was already open, so
@@ -1162,7 +1162,7 @@ Model advertises streaming, GPU device             // dictate.streaming
   // Metal on macOS, Vulkan on Linux and x64 Windows
   Load or switch model -> Probe a one-second silent stream (also prewarms the stream graph)
        ├── Succeeds -> Stream shortcut captures
-       └── Fails, CPU device, Apple Speech, or HEX_STREAMING=0 -> Whole-clip path only
+       └── Fails, CPU device, Apple Speech, or VOINC_STREAMING=0 -> Whole-clip path only
   Shortcut capture passes the hold threshold (Toggle on Windows and Linux: on press)
     -> Open one live stream; feed the 16 kHz backlog, then every 160 ms
        // same audio as the final clip, pre-roll included; never blocks capture
@@ -1218,18 +1218,18 @@ Model advertises streaming, GPU device             // dictate.streaming
   │   the author's own test) follows without a badge
   ├── he: ivrit.ai Whisper large-v3-turbo Recommended (Hebrew only, always with
   │   the `he` hint; 18.45% WER on FLEURS Hebrew test against stock turbo's
-  │   29.69%, Hex's run), then Whisper turbo for Vocabulary (#752)
+  │   29.69%, Voinc's run), then Whisper turbo for Vocabulary (#752)
   ├── ru: GigaAM v3 Recommended (ai-sage's e2e RNN-T, Russian only, 274 MB, no
   │   hint; 5.37% WER on FLEURS Russian test against Parakeet v3's 6.52% and
-  │   Whisper turbo's 5.36%, Hex's run), then Whisper turbo for Vocabulary (#952)
+  │   Whisper turbo's 5.36%, Voinc's run), then Whisper turbo for Vocabulary (#952)
   ├── no: NB-Whisper Medium Recommended (National Library of Norway, Norwegian
   │   only, always with the `no` hint, 539 MB; 6.68% WER on FLEURS Norwegian
-  │   test against Whisper turbo's 8.94%, Hex's run), then Whisper turbo for
+  │   test against Whisper turbo's 8.94%, Voinc's run), then Whisper turbo for
   │   Vocabulary (#1150)
   ├── en, fr, de, es, pt, it, ja: Granite Speech 5.0 (IBM's TurboCTC, 506 MB,
   │   no hint, also offered under Auto) follows without a badge: on FLEURS
   │   test it trailed Parakeet Unified/v3 in every European language and tied
-  │   Whisper turbo in Japanese (5.04% CER against 5.02%), Hex's run (#1252)
+  │   Whisper turbo in Japanese (5.04% CER against 5.02%), Voinc's run (#1252)
   ├── Orukeet: Oruk AI's Parakeet v3 fine-tune (740 MB, no hint, also offered
   │   under Auto) follows without a badge; 1.86% WER on LibriSpeech test-clean
   │   from transcribe.cpp's published conversion benchmark, with its FLEURS
@@ -1255,8 +1255,8 @@ a later capture opens one, and the job then waits for its text in order. Linux
 ([windows/dictation.rs](../../src/windows/dictation.rs)) drive the same engine
 from their capture loops. Parakeet buffers with its largest context menu
 (Unified English: 5.6 s left, 1.04 s chunk, 1.04 s right), its most accurate and
-least compute-intensive setting; `HEX_STREAM_CHUNK_MS` overrides the chunk for
-benchmarks and `HEX_STREAMING=1` streams on any device, including a CPU
+least compute-intensive setting; `VOINC_STREAM_CHUNK_MS` overrides the chunk for
+benchmarks and `VOINC_STREAMING=1` streams on any device, including a CPU
 (diagnostics and the Linux CI fixture). Each dictation logs
 `source=stream|offline|fallback` and `finish_ms`. The macOS "Transcribe during
 pauses" setting no longer affects dictation.
@@ -1280,11 +1280,11 @@ engine thread without a model) `a_finish_without_a_stream_transcribes_the_clip_o
 These use synthetic audio and recorded engine commands. The Linux CI fixture
 [`scripts/test-linux-dictation.sh`](../../scripts/test-linux-dictation.sh)
 replays the same speech through a virtual microphone twice with the real model:
-once on the CPU (whole clip, `source=offline`) and once with `HEX_STREAMING=1`
+once on the CPU (whole clip, `source=offline`) and once with `VOINC_STREAMING=1`
 (`source=stream`, or `fallback` when the CPU stream misses its deadline). The
 hidden Windows `model stream-bench <wav> [--speed N]` command and the opt-in
 macOS `metal_stream_tracks_offline_transcription` (parakeet.rs;
-`HEX_STREAM_MODEL`, `HEX_STREAM_WAVS`, `HEX_STREAM_SPEED`) replay a WAV in real
+`VOINC_STREAM_MODEL`, `VOINC_STREAM_WAVS`, `VOINC_STREAM_SPEED`) replay a WAV in real
 time and compare both paths.
 
 **Observed October 19, 2026, RTX 5070 Ti, Vulkan, Unified English Q8, Windows
@@ -1332,7 +1332,7 @@ kept each sentence in its language (1 word different from the whole clip),
 though both paths dropped one English sentence after a gap. Not a microphone, the HUD, macOS, or Windows.
 
 **Live text observed October 28, 2026, Apple M3 Pro, Metal, Unified English Q8,
-`Hex Test.app` at `84f594a` with `live-text`, a physical microphone:** the line
+`Voinc Test.app` at `84f594a` with `live-text`, a physical microphone:** the line
 appeared under the HUD and grew with the words; three dictations in a row
 reappeared with no trace of the previous text; a dictation released before its
 first words never showed the line and one released just after hid it; with the
@@ -1348,7 +1348,7 @@ words that resumed after 6 s and 13 s pauses were lost or garbled. Replaying
 floor) through `metal_stream_tracks_offline_transcription` lost "I" after the
 8 s gap of digital silence only, and the whole clip kept it: the loss depends
 on where speech resumes against the stream's chunks. Live text does not cause
-it: `HEX_STREAM_LIVE_TEXT=0` gives the same text. The losses replayed here sit
+it: `VOINC_STREAM_LIVE_TEXT=0` gives the same text. The losses replayed here sit
 in the middle of transcribed text, so neither coverage check below sees them;
 a loss of at least 300 ms at the stream's very start is checked since
 November 7, 2026 (`a_stream_that_lost_the_opening_phrase_falls_back_to_the_whole_clip`).
@@ -1480,7 +1480,7 @@ The opt-in `cohere_long_form_keeps_all_sections_with_and_without_pauses` runs th
 real pinned model on synthetic speech. Reproduce it on macOS with
 [`scripts/test-cohere-long-form.sh`](../../scripts/test-cohere-long-form.sh) and an
 explicit model path. The script uses Samantha speech synthesis, never microphone
-capture, and retains fixtures on failure (`HEX_KEEP_COHERE_FIXTURES=1` keeps successes).
+capture, and retains fixtures on failure (`VOINC_KEEP_COHERE_FIXTURES=1` keeps successes).
 
 **Observed September 4, 2026:** the same 57-second fixture went from 44 word errors
 to zero after chunking; the 73-second paused fixture went from 71 errors to one.
@@ -1532,14 +1532,14 @@ Listening idle                            // dictate.model-memory
 The selected GGUF remains resident by design; Parakeet v3's pinned Q8 artifact is
 739,508,576 bytes before runtime metadata and decoder state. Input-sized scheduler
 scratch must not remain at its high-water mark after a dictation. The pinned
-`transcribe-cpp` 0.1.3 runtime owns that scratch for the session lifetime, so Hex
+`transcribe-cpp` 0.1.3 runtime owns that scratch for the session lifetime, so Voinc
 rotates the lightweight session after every offline run while retaining the loaded
 model. A later dictation recreates its session without reloading the weights.
 
 **Observed September 18, 2026, isolated Metal probe on M2 Max:** with the similarly
 sized Parakeet Unified English model, `transcribe-cpp` 0.1.3 grew from a 792 MB loaded
 footprint to 1,195 MB after a 45-second input and retained 1,195 MB after another
-short run. The same 0.1.3 runtime with Hex's session rotation measured 792 MB loaded,
+short run. The same 0.1.3 runtime with Voinc's session rotation measured 792 MB loaded,
 801 MB after the long input, and 802 MB after the following short run. The probe used
 generated silence and no live microphone, UI, or paste. This
 establishes the backend scratch cause and reclamation on that model and machine, not
@@ -1580,7 +1580,7 @@ Finish
   ├── Capacity available -> Accepted job -> Local transcription -> Mode processing
   │    -> Paste successful nonempty output once, at current focus
   │       // Labs › Return to app (macOS): when the app in front now isn't the
-  │       // one the capture started in, Hex activates that one and waits up to
+  │       // one the capture started in, Voinc activates that one and waits up to
   │       // 500 ms for it; if it doesn't arrive, nothing is pasted and Paste
   │       // last dictation keeps the text
   │       // the clipboard write carries nspasteboard.org Transient and
@@ -1625,7 +1625,7 @@ speech are not addressed.
 [dictation.rs](../../src/dictation.rs) check the policy on synthetic samples
 with the detector's verdict fixed; `real_detector_rejects_silence_and_noise`,
 `real_detector_hears_speech`, and `real_detector_hears_quiet_whispers` (ignored;
-`HEX_VAD_MODEL`, `HEX_VAD_SPEECH_WAV`, `HEX_VAD_WHISPER_WAV`) run the real
+`VOINC_VAD_MODEL`, `VOINC_VAD_SPEECH_WAV`, `VOINC_VAD_WHISPER_WAV`) run the real
 detector, and `an_installed_model_does_not_wait_for_the_speech_detector` checks
 the background download.
 Key resolution: [keyboard.rs](../../src/keyboard.rs); non-Latin layout
@@ -1657,7 +1657,7 @@ fixed 150 ms pre-paste delay still missed about 1 in 4 dictations and was
 removed; no app waits before ⌘V. Instead, when the frontmost app's bundle
 contains `Contents/Frameworks/*Framework.framework/Versions/<a.b.c.d>/` with
 major version 155 or 156 (any version present counts, so a staged update is
-covered), Hex types the text as synthesized Unicode key events: at most 20
+covered), Voinc types the text as synthesized Unicode key events: at most 20
 UTF-16 units per event, never splitting a surrogate pair, and every line break
 as Shift-Return so chat boxes don't submit. Typing leaves the clipboard
 untouched, so there is nothing to restore; ordering, continuation joins, Send's
@@ -1677,7 +1677,7 @@ General › Advanced row) sends Ctrl+Shift+V instead, for apps that ignore
 a synthetic Ctrl+V (the herdr desktop app); a Labs › Terminal paste shortcut
 capture overrides it per paste, and Paste last dictation does not. Shift goes
 down after Ctrl and up
-before it; a Ctrl the user still holds is never pressed or released by Hex. A
+before it; a Ctrl the user still holds is never pressed or released by Voinc. A
 saved change applies to the next paste without restarting the listener.
 Java games (`javaw`/`java`) still take plain Ctrl+V, override or not.
 Source: `control_chord` in [windows/paste.rs](../../src/windows/paste.rs).
@@ -1691,7 +1691,7 @@ Settings › General, Shortcut mode = Tap (Toggle)     // dictate.toggle-cancel
   -> Cancel row: the shortcut (`cancel_hotkey`), Escape by default
      ├── Recorder -> any chord the OS's rules allow (Escape ends the recorder)
      ├── Restore -> back to Escape
-     └── Wayland -> no recorder: bind `hex dictation cancel` in the desktop
+     └── Wayland -> no recorder: bind `voinc dictation cancel` in the desktop
   Hold modes -> no row, no cancel
 Toggled recording (held or locked) -> Cancel shortcut
   -> Recording discarded: nothing transcribed, pasted, or kept in History
@@ -1699,7 +1699,7 @@ Toggled recording (held or locked) -> Cancel shortcut
   -> The key is kept from the app (press, repeats, release)
   -> Jobs already transcribing -> finish and paste in order
 Idle, or any Hold mode -> Cancel shortcut -> Nothing: it reaches the app
-hex dictation cancel -> Discards whatever records, any mode; idle -> unchanged
+voinc dictation cancel -> Discards whatever records, any mode; idle -> unchanged
 Annotate drawing -> Escape stops drawing first
 Programmatic dictation (local API) -> Its owner cancels through /cancel
 ```
@@ -1707,11 +1707,11 @@ Programmatic dictation (local API) -> Its owner cancels through /cancel
 Until #786, Escape cancelled the active capture in every mode, then the newest
 unfinished job, and an accidental Escape wiped a 5-minute dictation. #795
 removed cancel; the people who asked for it back use Toggle, so it returned
-there only, and never reaches past the recording. Hex takes the key only while
+there only, and never reaches past the recording. Voinc takes the key only while
 a toggled recording runs: macOS's session tap suppresses it only while the
 listener arms it, Windows' hook only while its capture records, and X11
 grabs it only for the recording. A shortcuts portal would hold the key from
-every app for as long as Hex runs, so Wayland binds nothing for it. Checks:
+every app for as long as Voinc runs, so Wayland binds nothing for it. Checks:
 `the_cancel_shortcut_discards_only_a_toggled_recording` and
 `the_cancel_key_is_suppressed_only_while_armed` in
 [suppression.rs](../../src/suppression.rs) (macOS, not compiled on Linux),
@@ -1748,7 +1748,7 @@ Record -> Release -> Transcribing/processing/paste -> Finished // dictate.feedba
         -> a new capture dismisses it; no old failure is replayed at launch
      -> Classic has none: macOS Basso, Signature's error on Windows and Linux
      -> A lost microphone or input -> A kept clip: no tone; a shortcut or
-        `hex dictation start` capture's audio is transcribed and copied
+        `voinc dictation start` capture's audio is transcribed and copied
         instead of pasted    // recovery.md#keep-an-interrupted-dictation
         -> No usable audio after the start, or a near-silent clip -> Error tone
   Tone requested -> Playback worker opens the default output, then plays
@@ -1769,7 +1769,7 @@ A failed dictation also stays visible in Settings' listener card as "Last
 dictation failed: …" until a later dictation completes. macOS now reads the
 listener's own event log on its runtime thread, as Windows already did. The
 listener's own stopped warning and a dictation failure are separate fields, so
-`hex status` keeps treating only the former as a stopped listener; the card
+`voinc status` keeps treating only the former as a stopped listener; the card
 shows the stopped warning first. A failure whose timestamp predates this run's
 start is ignored. Known
 microphone causes say what to do in every interface language — a built-in
@@ -1810,8 +1810,8 @@ two-display Mac; the misplacement inside Rune itself is not addressed here.
 
 **Fixed November 10, 2026 (issue 1663):** on Linux Wayland the HUD stopped
 appearing after its monitor was removed and added back (a KVM switch, for
-example) until Hex restarted. The compositor closes the layer surface with the
-output, and Rune hides and drops that overlay on its own while Hex still thinks
+example) until Voinc restarted. The compositor closes the layer surface with the
+output, and Rune hides and drops that overlay on its own while Voinc still thinks
 the HUD is shown, so no later dictation asked for it again. Each capture's start
 now asks for the HUD again, so it reappears on the next dictation, on an output
 that exists. Not verified on real Wayland hardware with a monitor
@@ -1821,7 +1821,7 @@ unplugged and re-plugged.
 Settings > Sounds (next to Sound volume)                    // dictate.sound-set
 ├── Default / older settings -> Classic
 ├── Row shows the saved set -> Opens the Sounds sheet
-│   ├── Stage -> Hex's own HUD, where this OS puts it, does what it does
+│   ├── Stage -> Voinc's own HUD, where this OS puts it, does what it does
 │   │   │          at each sound of a short dictation
 │   │   ├── Where -> Indicator position: top / bottom; Off shows none
 │   │   ├── Start (0 s) -> Recording, with a demo voice's level
@@ -1836,7 +1836,7 @@ Settings > Sounds (next to Sound volume)                    // dictate.sound-set
 │   ├── Any playback -> Stops the one before it (20 ms fade)
 │   ├── Sound volume -> Plays at it; Off plays nothing, the HUD still shows
 │   └── Close / Escape / scrim / leaving the pane -> Stops playback
-├── hex settings set sound_theme <signature|classic|click|soft|wood|analog|thock>
+├── voinc settings set sound_theme <signature|classic|click|soft|wood|analog|thock>
 └── Every set -> Same loudness per sound at a given volume
 ```
 
@@ -1850,17 +1850,17 @@ The sheet is a modal like the shortcut explainer, opened from a
 `dot_scope_turns_coral_on_failure`,
 `the_sound_sets_sheet_plays_and_chooses_sets` (Linux), and the `sound-sets`,
 and `sound-sets-playing` goldens. The stage
-replays Hex's HUD on the sheet's clock: `dictation/indicator`'s model, drawn
+replays Voinc's HUD on the sheet's clock: `dictation/indicator`'s model, drawn
 by the window's compositor with `rune_hud`'s painter and `rune_hud.wgsl`, as
 the real overlay draws it. It is a preview, not the overlay: Dot scope's
 in-bar and notch placements show below the menu bar, the voice is HUD Lab's
 demo, not the microphone, and it ignores Reduce Motion.
 
-Hex signature (2026-10-27) is one kalimba-like FM voice playing one motif,
-D-B-A-D (a sixth, since "hex" is six): start D5 to B5 (116 ms), stop B5 to A5
+Voinc signature (2026-10-27) is one kalimba-like FM voice playing one motif,
+D-B-A-D (a sixth, since "voinc" is six): start D5 to B5 (116 ms), stop B5 to A5
 (230 ms), done D6 over A5 (330 ms), error D4
 then a minor D4+Bb4 (280 ms), and onboarding success, the whole motif landing
-on a D sixth chord (1.1 s), played when the first run reaches Hex is ready. Click is mechanical key clicks, Soft tone warm sine blips in A major,
+on a D sixth chord (1.1 s), played when the first run reaches Voinc is ready. Click is mechanical key clicks, Soft tone warm sine blips in A major,
 Wood a soft-mallet marimba with hollow wood blocks for error, and
 Warm synth two detuned saws through a closing low-pass filter, and Thock one
 mechanical keyboard key, from the team's vote on the start sound (its winner,
@@ -1868,7 +1868,7 @@ an ElevenLabs take kept in `scripts/sounds/thock/`): start is the press, stop
 the same key's upstroke, error two keys at once,
 twice, and success a run of keys up to a full press; it has no done sound
 because the stop already says it. Classic is the
-sounds Hex played before the signature set (start clicks, stop swish),
+sounds Voinc played before the signature set (start clicks, stop swish),
 restored from git; it has no done tone, errors play macOS Basso as they
 did, and onboarding success plays its stop sound (the other sets have their own).
 The done sound of every set plays only when the paste lands at least
@@ -1907,7 +1907,7 @@ output for the first tone, keeps it through an idle grace so bursts of
 dictation share a warm device, and releases it after that grace or on the next
 observation after sounds turn Off. On macOS the grace is ten seconds: an open
 output is a live CoreAudio IO client that coreaudiod services and holds an
-idle-sleep assertion for. coreaudiod logged client timeouts against Hex's open
+idle-sleep assertion for. coreaudiod logged client timeouts against Voinc's open
 output (#1531), and a shorter grace reduces how long such a client exists.
 Ten seconds still covers a quick start-tone to stop-tone dictation, though a
 dictation held past about ten seconds pays a cold output open for its stop
@@ -1945,13 +1945,13 @@ still begin only at the 300 ms threshold. Checks:
 `provisional_start_sounds_after_the_chord_grace_unless_retracted`,
 `retracted_tone_fades_out_without_a_click_or_channel_skew`, and the ignored
 `native_start_tone_path_latency` (open-to-presentation timing, with
-`HEX_TONE_PATH=legacy` for the old path; route output to a silent device or set
-`HEX_TONE_MUTED`). The chord-to-retraction path is checked by reading the code,
+`VOINC_TONE_PATH=legacy` for the old path; route output to a silent device or set
+`VOINC_TONE_MUTED`). The chord-to-retraction path is checked by reading the code,
 not by a physical keyboard run.
 
 **Fixed in 2.1.21:** through 2.1.20 the worker opened the output at startup
 and kept it open for as long as sounds were On, so `coreaudiod` held a
-`PreventUserIdleSystemSleep` assertion for Hex's PID and an idle Mac never
+`PreventUserIdleSystemSleep` assertion for Voinc's PID and an idle Mac never
 slept ([#95](https://github.com/anomalyco/hex/issues/95)). 2.1.18 released the
 stream only when sounds were Off. Startup admission therefore no longer
 reports `could not open the audio output`; a device failure surfaces as a
@@ -1970,7 +1970,7 @@ built-in speakers. That is not an installed-app or USB/Bluetooth measurement.
 publication path after the admission receiver has gone away. These checks do
 not measure the reporter's CoreAudio CPU usage or establish audible playback.
 
-**Contributor-reported September 10, 2026 (PR #84):** a locally built `/Applications/Hex.app`
+**Contributor-reported September 10, 2026 (PR #84):** a locally built `/Applications/Voinc.app`
 (approximating 2.1.16 plus this change) was started right after a restart where
 the stock build had stopped its desktop recognition worker with
 `timed out preloading feedback audio`. The patched build started on the first
@@ -1985,7 +1985,7 @@ Linux now uses the same recording sounds with its own persisted Sound volume
 control; see [Linux feedback](README.md#other-platforms-and-consumers) for its
 entry points, timing, defaults, and verification limits.
 
-Check: in a debug app, `hex dev hud recording|transcribing|processing|reset`
+Check: in a debug app, `voinc dev hud recording|transcribing|processing|reset`
 or the HUD Lab pane drives the real HUD with deterministic state, so
 fullscreen and Space transitions can be checked. (The `dictation-hud` preview
 that looped the sequence went with GPUI.) This does not prove that actual
@@ -2002,7 +2002,7 @@ before ordering the panel in, and orders it out first if it is still shown on
 another Space (#1084). Changing the activation policy (the Dock icon follows
 Settings) could leave the panel tied to one Space while AppKit still reported
 the old mask, and re-setting an unchanged mask does nothing. Rune repairs that
-only as its panel shows, so while the HUD is shown Hex also checks each pump
+only as its panel shows, so while the HUD is shown Voinc also checks each pump
 turn that the panel is on the active Space, and re-homes it when a Space switch
 or a full-screen exit left it behind: it orders the panel out, clears and
 restores the mask, and orders it back in. That reorders the panel but leaves
@@ -2055,7 +2055,7 @@ claimed premultiplied alpha). Rune draws transparent Windows surfaces only
 through DX12, on the lowest-power adapter that drives a display, and fails
 the overlay when none can (93c7a04b; from reading the code and Windows' rules, not yet observed on
 Windows). If the window, its GPU surface or the show fails (including a
-cloaked window), Rune reports why (`OverlayHandle::failure`). Hex logs the
+cloaked window), Rune reports why (`OverlayHandle::failure`). Voinc logs the
 HUD's surface (backend, adapter, alpha mode) once, and treats a dictation
 start whose HUD presents no frame within 1.5 s as a failure too. Each
 failure is logged as an error in process.log once per reason, and Settings
@@ -2155,7 +2155,7 @@ HUD Lab
 ├── Save -> Writes dot-scope.json in Application Support; the HUD loads it at launch
 ├── Copy values -> The same JSON; Reset -> the prototype's values
 └── Leave the pane or close the window -> The demo hides; unsaved values
-    stay on the HUD until Hex restarts
+    stay on the HUD until Voinc restarts
 ```
 
 The playground (⇧⌘D, experiment `playground`) lists HUD stories
@@ -2171,7 +2171,7 @@ Prototypes › HUD                             // R plays, P next look, A auto l
 ├── Your voice -> Waits for your shortcut and meters your microphone
 │   └── Both: variants hud-lab, notch, pretend-notch, menu-bar, below
 └── Links name the story and variant:
-    hex://story/prototypes/hud/notch?variant=pulse-fail&play=1
+    voinc://story/prototypes/hud/notch?variant=pulse-fail&play=1
 ```
 
 The HUD is its own Rune overlay, not a view in the window, so a story drives
@@ -2179,7 +2179,7 @@ the real HUD at the top of the screen and its stage only says what it shows. Pla
 puts its placement and look into the one tuning it shares with HUD Lab
 (`rune_hud::dot_scope::lab`).
 
-Hex meters no spectrum, so the prototype's band emphasis is the same for
+Voinc meters no spectrum, so the prototype's band emphasis is the same for
 every component.
 
 Check: `scripts/check rune_hud::dot_scope` (defaults, knobs, frame-rate independence,
@@ -2189,7 +2189,7 @@ processing minimum, failure and cancel, a hot microphone still moving),
 `scripts/check rune_hud::hud_placement` (each placement on flat and notched screens),
 and `rune_hud::tests::rune_hud_frames` (ignored; renders a fixed
 dictation through the real shaders offscreen into PNG frames, with
-`HEX_HUD_TUNING` for the look and placement over a pretend 14-inch MacBook
+`VOINC_HUD_TUNING` for the look and placement over a pretend 14-inch MacBook
 Pro's menu bar). On 2026-10-28 its Dot scope and notch frames matched the
 retired Metal HUD's render of the same inputs on hailmary to within 3/255
 per channel; on 2026-10-29 a headless capture on apollo showed recording,
@@ -2197,7 +2197,7 @@ processing, and done after Dot scope became the default.
 Not yet observed on a real notched display, over a fullscreen app, or with
 a hidden menu bar.
 
-Hex itself never activates on paste. Another app's modifier-tap hotkey once
+Voinc itself never activates on paste. Another app's modifier-tap hotkey once
 switched Spaces before the paste; the [chord breaker](#hold-and-short-taps)
 keeps a held bare-modifier dictation from reading as a tap.
 

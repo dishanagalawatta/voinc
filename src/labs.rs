@@ -251,7 +251,7 @@ impl Feature {
             )
     }
 
-    /// The feature `hex settings` key `key` switches (its toggle, or
+    /// The feature `voinc settings` key `key` switches (its toggle, or
     /// Unload when idle's minutes).
     pub fn for_settings_key(key: &str) -> Option<Self> {
         if key == "labs.unload_idle_minutes" {
@@ -359,7 +359,7 @@ impl Feature {
         }
     }
 
-    /// The name `hex labs on|off` takes.
+    /// The name `voinc labs on|off` takes.
     pub const fn name(self) -> &'static str {
         match self {
             Self::Meetings => "meetings",
@@ -437,7 +437,7 @@ impl Feature {
         }
     }
 
-    /// Its `hex settings` key.
+    /// Its `voinc settings` key.
     pub const fn settings_key(self) -> &'static str {
         match self {
             Self::Meetings => "meetings.enabled",
@@ -852,7 +852,7 @@ const MEETING_NOTES_FILE: u64 = SPEAKERS_ONLY << 1;
 /// The next bit above Notes' file: a dictation mode's speech model and
 /// language follow the foreground application (macOS, Windows).
 const APP_MODEL_SWITCHING: u64 = MEETING_NOTES_FILE << 1;
-/// The next bit above Switch model with app: the menu bar offers Pause Hex,
+/// The next bit above Switch model with app: the menu bar offers Pause Voinc,
 /// and every capture shortcut is inert while paused (macOS).
 const PAUSE_MENU: u64 = APP_MODEL_SWITCHING << 1;
 /// The next bit above Pause from menu bar: the local API's
@@ -1105,7 +1105,7 @@ fn encode_where(settings: &LabsSettings, reaches: impl Fn(Feature) -> bool) -> u
     .fold(KNOWN | minutes, |state, (_, _, bit)| state | bit)
 }
 
-/// The names of the features on, for `hex status`.
+/// The names of the features on, for `voinc status`.
 pub fn active_names(settings: &AppSettings) -> Vec<String> {
     Feature::available()
         .filter(|feature| feature.on(settings))
@@ -1113,7 +1113,7 @@ pub fn active_names(settings: &AppSettings) -> Vec<String> {
         .collect()
 }
 
-/// Logs the switches to process.log; call once logging is up in a long-lived Hex.
+/// Logs the switches to process.log; call once logging is up in a long-lived Voinc.
 pub fn log_launch() {
     tracing::info!(
         live_text = live_text(),

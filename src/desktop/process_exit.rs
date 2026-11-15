@@ -1,12 +1,12 @@
 //! How a desktop app process ends.
 //!
 //! `exit` (what `-[NSApplication terminate:]` and returning from `main` call)
-//! runs C++ static destructors and `atexit` handlers while threads Hex does
+//! runs C++ static destructors and `atexit` handlers while threads Voinc does
 //! not join are still running: CoreAudio's IO threads or ggml's residency-set
 //! keep-alive. Those destructors tear down native globals under them; ggml's
 //! Metal device list aborts in `ggml_metal_rsets_free` unless every Metal
-//! buffer was already freed. So Hex drains its own work first, then ends with
-//! `_exit`, which runs none of them. Nothing Hex keeps relies on them: the
+//! buffer was already freed. So Voinc drains its own work first, then ends with
+//! `_exit`, which runs none of them. Nothing Voinc keeps relies on them: the
 //! drain flushes the event log, and settings, history, and meetings are saved
 //! atomically when they change. A meeting recording at quit keeps its audio
 //! and finishes its transcript at the next launch.
@@ -93,14 +93,14 @@ pub(crate) fn finish(drain: &Drain) -> ! {
 fn finish_within(drain: &Drain, deadline: Duration) -> ! {
     QUITTING.store(true, Ordering::Release);
     let _ = std::thread::Builder::new()
-        .name("hex-exit-deadline".into())
+        .name("voinc-exit-deadline".into())
         .spawn(move || {
             std::thread::sleep(deadline);
-            tracing::warn!("Hex stopped before its workers finished");
+            tracing::warn!("Voinc stopped before its workers finished");
             end_process();
         });
     drain.run();
-    tracing::info!("Hex stopped");
+    tracing::info!("Voinc stopped");
     end_process()
 }
 
@@ -154,7 +154,7 @@ pub(crate) fn arm_deadline() {
     static ARMED: Once = Once::new();
     ARMED.call_once(|| {
         if let Err(error) = run_deadline(STOP_DEADLINE, pending_work, || end_process()) {
-            tracing::warn!(%error, "could not arm Hex's exit deadline");
+            tracing::warn!(%error, "could not arm Voinc's exit deadline");
         }
     });
 }
@@ -168,12 +168,12 @@ fn run_deadline(
     exit: impl FnOnce() + Send + 'static,
 ) -> std::io::Result<()> {
     std::thread::Builder::new()
-        .name("hex-exit-deadline".into())
+        .name("voinc-exit-deadline".into())
         .spawn(move || {
             std::thread::sleep(deadline);
             tracing::warn!(
                 pending = pending(),
-                "Hex's shutdown did not finish before its exit deadline"
+                "Voinc's shutdown did not finish before its exit deadline"
             );
             exit();
         })
@@ -199,7 +199,7 @@ mod tests {
         assert_eq!(runs.load(Ordering::SeqCst), 1);
     }
 
-    const CHILD: &str = "HEX_PROCESS_EXIT_CHILD";
+    const CHILD: &str = "VOINC_PROCESS_EXIT_CHILD";
 
     /// The child half of `finishing_stops_the_listener_and_skips_static_destructors`.
     #[test]

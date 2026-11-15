@@ -351,7 +351,7 @@ mod tests {
 
     fn start(stream_engine: Option<crate::transcription::stream::EngineSource>) -> LocalApi {
         let directory = std::env::temp_dir().join(format!(
-            "hex-streams-{}-{}",
+            "voinc-streams-{}-{}",
             std::process::id(),
             NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed)
         ));

@@ -5,7 +5,7 @@ use crate::audio::CaptureInstant;
 use crate::control::ControlReply;
 use crate::dictation::audio::DictationAudio;
 
-/// Whether Hex takes Escape from the app in front: only for a capture
+/// Whether Voinc takes Escape from the app in front: only for a capture
 /// (drawing, its press, the capsule's picker), never for dictation, and never
 /// while a programmatic dictation records: the listener ignores every key
 /// then, so Escape stays with its owner app rather than being swallowed.
@@ -30,14 +30,14 @@ pub(super) fn capture_refusal(other_recording: bool, suspended: bool) -> Option<
     } else if suspended {
         Some(ControlReply::error(
             "busy",
-            "Hex is recording a shortcut in Settings or reopening the microphone; try again",
+            "Voinc is recording a shortcut in Settings or reopening the microphone; try again",
         ))
     } else {
         None
     }
 }
 
-/// A `hex paste-last` (or the menu bar's Paste Last Dictation) waits for
+/// A `voinc paste-last` (or the menu bar's Paste Last Dictation) waits for
 /// every capture and shortcut gesture to end: pasting cancels the audio
 /// owner's capture, which would strand the machine that started it.
 pub(super) fn paste_last_refusal(capture_active: bool) -> Option<ControlReply> {

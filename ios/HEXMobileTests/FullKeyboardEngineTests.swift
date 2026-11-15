@@ -1,6 +1,6 @@
 import UIKit
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 @MainActor
 final class FullKeyboardEngineTests: XCTestCase {

@@ -10,10 +10,10 @@ struct HexDictationControl: ControlWidget {
         StaticControlConfiguration(kind: Self.kind) {
             ControlWidgetButton(action: ToggleHexControlIntent()) {
                 Label("Dictate", systemImage: "mic.fill")
-                Text("Hex")
+                Text("Voinc")
             }
         }
-        .displayName("Dictate with Hex")
+        .displayName("Dictate with Voinc")
         .description("Starts or finishes on-device dictation and copies the text.")
     }
 }

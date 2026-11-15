@@ -1,9 +1,9 @@
-cask "hex" do
+cask "voinc" do
   version "@VERSION@"
   sha256 "@SHA256@"
 
   url "@URL@"
-  name "Hex"
+  name "Voinc"
   desc "Local voice dictation"
   homepage "https://anoma.ly/hex/"
 
@@ -18,16 +18,16 @@ cask "hex" do
   depends_on arch: :arm64
   depends_on macos: :sequoia
 
-  app "Hex.app"
+  app "Voinc.app"
 
-  uninstall quit: "anomaly.hex"
+  uninstall quit: "io.voinc.voinc"
 
   zap trash: [
-    "~/.config/hex",
-    "~/Library/Application Support/hex",
-    "~/Library/Caches/anomaly.hex",
-    "~/Library/HTTPStorages/anomaly.hex",
-    "~/Library/Preferences/anomaly.hex.plist",
-    "~/Library/Saved Application State/anomaly.hex.savedState",
+    "~/.config/voinc",
+    "~/Library/Application Support/voinc",
+    "~/Library/Caches/io.voinc.voinc",
+    "~/Library/HTTPStorages/io.voinc.voinc",
+    "~/Library/Preferences/io.voinc.voinc.plist",
+    "~/Library/Saved Application State/io.voinc.voinc.savedState",
   ]
 end

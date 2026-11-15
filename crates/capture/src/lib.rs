@@ -21,7 +21,7 @@ pub mod handoff;
 #[cfg_attr(target_os = "windows", path = "win/helper.rs")]
 #[cfg_attr(target_os = "linux", path = "linux/helper.rs")]
 pub mod helper;
-#[cfg(feature = "hex-client")]
+#[cfg(feature = "voinc-client")]
 pub mod hex;
 pub mod hosted_input;
 pub mod ingest_http;

@@ -1,4 +1,4 @@
-//! `scrawl router decide`, `deliver`, `correct` and `eval`: Jev routing for any item (Hex calls
+//! `scrawl router decide`, `deliver`, `correct` and `eval`: Jev routing for any item (Voinc calls
 //! it for dictation), sending a decided item, logging Kit's corrections, and Jev's accuracy on
 //! past captures whose real destination is known. Only `deliver` sends. The contract is in
 //! `docs/routing.md`.
@@ -22,7 +22,7 @@ use crate::delivery::{self, Delivery};
 use crate::model::ScrawlBundle;
 use crate::opencode::Posted;
 
-/// Hex's deadline is 3 s: `scrawl router decide` answers within this whatever happens...
+/// Voinc's deadline is 3 s: `scrawl router decide` answers within this whatever happens...
 pub const DEADLINE: Duration = Duration::from_millis(2500);
 /// ...and reading sessions and asking Jev must be done this long before it.
 const JEV_MARGIN: Duration = Duration::from_millis(200);
@@ -37,7 +37,7 @@ const LISTED: usize = 5;
 #[derive(Clone, Debug, Deserialize)]
 struct Input {
     item: Item,
-    /// Sessions pinned in Hex: always candidates, never winners on their own.
+    /// Sessions pinned in Voinc: always candidates, never winners on their own.
     #[serde(default, deserialize_with = "one_or_many")]
     pinned: Vec<String>,
     /// Recent items and where they went, passed to Jev as state.
@@ -47,7 +47,7 @@ struct Input {
 
 #[derive(Clone, Debug, Default, Deserialize)]
 struct Item {
-    /// The caller's ID for the item (Hex's UUID), echoed in the reply and the log.
+    /// The caller's ID for the item (Voinc's UUID), echoed in the reply and the log.
     #[serde(default, alias = "id")]
     item_id: Option<String>,
     #[serde(default)]
@@ -62,7 +62,7 @@ struct Item {
     url: Option<String>,
     #[serde(default)]
     selected_text: Option<String>,
-    /// Hex's mode.
+    /// Voinc's mode.
     #[serde(default)]
     mode: Option<String>,
     /// A capture's bundle, which `deliver` sends the normal way.
@@ -326,7 +326,7 @@ pub fn decide_within(request: Value, deadline: Duration) -> Result<Output> {
     Ok(output)
 }
 
-/// A timed-out answer names no target; Hex shows its picker.
+/// A timed-out answer names no target; Voinc shows its picker.
 fn line_timeout(output: &mut Output) {
     output.decision = Band::Keep.label();
     output.target = None;
@@ -592,7 +592,7 @@ pub fn outbox_dir() -> Option<PathBuf> {
     crate::env::get().dirs.outbox.clone()
 }
 
-/// A short ID, unique enough: the time in ms and some of its nanoseconds, in hex.
+/// A short ID, unique enough: the time in ms and some of its nanoseconds, in voinc.
 pub(crate) fn new_id(now_ms: u64) -> String {
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -858,7 +858,7 @@ fn deliver_with(
     match text {
         Some(text) => {
             item.text = text.to_owned();
-            // Hex's text is the whole prompt; the saved selection may no longer apply.
+            // Voinc's text is the whole prompt; the saved selection may no longer apply.
             item.selected_text = None;
         }
         None if found.is_none() => bail!("no saved decision for that item, and no text on stdin"),
@@ -948,14 +948,14 @@ fn deliver_with(
 }
 
 /// The prompt for an item: a bracketed first line saying where it came from
-/// (`[voice via Hex · from Ghostty]`), then the text and any selection.
+/// (`[voice via Voinc · from Ghostty]`), then the text and any selection.
 fn prompt_text(item: &Item) -> String {
-    if item.text.trim_start().starts_with("[voice via Hex") {
+    if item.text.trim_start().starts_with("[voice via Voinc") {
         return item.text.trim().to_owned();
     }
     let mut head = match item.kind() {
         "capture" => "[scrawl capture".to_owned(),
-        _ => "[voice via Hex".to_owned(),
+        _ => "[voice via Voinc".to_owned(),
     };
     if let Some(app) = item.app_name() {
         head.push_str(&format!(" · from {app}"));
@@ -1009,7 +1009,7 @@ fn correction(
     Ok(line)
 }
 
-/// `scrawl router log`: one correction line from stdin (Hex's spelling), joined to its
+/// `scrawl router log`: one correction line from stdin (Voinc's spelling), joined to its
 /// decision by `decision_id` or `item_id`, then written like every other correction.
 pub fn log(input: &str) -> Result<()> {
     let line: Value =
@@ -1730,7 +1730,7 @@ mod tests {
         }
         fake_api::serve(
             &[
-                fake_api::session("ses_hex", "HEX", "/tmp/hex", 10_000),
+                fake_api::session("ses_hex", "VOINC", "/tmp/voinc", 10_000),
                 fake_api::session("ses_a", "A", "/tmp/a", 9_500),
                 fake_api::session("ses_home", "HOME", "/tmp/home", 9_000),
                 fake_api::session("ses_b", "B", "/tmp/b", 8_500),
@@ -1751,7 +1751,7 @@ mod tests {
     fn no_writes(_: &str, _: u64, _: u64) -> Vec<crate::routing::served::Write> {
         Vec::new()
     }
-    // Targets newest first: t1 HEX, t2 A, t3 HOME, t4 B, t5 C.
+    // Targets newest first: t1 VOINC, t2 A, t3 HOME, t4 B, t5 C.
     fn sure(body: &[u8], _: Duration) -> Result<Vec<u8>> {
         ASKED.with(|a| *a.borrow_mut() = serde_json::from_slice(body).ok());
         Ok(
@@ -1843,21 +1843,21 @@ mod tests {
     #[test]
     fn a_confident_answer_is_a_send() {
         let out = run(
-            json!({"item": {"kind": "dictation", "text": "the hex icon is wrong",
-                            "app": {"id": "com.example.Hex", "name": "Hex"}, "mode": "Code", "extra": 1},
+            json!({"item": {"kind": "dictation", "text": "the voinc icon is wrong",
+                            "app": {"id": "com.example.Voinc", "name": "Voinc"}, "mode": "Code", "extra": 1},
                    "history": [{"text": "the menu", "to": "ses_hex"}]}),
             sure,
         );
         assert_eq!(out["decision"], "send", "{out}");
         assert_eq!(out["target"]["id"], "ses_hex");
-        assert_eq!(out["target"]["directory"], "/tmp/hex");
+        assert_eq!(out["target"]["directory"], "/tmp/voinc");
         assert_eq!(out["candidates"][0]["score"], 0.97);
         assert_eq!(out["model"], "jev-1.13");
         assert_eq!(out["confidence"], 0.95);
         assert_eq!(out["any_fits"], 0.9);
         assert_eq!(out["why"], "jev: confident");
         let asked = ASKED.with(|a| a.borrow().clone()).unwrap();
-        assert_eq!(asked["state"]["capture"]["app"], "Hex");
+        assert_eq!(asked["state"]["capture"]["app"], "Voinc");
         assert_eq!(asked["state"]["capture"]["mode"], "Code");
     }
 
@@ -1868,7 +1868,7 @@ mod tests {
                             "windows": [{"app": "Editor", "title": "notes.txt"}, {"app": "Chat"}],
                             "focused": {"role": "AXTextArea", "value_excerpt": "the margin is"},
                             "visible_text": "v".repeat(5000),
-                            "opencode_tab": "HEX",
+                            "opencode_tab": "VOINC",
                             "recent": [{"text_excerpt": "rename it", "routed_to": "ses_a"}],
                             "future_field": {"x": 1}}}),
             sure,
@@ -1879,8 +1879,8 @@ mod tests {
         assert_eq!(screen["windows"][1]["app"], "Chat");
         assert_eq!(screen["focused"]["value_excerpt"], "the margin is");
         assert!(screen["visible_text"].as_str().unwrap().chars().count() <= 1501);
-        assert_eq!(screen["opencode_tab"], "HEX");
-        // Targets newest first: t1 HEX, t2 A.
+        assert_eq!(screen["opencode_tab"], "VOINC");
+        // Targets newest first: t1 VOINC, t2 A.
         assert_eq!(screen["recent"][0]["routed_to"], "targets.t2");
         assert!(screen.get("future_field").is_none());
         let hints = asked["state"]["hints"].as_array().unwrap();
@@ -1895,7 +1895,7 @@ mod tests {
     fn a_session_named_at_the_start_is_sent_to_without_jev() {
         ASKED.with(|a| *a.borrow_mut() = None);
         let out = run(
-            json!({"item": {"text": "For home: file the hex icon bug", "app": "Ghostty"}}),
+            json!({"item": {"text": "For home: file the voinc icon bug", "app": "Ghostty"}}),
             sure,
         );
         assert_eq!(out["decision"], "send", "{out}");
@@ -1911,7 +1911,7 @@ mod tests {
 
     #[test]
     fn under_rules_jevs_confident_pick_is_suggested_first() {
-        let item = json!({"item": {"text": "the hex icon is wrong", "app": "Ghostty"}});
+        let item = json!({"item": {"text": "the voinc icon is wrong", "app": "Ghostty"}});
         let out = run_as(policy::AutoSend::Rules, item.clone(), sure);
         assert_eq!(out["decision"], "ask", "{out}");
         assert_eq!(out["suggested"], true);
@@ -1923,7 +1923,7 @@ mod tests {
         assert!(out["candidates"].as_array().unwrap().len() <= jev::CHIPS);
         assert!(out["why"].as_str().unwrap().contains("suggested"));
         // Named at the start still sends under rules; under never it only goes first.
-        let named = json!({"item": {"text": "For home: file the hex icon bug"}});
+        let named = json!({"item": {"text": "For home: file the voinc icon bug"}});
         let out = run_as(policy::AutoSend::Rules, named.clone(), sure);
         assert_eq!(
             (out["decision"].as_str(), out["target"]["id"].as_str()),
@@ -2019,7 +2019,7 @@ mod tests {
 
     #[test]
     fn the_text_is_required_and_the_app_can_be_a_bundle_id() {
-        assert!(serde_json::from_value::<Input>(json!({"item": {"app": "Hex"}})).is_err());
+        assert!(serde_json::from_value::<Input>(json!({"item": {"app": "Voinc"}})).is_err());
         let input: Input =
             serde_json::from_value(json!({"item": {"text": "x", "app": "com.mitchellh.ghostty",
                 "window_title": "zsh"}, "pinned": "ses_a"}))
@@ -2133,7 +2133,7 @@ mod tests {
         let (session, text) = last_sent();
         assert_eq!(session, "ses_hex");
         assert!(
-            text.starts_with("[voice via Hex · from Ghostty]\nmake the icon bigger"),
+            text.starts_with("[voice via Voinc · from Ghostty]\nmake the icon bigger"),
             "{text}"
         );
         assert!(text.ends_with("Selected text:\n> icon.png"), "{text}");
@@ -2142,7 +2142,7 @@ mod tests {
             "sent prompts leave the outbox"
         );
 
-        // Hex's spelling: the item ID and the text on stdin, which wins.
+        // Voinc's spelling: the item ID and the text on stdin, which wins.
         let request = DeliverRequest {
             item_id: Some("A1B2-C3".into()),
             to: "ses_b".into(),
@@ -2154,7 +2154,7 @@ mod tests {
             last_sent(),
             (
                 "ses_b".into(),
-                "[voice via Hex · from Ghostty]\nmake it smaller".into()
+                "[voice via Voinc · from Ghostty]\nmake it smaller".into()
             )
         );
 
@@ -2166,17 +2166,17 @@ mod tests {
             ..DeliverRequest::default()
         };
         deliver_with(&decisions, request, &outbox, &ok).unwrap();
-        assert_eq!(last_sent().1, "[voice via Hex]\nhello");
+        assert_eq!(last_sent().1, "[voice via Voinc]\nhello");
 
         // Text that already carries the prefix isn't given a second one.
         let request = DeliverRequest {
             item_id: Some("zz-10".into()),
             to: "ses_b".into(),
-            text: Some("[voice via Hex · from Zed]\nhello".into()),
+            text: Some("[voice via Voinc · from Zed]\nhello".into()),
             ..DeliverRequest::default()
         };
         deliver_with(&decisions, request, &outbox, &ok).unwrap();
-        assert_eq!(last_sent().1, "[voice via Hex · from Zed]\nhello");
+        assert_eq!(last_sent().1, "[voice via Voinc · from Zed]\nhello");
 
         // A failed send waits in the outbox for the app's retries.
         let down = DeliverHooks {

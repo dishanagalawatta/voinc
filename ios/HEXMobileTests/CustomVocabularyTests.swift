@@ -1,5 +1,5 @@
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 final class VocabularySpellingTests: XCTestCase {
     func testAppliesSpellingAcrossWords() {
@@ -28,12 +28,12 @@ final class VocabularySpellingTests: XCTestCase {
 
     func testMatchesWholeWordsOnly() {
         XCTAssertEqual(
-            VocabularySpelling.apply(["Hex"], to: "hexagon"),
+            VocabularySpelling.apply(["Voinc"], to: "hexagon"),
             "hexagon"
         )
         XCTAssertEqual(
-            VocabularySpelling.apply(["Hex"], to: "hex"),
-            "Hex"
+            VocabularySpelling.apply(["Voinc"], to: "voinc"),
+            "Voinc"
         )
     }
 

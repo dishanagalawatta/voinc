@@ -56,7 +56,7 @@ let
       libva
     ];
     ALSA_PLUGIN_DIR = symlinkJoin {
-      name = "hex-alsa-plugins";
+      name = "voinc-alsa-plugins";
       paths = [
         "${pipewire}/lib/alsa-lib"
         "${alsa-plugins}/lib/alsa-lib"
@@ -89,7 +89,7 @@ let
   };
 in
 rustPlatform.buildRustPackage (finalAttrs: {
-  pname = "hex";
+  pname = "voinc";
   version = (builtins.fromTOML (builtins.readFile ../Cargo.toml)).package.version;
 
   src = lib.fileset.toSource {
@@ -155,20 +155,20 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # Desktop and installed-model tests are #[ignore]; run the remaining suite.
   doCheck = true;
   preCheck = ''
-    export HOME="$TMPDIR/hex-test-home"
+    export HOME="$TMPDIR/voinc-test-home"
     mkdir -p "$HOME"
   '';
 
   postInstall = ''
-    install -Dm644 ${../packaging/anomaly.hex.desktop} $out/share/applications/anomaly.hex.desktop
+    install -Dm644 ${../packaging/io.voinc.voinc.desktop} $out/share/applications/io.voinc.voinc.desktop
     mkdir -p $out/share/icons
     cp -R ${../packaging/linux/icons/hicolor} $out/share/icons/hicolor
-    substituteInPlace $out/share/applications/anomaly.hex.desktop \
-      --replace-fail '@HEX_BIN@' "$out/bin/hex"
+    substituteInPlace $out/share/applications/io.voinc.voinc.desktop \
+      --replace-fail '@VOINC_BIN@' "$out/bin/voinc"
   '';
 
   postFixup = ''
-    wrapProgram $out/bin/hex \
+    wrapProgram $out/bin/voinc \
       --prefix PATH : ${lib.makeBinPath runtimePackages} \
       --prefix LD_LIBRARY_PATH : ${runtimeEnv.LD_LIBRARY_PATH} \
       --set ALSA_PLUGIN_DIR ${runtimeEnv.ALSA_PLUGIN_DIR}
@@ -188,7 +188,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     description = "Local-first voice dictation (Linux beta)";
     homepage = "https://anoma.ly/hex/";
     license = lib.licenses.mit;
-    mainProgram = "hex";
+    mainProgram = "voinc";
     platforms = [
       "x86_64-linux"
       "aarch64-linux"

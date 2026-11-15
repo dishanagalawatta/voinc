@@ -53,7 +53,7 @@ fn transcript_entries_coalesce_into_source_turns_without_hiding_long_pauses() {
 #[test]
 fn final_transcript_replaces_the_rolling_transcript_atomically() {
     let directory = std::env::temp_dir().join(format!(
-        "hex-meeting-transcript-{}-{}",
+        "voinc-meeting-transcript-{}-{}",
         std::process::id(),
         now_ms()
     ));
@@ -108,7 +108,7 @@ fn final_transcript_replaces_the_rolling_transcript_atomically() {
 #[test]
 fn reading_a_transcript_ignores_an_in_flight_trailing_write() {
     let path = std::env::temp_dir().join(format!(
-        "hex-transcript-tail-{}-{}.ndjson",
+        "voinc-transcript-tail-{}-{}.ndjson",
         std::process::id(),
         now_ms()
     ));
@@ -142,7 +142,7 @@ fn reading_a_transcript_ignores_an_in_flight_trailing_write() {
 #[test]
 fn capture_failures_are_persisted_instead_of_looking_interrupted() {
     let directory = std::env::temp_dir().join(format!(
-        "hex-meeting-failure-{}-{}",
+        "voinc-meeting-failure-{}-{}",
         std::process::id(),
         now_ms()
     ));
@@ -193,7 +193,7 @@ fn capture_failures_are_persisted_instead_of_looking_interrupted() {
 #[test]
 fn mid_meeting_capture_loss_proceeds_to_transcription_when_audio_was_recorded() {
     let directory = std::env::temp_dir().join(format!(
-        "hex-meeting-capture-loss-{}-{}",
+        "voinc-meeting-capture-loss-{}-{}",
         std::process::id(),
         now_ms()
     ));
@@ -302,7 +302,7 @@ fn abandoned_recording_and_finalization_are_recovered_as_interrupted() {
 #[test]
 fn meeting_lock_reports_liveness_across_file_descriptors() {
     let directory = std::env::temp_dir().join(format!(
-        "hex-meeting-lock-{}-{}",
+        "voinc-meeting-lock-{}-{}",
         std::process::id(),
         now_ms()
     ));
@@ -317,7 +317,7 @@ fn meeting_lock_reports_liveness_across_file_descriptors() {
 }
 
 fn finished_meeting(name: &str, title: &str) -> (PathBuf, PathBuf) {
-    let base = std::env::temp_dir().join(format!("hex-{name}-{}-{}", std::process::id(), now_ms()));
+    let base = std::env::temp_dir().join(format!("voinc-{name}-{}-{}", std::process::id(), now_ms()));
     let directory = base.join("1760000000000-1");
     fs::create_dir_all(&directory).unwrap();
     let export = base.join("2026-10-15 1418 Meeting.md");
@@ -630,18 +630,18 @@ fn the_exported_markdown_is_the_reveal_target_only_while_it_exists() {
 fn explorer_selects_the_meeting_file_with_the_switch_outside_the_quotes() {
     assert_eq!(
         explorer_select(Path::new(
-            r"C:\Users\dax\Documents\Hex Meetings\Design sync.md"
+            r"C:\Users\dax\Documents\Voinc Meetings\Design sync.md"
         ))
         .as_os_str(),
-        std::ffi::OsStr::new(r#"/select,"C:\Users\dax\Documents\Hex Meetings\Design sync.md""#)
+        std::ffi::OsStr::new(r#"/select,"C:\Users\dax\Documents\Voinc Meetings\Design sync.md""#)
     );
     assert_eq!(
         explorer_select(Path::new(
-            r"C:\Users\dax\Documents\Hex Meetings\Design sync, notes.md"
+            r"C:\Users\dax\Documents\Voinc Meetings\Design sync, notes.md"
         ))
         .as_os_str(),
         std::ffi::OsStr::new(
-            r#"/select,"C:\Users\dax\Documents\Hex Meetings\Design sync, notes.md""#
+            r#"/select,"C:\Users\dax\Documents\Voinc Meetings\Design sync, notes.md""#
         )
     );
 }
@@ -1024,7 +1024,7 @@ fn expiry_leaves_a_markdown_copy_the_user_edited() {
         "the edited Markdown stays"
     );
 
-    // A Markdown written before Hex recorded its digest is not Hex's to move.
+    // A Markdown written before Voinc recorded its digest is not Voinc's to move.
     manifest.export_sha256 = None;
     write_manifest(&directory, &manifest).unwrap();
     trashed.clear();
@@ -1292,7 +1292,7 @@ fn a_source_that_resumes_after_an_outage_is_padded_back_onto_the_timeline() {
 #[test]
 fn writer_fills_a_capture_gap_with_silence_and_records_it() {
     let directory = std::env::temp_dir().join(format!(
-        "hex-meeting-gap-{}-{}",
+        "voinc-meeting-gap-{}-{}",
         std::process::id(),
         now_ms()
     ));

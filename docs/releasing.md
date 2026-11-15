@@ -1,11 +1,11 @@
-# Releasing Hex
+# Releasing Voinc
 
 One run of the **Release** workflow (`.github/workflows/release.yml`)
 builds, signs, and publishes every platform from one commit to the Anomaly
-release service (`anomalyco/release`, `https://anoma.ly/release`). Hex's
+release service (`anomalyco/release`, `https://anoma.ly/release`). Voinc's
 names on the service are in [`plans/release-service.md`](plans/release-service.md).
 The service's dev stage, `https://dev.anoma.ly/release`, is only for testing
-the release service itself: Hex never publishes to it or reads from it. Builds
+the release service itself: Voinc never publishes to it or reads from it. Builds
 are tested before stable on the production service's `dev` channel.
 
 Like OpenCode's release, building is split from everything that holds a
@@ -33,10 +33,10 @@ Release (push to dev: dev channel; workflow_dispatch: ref + channel check | dev 
 ├─ plan                     .github/release/plan.sh: version, channel, tag, notes
 ├─ build                    build-desktop.yml: Linux x64 + ARM64 (Ubuntu 24.04) executables, .deb,  [build]
 │                           .rpm (installed and run on Ubuntu and Fedora); Windows x64 + ARM64
-├─ build-macos              Hex.app as anomaly.hex, ad-hoc signed (HEX_RELEASE_UNSIGNED)             [build]
+├─ build-macos              Voinc.app as io.voinc.voinc, ad-hoc signed (VOINC_RELEASE_UNSIGNED)             [build]
 ├─ sign-macos               Developer ID inside-out, notarize + staple, ZIP + DMG (sign-macos.sh)     [release]
 ├─ verify-macos             validate-app.sh, Gatekeeper, updater requirement, launch                 [build]
-├─ sign-windows             Azure Artifact Signing of both hex.exe, Authenticode check                [release]
+├─ sign-windows             Azure Artifact Signing of both voinc.exe, Authenticode check                [release]
 ├─ installers               windows-installers.yml: Setup.exe around them, tested on x64 + ARM64      [build]
 ├─ sign-windows-installers  Azure Artifact Signing of both Setup.exe                                  [release]
 ├─ check-linux, -macos,     stable, check: the full suites on the candidate (check-<os>.yml, called   [build]
@@ -69,7 +69,7 @@ by Release: after a stable release, run **Site** with `mode: production` from
 - Windows: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
   `AZURE_TRUSTED_SIGNING_ENDPOINT`, `AZURE_TRUSTED_SIGNING_ACCOUNT_NAME`,
   `AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE`, with a federated credential for
-  `repo:anomalyco/hex:environment:release` (docs/windows-signing.md).
+  `repo:dishanagalawatta/voinc:environment:release` (docs/windows-signing.md).
 
 ### Release tags
 
@@ -88,7 +88,7 @@ Repository admins can still change rulesets.
 ## The release service
 
 The service authorizes the publish jobs by their GitHub OIDC token alone:
-`registry/hex.json` in `anomalyco/release` admits repository `anomalyco/hex`
+`registry/voinc.json` in `anomalyco/release` admits repository `dishanagalawatta/voinc`
 (by name and id) and workflow `.github/workflows/release.yml` running
 from the same ref it was triggered on, for artifact `desktop` on both the dev
 and production services, as two publishers:
@@ -111,14 +111,14 @@ production site.
 
 | Environment | Branches | Reviewers | Used by | AWS role |
 | --- | --- | --- | --- | --- |
-| `release` | `dev`, `production` | none | Release sign and publish jobs, aur-check | `role/github/hex-release` |
-| `infra-dev` | `dev` | none | Deploy, from `dev` | `role/github/hex-infra-dev` |
-| `infra-production` | `production` | none | Deploy, from `production` | `role/github/hex-infra-production` |
+| `release` | `dev`, `production` | none | Release sign and publish jobs, aur-check | `role/github/voinc-release` |
+| `infra-dev` | `dev` | none | Deploy, from `dev` | `role/github/voinc-infra-dev` |
+| `infra-production` | `production` | none | Deploy, from `production` | `role/github/voinc-infra-production` |
 
 `publish` uploads each file under its own name with its SHA-256 (files over
 95 MiB in 90 MiB parts), then posts the release naming each target by file
-and hash, with distributions `direct`, `aur` (`hex-bin`), `deb-x64`,
-`deb-arm64`, `rpm-x64`, `rpm-arm64`, `brew` (`anomalyco/tap/hex`), and `nix`.
+and hash, with distributions `direct`, `aur` (`voinc-bin`), `deb-x64`,
+`deb-arm64`, `rpm-x64`, `rpm-arm64`, `brew` (`anomalyco/tap/voinc`), and `nix`.
 It then downloads every published URL and compares it with the local bytes.
 Package-manager entries gain a version only once that package manager serves
 it: `nix` and the `deb`/`rpm` kinds at publish (the flake builds the release
@@ -129,10 +129,10 @@ clients check HTTPS, each file's size and SHA-256, and the OS code signature
 
 ## Homebrew
 
-`packaging/homebrew/hex.rb` is the cask `anomalyco/tap/hex`: the `anomaly.hex`
+`packaging/homebrew/voinc.rb` is the cask `anomalyco/tap/voinc`: the `io.voinc.voinc`
 app from the release's `macos-arm64-dmg` file URL and SHA-256, `auto_updates
-true` (Hex updates any writable `Hex.app` itself), a livecheck on the stable
-manifest, and zap paths for the new identity and the shared `hex` data folder.
+true` (Voinc updates any writable `Voinc.app` itself), a livecheck on the stable
+manifest, and zap paths for the new identity and the shared `voinc` data folder.
 The `homebrew-stage` job renders it on a macOS runner and runs `brew style`
 and `brew audit --cask --strict --online` in a local copy of the tap, without
 secrets; the `homebrew` job pushes that verified file with the tap deploy key
@@ -164,10 +164,10 @@ secrets; the `homebrew` job pushes that verified file with the tap deploy key
   current release and installs follow it, so a dev build below 2.3.1 is fine,
   and a rollback is making an earlier release current (the service's
   `promote` with a history `sequence`, or Make current in its admin panel).
-  Every build is stamped with its channel (`HEX_BUILD_CHANNEL`); an install
+  Every build is stamped with its channel (`VOINC_BUILD_CHANNEL`); an install
   whose Update channel setting names another channel offers that channel's
   current release ("Switch to Stable 2.3.1") and switches only once the user
-  confirms. Source, local (`HEX_LOCAL_BUILD=1`) and test builds never check or offer
+  confirms. Source, local (`VOINC_LOCAL_BUILD=1`) and test builds never check or offer
   a switch. The first build after this change, 2.3.2-dev.<run> on
   2026-10-27, carried the new client to installs whose older client took only
   higher versions; every build since is `0.0.0-dev-<run>`. It publishes only signed builds, because the
@@ -224,13 +224,13 @@ refuses force pushes and deletion.
    item for 2.3.1 Macs (both below, "Transition from Kit's hosting").
 
 The first Anomaly-signed macOS release also changes the bundle ID to
-`anomaly.hex` (docs/plans/macos-signing.md). Its notes must tell Mac users
+`io.voinc.voinc` (docs/plans/macos-signing.md). Its notes must tell Mac users
 that macOS sees a new app: grant Microphone, Accessibility, and (for
 meetings) Screen & System Audio Recording once more, removing any
-stale Hex entry in System Settings first; turn Launch at login on again; and
-point `DisableUpdates` profiles at `anomaly.hex`. Settings, history, and
+stale Voinc entry in System Settings first; turn Launch at login on again; and
+point `DisableUpdates` profiles at `io.voinc.voinc`. Settings, history, and
 models do not carry over from 2.3.1 on any OS: 2.3.1 kept them in
-`voice-control`, and Hex now reads only `hex` and imports nothing. Decide how
+`voice-control`, and Voinc now reads only `voinc` and imports nothing. Decide how
 2.3.1 installs reach it first (same doc, "Existing installs").
 
 Versions are display text and never compared: each channel has one current
@@ -238,14 +238,14 @@ release, which installs follow.
 
 ## Hosting
 
-Hex lives under one path on anoma.ly (no subdomains) until a vanity domain
+Voinc lives under one path on anoma.ly (no subdomains) until a vanity domain
 exists. `site/cloudflare.config.ts` defines both environments; `--mode`
 picks one:
 
 ```ts
 cloudflare.config.ts (cf deploy --prebuilt --mode <mode>, from CI only)
-├─ production: Worker hex-production-site  routes anoma.ly/hex, anoma.ly/hex/*         bucket hex-production-files
-└─ dev:        Worker hex-dev-site         routes dev.anoma.ly/hex, dev.anoma.ly/hex/* bucket hex-production-files
+├─ production: Worker voinc-production-site  routes anoma.ly/hex, anoma.ly/hex/*         bucket voinc-production-files
+└─ dev:        Worker voinc-dev-site         routes dev.anoma.ly/hex, dev.anoma.ly/hex/* bucket voinc-production-files
 
 https://anoma.ly/hex/                      the site; downloads read the service's stable manifest at build time
 ├─ download/dev                            302 to the dev channel's macos-arm64-dmg, read per request
@@ -257,18 +257,18 @@ https://anoma.ly/hex/                      the site; downloads read the service'
    └─ *-update.json, releases/…                             frozen 2.3.1 history, read-only from the bucket
 ```
 
-Both Workers bind `hex-production-files` because the frozen 2.3.1 history is
+Both Workers bind `voinc-production-files` because the frozen 2.3.1 history is
 the same for both and is only read; CI holds no R2 credential. The bucket's
 old `install-linux.sh`, `install-windows.ps1`, `appcast.xml`, and
 `dev-notes.json` objects are no longer read once this is deployed; delete
 them after the cutover. The site's
 download links come from `site/scripts/release-data.ts`, which reads the
 stable manifest of the mode's service when the site builds; until the
-service has a stable Hex release they name the frozen 2.3.1 downloads. The
+service has a stable Voinc release they name the frozen 2.3.1 downloads. The
 installers fetch the stable manifest, download their target, check its size
 and SHA-256, and write the direct-install receipt.
 
-`/hex/download/dev` is the permanent team link to the newest Mac dev build:
+`/voinc/download/dev` is the permanent team link to the newest Mac dev build:
 the Worker reads its host's service `dev.json` on every request and redirects
 to the `macos-arm64-dmg` file, or answers 404 with a plain message when no dev
 release (or no Mac build of it) exists. The release service is another Worker
@@ -302,9 +302,9 @@ The site's Worker code and assets come from repository code anyone with push
 access can merge, so `.github/release/deploy-site.sh` treats the artifact as
 untrusted: it deploys only the Build Output files, and only if the root config
 is a non-preview build of that mode and the Worker config is exactly that
-mode's Worker (`hex-dev-site` or `hex-production-site`), its two `anoma.ly`
+mode's Worker (`voinc-dev-site` or `voinc-production-site`), its two `anoma.ly`
 routes, `workersDev`/`previewUrls` off, and the bindings `ASSETS`, `FILES`
-(`hex-production-files`, read for the frozen history), and `CANONICAL_HOST`.
+(`voinc-production-files`, read for the frozen history), and `CANONICAL_HOST`.
 Any other Worker name, route, binding, key, Worker, or Container is refused: a
 binding would give the Worker access to another resource, and the token can
 write every Worker. A change to those parts of `site/cloudflare.config.ts`
@@ -313,19 +313,19 @@ therefore needs the matching change in `deploy-site.sh` (Dax).
 Set once by hand on the anomaly account, because the config only binds them:
 the files bucket (`cf deploy` provisions only unnamed bindings; a missing
 named bucket fails the deploy) and an anoma.ly `http_config_settings` rule that
-turns off Browser Integrity Check for `/hex/files/` on both hosts (it returned
+turns off Browser Integrity Check for `/voinc/files/` on both hosts (it returned
 403 to Python's default user agent). The site build serves the installers and
 the appcast; the bucket only holds the frozen 2.3.1 feeds and artifacts, which
 the Worker reads and never writes.
 
 One short-lived token, minted per deploy:
 
-- `deploy` runs in `infra-<mode>`, assumes `role/github/hex-infra-<mode>`
+- `deploy` runs in `infra-<mode>`, assumes `role/github/voinc-infra-<mode>`
   (a 15-minute session, only a step output that the token step alone
   receives; cf never sees it), then runs `.github/release/cloudflare-token.sh`, which SigV4-POSTs to the
   token issuer in [anomalyco/secrets](https://github.com/anomalyco/secrets)
   and receives a 15-minute account-owned token with Individual Workers Editor
-  on that mode's Worker only (`hex-dev-site` or `hex-production-site`) and
+  on that mode's Worker only (`voinc-dev-site` or `voinc-production-site`) and
   Workers Routes Write (zone `anoma.ly`), pinned to the runner's request IP,
   at most ten live at once. The script masks it before writing
   `steps.cloudflare-token.outputs.token`, and only the Deploy step receives it
@@ -335,62 +335,62 @@ One short-lived token, minted per deploy:
   always written on deploy, and `cf` then needs Routes Write on the zone,
   which Cloudflare does not scope per route.
 - The `production` branch (far behind `dev`) still deploys the production
-  site from `release`, reading the old long-lived `hex-site-deploy` token from
-  Secrets Manager as `hex/release/CLOUDFLARE_API_TOKEN`. Once `production` is
+  site from `release`, reading the old long-lived `voinc-site-deploy` token from
+  Secrets Manager as `voinc/release/CLOUDFLARE_API_TOKEN`. Once `production` is
   promoted and its site deploys green from `infra-production`, revoke that
-  token and drop the site permissions from the `hex.release` issuer stage.
+  token and drop the site permissions from the `voinc.release` issuer stage.
 
 ## Old clients (2.3.1 and earlier)
 
 `https://anoma.ly/hex/files/` keeps serving the 2.3.1
 `linux-update.json`, `windows-update.json`, `windows-aarch64-update.json`,
-and their files from `hex-production-files`, frozen: nothing updates them
+and their files from `voinc-production-files`, frozen: nothing updates them
 anymore, and those installs see no update on their own. The site Worker reads
-the bucket binding; no CI job writes it. The new Hex is effectively a new
+the bucket binding; no CI job writes it. The new Voinc is effectively a new
 app (new updater, and on macOS a new bundle ID), so:
 
-- **macOS:** the appcast at `/hex/files/appcast.xml` is
+- **macOS:** the appcast at `/voinc/files/appcast.xml` is
   `packaging/macos/legacy-appcast.xml`, served by the site build: one
-  informational item that tells 2.3.1 users to download the new Hex from
+  informational item that tells 2.3.1 users to download the new Voinc from
   https://anoma.ly/hex (no enclosure, so Sparkle installs nothing). Edit that
   file and push; Deploy serves it. Superseded (Kit, 2026-11-02): the 2.3.1
   and Swift feeds offer the released ZIP itself, signed with their old Sparkle
-  key, so Install Update moves those Macs onto the new Hex
+  key, so Install Update moves those Macs onto the new Voinc
   (docs/plans/swift-app-handoff.md, "Legacy Update"). Keep `SUPublicEDKey` in
   `app/Info.plist`.
 - **Windows signer:** the updater accepts only a Valid Authenticode signature
   whose signer is `AUTHENTICODE_SIGNER` in `src/updater/windows.rs` (OpenCode's
-  Artifact Signing subject). Check the first Azure-signed Hex build's subject
+  Artifact Signing subject). Check the first Azure-signed Voinc build's subject
   against it before a stable release; unsigned builds never update.
 - **Linux and Windows:** the feeds stay at 2.3.1; the site and README tell
-  users to reinstall. `HEX_RELEASE_SIGNING_KEY` (the ed25519 key 2.3.1's
+  users to reinstall. `VOINC_RELEASE_SIGNING_KEY` (the ed25519 key 2.3.1's
   feeds were signed with) now signs every Linux executable Release publishes
   (`.github/release/sign-linux.sh`).
 
 ### Transition from Kit's hosting
 
 Releases up to 2.3.1 compiled `https://downloads.hex.kitlangton.dev` (Kit's
-personal `hex-releases` bucket; the website and installers used the `.com`
+personal `voinc-releases` bucket; the website and installers used the `.com`
 alias); later 2.3.x builds compiled `https://anoma.ly/hex/files`. Builds on
 the release service compile `https://anoma.ly/release`.
 
-- `hex-production-files` was seeded with byte copies of every object the old
+- `voinc-production-files` was seeded with byte copies of every object the old
   bucket served (the 2.3.1 feeds and artifacts, installers, the appcast, DMGs, Sparkle
   ZIPs, and Setup.exe installers).
-- Both hosts are custom domains of `hex-releases` in Kit's personal
+- Both hosts are custom domains of `voinc-releases` in Kit's personal
   Cloudflare account and serve the bucket directly until the redirect is
   deployed. The redirect is the Worker in `packaging/legacy-downloads/`
-  (`hex-legacy-downloads`, routes `downloads.hex.kitlangton.dev/*` and
+  (`voinc-legacy-downloads`, routes `downloads.hex.kitlangton.dev/*` and
   `downloads.hex.kitlangton.com/*` → `https://anoma.ly/hex/files/<path>`,
   302, path and query preserved). Deploy it with Kit's personal Wrangler
-  login, before the appcast at `/hex/files/appcast.xml` gains the notice, so
+  login, before the appcast at `/voinc/files/appcast.xml` gains the notice, so
   old installs reach it on either host:
 
   ```sh
   bunx wrangler@latest deploy --config packaging/legacy-downloads/wrangler.jsonc
   ```
 
-  It changes no bytes old installs get (`hex-production-files` holds copies
+  It changes no bytes old installs get (`voinc-production-files` holds copies
   of everything the bucket served), so it may go up before the notice.
   Sparkle and the Linux/Windows updaters (curl `--location`, HTTPS-only
   redirects, since the first updater) follow it, so those installs read the
@@ -409,9 +409,9 @@ the release service compile `https://anoma.ly/release`.
 Release secrets live in AWS Secrets Manager (account `anomaly-secrets`), managed from
 [anomalyco/secrets](https://github.com/anomalyco/secrets). Jobs in the `release` environment
 (limited to `dev` and `production`; `dev` is allowed because dev-channel builds run from it,
-and no reviewer is required) assume `role/github/hex-release` with
-GitHub OIDC and fetch only what they use. That role can read `hex/release/*` and the shared Apple, AUR and Homebrew
-secrets. Set a value with `bun set hex release <NAME>` in that repo.
+and no reviewer is required) assume `role/github/voinc-release` with
+GitHub OIDC and fetch only what they use. That role can read `voinc/release/*` and the shared Apple, AUR and Homebrew
+secrets. Set a value with `bun set voinc release <NAME>` in that repo.
 
 Credentials are step-scoped. `configure-aws-credentials` runs with
 `output-env-credentials: false`, so the 15-minute AWS session is only a step output, passed
@@ -425,17 +425,17 @@ jobs that run repository code.
 | Secret | Use |
 | --- | --- |
 | (none) | publishing to the release service: the job's GitHub OIDC token |
-| `hex/release/CLOUDFLARE_API_TOKEN` | old long-lived `hex-site-deploy` token, read only by the `production` branch's site deploy until `production` is promoted; then revoke it |
-| `shared/AUR_SSH_KEY` | pushes `hex-bin`; one key for every Anomaly AUR package (`github-actions-hex-aur`) |
-| `shared/HOMEBREW_TAP_DEPLOY_KEY` | pushes `Casks/hex.rb`; one deploy key on `anomalyco/homebrew-tap` for every app (`anomaly-release`) |
+| `voinc/release/CLOUDFLARE_API_TOKEN` | old long-lived `voinc-site-deploy` token, read only by the `production` branch's site deploy until `production` is promoted; then revoke it |
+| `shared/AUR_SSH_KEY` | pushes `voinc-bin`; one key for every Anomaly AUR package (`github-actions-voinc-aur`) |
+| `shared/HOMEBREW_TAP_DEPLOY_KEY` | pushes `Casks/voinc.rb`; one deploy key on `anomalyco/homebrew-tap` for every app (`anomaly-release`) |
 | vars `AZURE_*` | Authenticode (docs/windows-signing.md); not secrets, `azure/login` uses OIDC |
 | `shared/APPLE_SIGNING_CERTIFICATE`, `shared/APPLE_NOTARY_KEY`, vars `APPLE_NOTARY_*` | macOS signing and notarization (docs/plans/macos-signing.md) |
-| `hex/release/RELEASE_SIGNING_KEY` | ed25519 PEM; signs each Linux executable (`<target>-sig`), public key `.github/release/linux-signing.pub` and `src/updater/linux.rs` |
+| `voinc/release/RELEASE_SIGNING_KEY` | ed25519 PEM; signs each Linux executable (`<target>-sig`), public key `.github/release/linux-signing.pub` and `src/updater/linux.rs` |
 | `SPARKLE_ED_PRIVATE_KEY` | old 2.3.1 appcast key; unused, kept for old clients |
 
 `infra-dev` and `infra-production` hold no secrets. Their roles,
-`role/github/hex-infra-dev` and `role/github/hex-infra-production`, can read only their own
-empty `hex/infra-<mode>/*` folder; the site deploy only mints a 15-minute Cloudflare token for
+`role/github/voinc-infra-dev` and `role/github/voinc-infra-production`, can read only their own
+empty `voinc/infra-<mode>/*` folder; the site deploy only mints a 15-minute Cloudflare token for
 its own Worker from the token issuer (`.github/release/cloudflare-token.sh`).
 
 ## Linux packages
@@ -447,16 +447,16 @@ its own Worker from the token issuer (`.github/release/cloudflare-token.sh`).
   itself from the service's manifest and the window offers "Update" (restart
   into the staged version). Deploy runs the installer test before it
   deploys and compares the served bytes with `.github/release/` afterwards.
-- **AUR** `hex-bin` (`packaging/aur`, staged by `scripts/release-aur.sh`, pushed by `.github/release/push-aur.sh`):
-  `/usr/bin/hex`, the desktop entry, and the systemd user unit
-  `/usr/lib/systemd/user/hex.service`, from the release service's
-  `linux-x64` (`x86_64`) or `linux-arm64` (`aarch64`) file. Not a prebuilt of the official `extra/hex` (a hex dump tool
+- **AUR** `voinc-bin` (`packaging/aur`, staged by `scripts/release-aur.sh`, pushed by `.github/release/push-aur.sh`):
+  `/usr/bin/voinc`, the desktop entry, and the systemd user unit
+  `/usr/lib/systemd/user/voinc.service`, from the release service's
+  `linux-x64` (`x86_64`) or `linux-arm64` (`aarch64`) file. Not a prebuilt of the official `extra/voinc` (a voinc dump tool
   that installs `/usr/bin/hx`), so it neither provides nor conflicts with it;
   its description says so. Maintained under Dax's AUR account.
-- **.deb and .rpm** `hex` (`packaging/linux/nfpm.yaml`, built by
+- **.deb and .rpm** `voinc` (`packaging/linux/nfpm.yaml`, built by
   `scripts/package-linux.sh` with nfpm in the build jobs): the same three
   files as the AUR package, for x64 and arm64, published as
-  `linux-<arch>-deb` and `linux-<arch>-rpm` (`hex.deb`, `hex.rpm`). There is no
+  `linux-<arch>-deb` and `linux-<arch>-rpm` (`voinc.deb`, `voinc.rpm`). There is no
   apt or dnf repository: the release service's `deb-<arch>`/`rpm-<arch>`
   distributions carry the command that downloads the stable package from its
   alias link and installs it with `apt` or `dnf`. Dependencies name Ubuntu
@@ -468,7 +468,7 @@ its own Worker from the token issuer (`.github/release/cloudflare-token.sh`).
   `source-build` marker; the checkout updates it.
 
 An executable outside the user-local layout that the user does not own and
-pacman, dpkg, or rpm owns (`/usr/bin/hex`), or that lives in the Nix store,
+pacman, dpkg, or rpm owns (`/usr/bin/voinc`), or that lives in the Nix store,
 never self-updates; Settings says
 "Updated by your package manager". Source installs say "Updated from your
 source checkout".
@@ -482,6 +482,6 @@ current Arch). `.github/release/check-glibc-floor.sh` fails the build if the
 executable needs a newer symbol, and the build installs the `.deb` and runs
 the executables on Debian 12. ARM64 keeps the Vulkan backend like x64; ggml's CPU
 kernels stay portable (`GGML_NATIVE=OFF`, baseline ARMv8-A). There is no
-AppImage: the bare executable already runs without installing, and Hex's
+AppImage: the bare executable already runs without installing, and Voinc's
 systemd user unit and updater want a stable executable path that an AppImage
 does not have.

@@ -1,15 +1,15 @@
 [Desktop Entry]
 Type=Application
-Name=Hex
+Name=Voinc
 Comment=Local voice dictation
-Exec=@HEX_BIN@
-Icon=anomaly.hex
+Exec=@VOINC_BIN@
+Icon=io.voinc.voinc
 Terminal=false
 Categories=Utility;Accessibility;
 StartupNotify=true
-StartupWMClass=anomaly.hex
+StartupWMClass=io.voinc.voinc
 Actions=quit;
 
 [Desktop Action quit]
-Name=Quit Hex
-Exec=@HEX_BIN@ quit
+Name=Quit Voinc
+Exec=@VOINC_BIN@ quit

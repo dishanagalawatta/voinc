@@ -1,7 +1,7 @@
 #!/bin/sh
-# Build one Windows release, dist/hex-<version>-windows-<x64|arm64>.exe (the
+# Build one Windows release, dist/voinc-<version>-windows-<x64|arm64>.exe (the
 # GUI app) and .com (crates/console, the console entry point installed as
-# hex.com beside it), from Git Bash on Windows: HEX_WINDOWS_ARCH=x86_64
+# voinc.com beside it), from Git Bash on Windows: VOINC_WINDOWS_ARCH=x86_64
 # (default; Vulkan SDK required) or aarch64 (clang-cl and Ninja, best on an
 # ARM64 host). CI then Authenticode-signs both and wraps them in the Setup.exe
 # installer; the Release workflow publishes all three
@@ -9,16 +9,16 @@
 set -eu
 
 script_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-root=${HEX_RELEASE_SOURCE:-$script_root}
-version=${HEX_VERSION:-$(cargo metadata --no-deps --format-version 1 --manifest-path "$root/Cargo.toml" | jq -r '.packages[] | select(.name == "hex") | .version')}
-dist=${HEX_RELEASE_DIST:-"$root/dist"}
+root=${VOINC_RELEASE_SOURCE:-$script_root}
+version=${VOINC_VERSION:-$(cargo metadata --no-deps --format-version 1 --manifest-path "$root/Cargo.toml" | jq -r '.packages[] | select(.name == "voinc") | .version')}
+dist=${VOINC_RELEASE_DIST:-"$root/dist"}
 target_dir=${CARGO_TARGET_DIR:-"$root/target"}
-arch=${HEX_WINDOWS_ARCH:-x86_64}
+arch=${VOINC_WINDOWS_ARCH:-x86_64}
 case "$arch" in
   x86_64) label=x64 ;;
   aarch64) label=arm64 ;;
   *)
-    echo "HEX_WINDOWS_ARCH must be x86_64 or aarch64." >&2
+    echo "VOINC_WINDOWS_ARCH must be x86_64 or aarch64." >&2
     exit 1
     ;;
 esac
@@ -64,21 +64,21 @@ fi
 # Cargo reads .cargo/config.toml (the static Windows runtime) from the
 # working directory, not from --manifest-path.
 (cd "$root" && TRANSCRIBE_CMAKE_ARGS="$cmake_args" cargo build --locked --release --target "$triple")
-(cd "$root" && cargo build --locked --release --target "$triple" -p hex-console)
-executable="$dist/hex-$version-windows-$label.exe"
-console="$dist/hex-$version-windows-$label.com"
-cp "$target_dir/$triple/release/hex.exe" "$executable"
-cp "$target_dir/$triple/release/hex-console.exe" "$console"
+(cd "$root" && cargo build --locked --release --target "$triple" -p voinc-console)
+executable="$dist/voinc-$version-windows-$label.exe"
+console="$dist/voinc-$version-windows-$label.com"
+cp "$target_dir/$triple/release/voinc.exe" "$executable"
+cp "$target_dir/$triple/release/voinc-console.exe" "$console"
 test "$(head -c 2 "$executable")" = MZ
 test "$(head -c 2 "$console")" = MZ
 # An executable for the other architecture cannot run here; the installer
-# test checks it on its own runner. hex.com runs the hex.exe beside it, as
+# test checks it on its own runner. voinc.com runs the voinc.exe beside it, as
 # installed.
 if [ "$(uname -m)" = "$arch" ]; then
   pair=$(mktemp -d)
-  cp "$executable" "$pair/hex.exe"
-  cp "$console" "$pair/hex.com"
-  test "$("$pair/hex.com" --version | awk 'NF { value=$NF } END { print value }')" = "$version"
+  cp "$executable" "$pair/voinc.exe"
+  cp "$console" "$pair/voinc.com"
+  test "$("$pair/voinc.com" --version | awk 'NF { value=$NF } END { print value }')" = "$version"
   rm -rf "$pair"
 fi
 echo "$executable"

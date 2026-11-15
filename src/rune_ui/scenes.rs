@@ -12,7 +12,7 @@ pub(super) const SCENES: &[Scene] = &[
     // (`--snap`): waits for its first snapshot instead of drawing
     // "Connecting…" at virtual time zero.
     ("live", |ui| {
-        // Reads the saved settings and the running Hex; writes neither.
+        // Reads the saved settings and the running Voinc; writes neither.
         let settings = AppSettings::read().unwrap_or_default();
         crate::desktop::i18n::apply(settings.ui_language.as_deref());
         *ui = Ui::with(settings, Service::Fixture(Vec::new()));
@@ -271,9 +271,9 @@ pub(super) const SCENES: &[Scene] = &[
             },
         );
     }),
-    // The first run on Linux (Windows is the same window): setting up Hex
+    // The first run on Linux (Windows is the same window): setting up Voinc
     // with nothing found, the model step with models found here, the demo,
-    // waiting for the model, the practice game, and Hex is ready.
+    // waiting for the model, the practice game, and Voinc is ready.
     ("onboarding", |ui| {
         first_run(ui, FirstRun::Fresh, Page::Download)
     }),
@@ -678,7 +678,7 @@ pub(super) const SCENES: &[Scene] = &[
         if let Some(source) = &mut ui.platform.hex_microphone {
             source.driver_loaded = false;
             source.action_state = crate::audio::hex_microphone::DriverActionState::Failed(
-                "pw-cat was not found; Hex Microphone needs PipeWire".into(),
+                "pw-cat was not found; Voinc Microphone needs PipeWire".into(),
             );
         }
         ui.settings.experimental.hex_microphone = true;
@@ -690,7 +690,7 @@ pub(super) const SCENES: &[Scene] = &[
         ui.pane = Pane::HudLab;
     }),
     ("mac-labs", labs_with_some_on),
-    // Where hex://labs/vocabulary-biasing lands: its group's chip.
+    // Where voinc://labs/vocabulary-biasing lands: its group's chip.
     ("mac-labs-link", |ui| {
         *ui = mac_fixture();
         ui.labs_open = true;
@@ -768,8 +768,8 @@ pub(super) const SCENES: &[Scene] = &[
             key: None,
         };
     }),
-    // The first run on macOS: setting up Hex, each permission state, the
-    // practice game, and Hex is ready.
+    // The first run on macOS: setting up Voinc, each permission state, the
+    // practice game, and Voinc is ready.
     ("mac-onboarding", |ui| {
         mac_first_run(ui, onboarding::MacStep::Setup, Page::Download)
     }),
@@ -901,7 +901,7 @@ pub(super) fn portal_fixture() -> Ui {
 /// desktop with the shortcuts portal.
 pub(super) fn fixture(shortcuts: DesktopShortcuts) -> Ui {
     // English, unless a render names another language to check its copy in.
-    let language = std::env::var("HEX_RENDER_LANGUAGE").unwrap_or_else(|_| "en".into());
+    let language = std::env::var("VOINC_RENDER_LANGUAGE").unwrap_or_else(|_| "en".into());
     crate::desktop::i18n::apply(Some(&language));
     let settings = AppSettings {
         dictation_hotkey: HotkeyBinding {

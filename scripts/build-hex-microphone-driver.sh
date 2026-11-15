@@ -3,10 +3,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="$ROOT_DIR/macos/HexMicrophoneDriver"
-OUT_DIR="${1:-$HOME/Library/Caches/hex-mic}"
+OUT_DIR="${1:-$HOME/Library/Caches/voinc-mic}"
 BUNDLE_DIR="$OUT_DIR/HexMicrophone.driver"
-VERSION="${HEX_VERSION:-$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT_DIR/Cargo.toml" | head -1)}"
-BUILD_NUMBER="${HEX_BUILD_NUMBER:-$(printf '%s\n' "${VERSION%%-*}" | awk -F. '{ print ($1 * 10000) + ($2 * 100) + $3 }')}"
+VERSION="${VOINC_VERSION:-$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT_DIR/Cargo.toml" | head -1)}"
+BUILD_NUMBER="${VOINC_BUILD_NUMBER:-$(printf '%s\n' "${VERSION%%-*}" | awk -F. '{ print ($1 * 10000) + ($2 * 100) + $3 }')}"
 
 rm -rf "$BUNDLE_DIR"
 mkdir -p "$BUNDLE_DIR/Contents/MacOS"
@@ -23,9 +23,9 @@ clang -std=c11 -O2 -Wall -Wextra -Werror \
   "$SRC_DIR/HexMicrophoneDriver.c" \
   -o "$BUNDLE_DIR/Contents/MacOS/HexMicrophoneDriver"
 
-SIGN_ID="${HEX_CODESIGN_IDENTITY:-}"
-if [[ -z "$SIGN_ID" && -n "${HEX_TEAM_ID:-}" ]]; then
-  SIGN_ID="$(security find-identity -v -p codesigning | awk -F'"' -v team="$HEX_TEAM_ID" '$2 ~ "^Developer ID Application: .*\\(" team "\\)$" { print $2; exit }')"
+SIGN_ID="${VOINC_CODESIGN_IDENTITY:-}"
+if [[ -z "$SIGN_ID" && -n "${VOINC_TEAM_ID:-}" ]]; then
+  SIGN_ID="$(security find-identity -v -p codesigning | awk -F'"' -v team="$VOINC_TEAM_ID" '$2 ~ "^Developer ID Application: .*\\(" team "\\)$" { print $2; exit }')"
 fi
 if [[ -n "$SIGN_ID" ]]; then
   codesign --force --options runtime --timestamp --sign "$SIGN_ID" "$BUNDLE_DIR"
@@ -33,7 +33,7 @@ else
   codesign --force --sign - "$BUNDLE_DIR"
 fi
 
-if [[ "${HEX_SKIP_INSTALL_SCRIPT:-0}" != "1" ]]; then
+if [[ "${VOINC_SKIP_INSTALL_SCRIPT:-0}" != "1" ]]; then
   cat > "$OUT_DIR/install-driver.sh" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail

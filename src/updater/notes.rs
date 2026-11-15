@@ -15,7 +15,7 @@ use crate::desktop::host::UpdateNotes;
 const URL: &str = "https://anoma.ly/hex/files/dev-notes.json";
 const PAGE: &str = "https://anoma.ly/hex/dev";
 /// A stable release's notes, as the release workflow links them (`plan.sh`).
-const RELEASES: &str = "https://github.com/anomalyco/hex/releases/tag";
+const RELEASES: &str = "https://github.com/dishanagalawatta/voinc/releases/tag";
 const TIMEOUT: Duration = Duration::from_secs(30);
 const MAX_ITEMS: usize = 40;
 const MAX_TITLE: usize = 200;
@@ -160,7 +160,7 @@ mod tests {
     fn a_stable_build_opens_its_github_release() {
         assert_eq!(
             release_notes_url("3.3.0").as_deref(),
-            Some("https://github.com/anomalyco/hex/releases/tag/v3.3.0")
+            Some("https://github.com/dishanagalawatta/voinc/releases/tag/v3.3.0")
         );
     }
 

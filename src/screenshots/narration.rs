@@ -48,7 +48,7 @@ pub(crate) fn claim() -> Option<PrintReply> {
     editor::listen(Listen::Transcribing);
     let (reply, printed) = PrintReply::channel();
     let spawned = std::thread::Builder::new()
-        .name("hex-screenshot-narration".into())
+        .name("voinc-screenshot-narration".into())
         .spawn(move || {
             let words = match printed.recv_timeout(crate::control::PRINT_WAIT) {
                 Ok(PrintedTranscript::Text(words)) => Some(words),
@@ -69,7 +69,7 @@ pub(crate) fn claim() -> Option<PrintReply> {
     }
 }
 
-/// The editor's microphone and Escape, through the listener as `hex
+/// The editor's microphone and Escape, through the listener as `voinc
 /// dictation` goes, so the shortcut and the chip finish each other's.
 pub(crate) fn talk(talk: Talk) {
     let Some(runtime) = crate::macos_rune::runtime() else {

@@ -1,12 +1,12 @@
 //! The clipboard a Linux paste puts back afterwards: every format of the
 //! CLIPBOARD selection, read within a size cap and deadline, then served
-//! again from Hex until another client takes the clipboard. Wayland reads
+//! again from Voinc until another client takes the clipboard. Wayland reads
 //! and serves through ext-data-control or wlr-data-control. X11 uses its own selection owner,
 //! because `x11-clipboard` serves a single target. A Wayland desktop with
 //! neither protocol (GNOME's Mutter) restores nothing unless Labs › Restore
 //! clipboard on GNOME is on and XWayland already runs: then the paste reads
 //! and restores the CLIPBOARD selection through XWayland, which Mutter
-//! bridges to Wayland apps both ways (#1111). Hex never starts XWayland.
+//! bridges to Wayland apps both ways (#1111). Voinc never starts XWayland.
 
 use std::io::{ErrorKind, Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
@@ -105,7 +105,7 @@ impl Selection {
         }
     }
 
-    /// Whether the clipboard still holds what Hex pasted: the same bytes on
+    /// Whether the clipboard still holds what Voinc pasted: the same bytes on
     /// Wayland, the paste's own selection owner on X11.
     pub(crate) fn holds(self, mime: &str, bytes: &[u8]) -> bool {
         match self {
@@ -184,7 +184,7 @@ fn too_large() -> color_eyre::eyre::Report {
 /// The clipboard's text through `wl-paste`, for a Wayland compositor without
 /// data-control (GNOME). `wl-paste` comes with the `wl-copy` every Wayland
 /// paste already needs. Its windowless client can briefly take focus on
-/// GNOME, which is why Hex reads through data-control wherever it exists.
+/// GNOME, which is why Voinc reads through data-control wherever it exists.
 /// `--type text` keeps a binary clipboard from being read as text.
 fn wl_paste_text() -> Result<Option<String>> {
     let mut child = Command::new("wl-paste")
@@ -307,7 +307,7 @@ fn write_bounded(fd: OwnedFd, data: &[u8], deadline: Instant) -> Result<()> {
 /// The Wayland snapshot and restore over a data-control protocol whose
 /// manager, device, offer, and source modules the caller imports as
 /// `manager`, `device`, `offer`, and `source`: wlroots' and the standard
-/// `ext` one share every request and event Hex uses.
+/// `ext` one share every request and event Voinc uses.
 macro_rules! data_control {
     ($name:literal) => {
         use std::collections::HashMap;
@@ -451,7 +451,7 @@ macro_rules! data_control {
             session.state.served = formats;
             session.queue.roundtrip(&mut session.state)?;
             thread::Builder::new()
-                .name("hex-clipboard-restore".into())
+                .name("voinc-clipboard-restore".into())
                 .spawn(move || {
                     while !session.state.done {
                         if session.queue.blocking_dispatch(&mut session.state).is_err() {
@@ -685,7 +685,7 @@ mod x11 {
             SAVE_TARGETS,
             DELETE,
             INCR,
-            HEX_CLIPBOARD,
+            VOINC_CLIPBOARD,
         }
     }
 
@@ -864,7 +864,7 @@ mod x11 {
         budget: usize,
         deadline: Instant,
     ) -> Result<Option<X11Format>> {
-        let property = atoms.HEX_CLIPBOARD;
+        let property = atoms.VOINC_CLIPBOARD;
         connection.delete_property(window, property)?;
         connection.convert_selection(window, atoms.CLIPBOARD, target, property, CURRENT_TIME)?;
         connection.flush()?;
@@ -949,7 +949,7 @@ mod x11 {
             return Err(eyre!("could not own the X11 clipboard"));
         }
         thread::Builder::new()
-            .name("hex-clipboard-restore".into())
+            .name("voinc-clipboard-restore".into())
             .spawn(move || serve_until_cleared(&connection, &atoms, window, &formats))?;
         Ok(())
     }

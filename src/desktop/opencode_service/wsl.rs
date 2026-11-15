@@ -78,7 +78,7 @@ pub(super) struct WslHome {
     /// `/etc/wsl.conf`'s `[automount]`, read once when the home was looked
     /// up, so naming a capture folder never reads over UNC again.
     automount: Automount,
-    /// Set once Hex's workspace was created through `unc`; clones share it,
+    /// Set once Voinc's workspace was created through `unc`; clones share it,
     /// so one success is remembered by every request.
     workspace_ready: Arc<AtomicBool>,
 }
@@ -130,12 +130,12 @@ impl WslHome {
         self.unc.join(".local").join("state").join("opencode")
     }
 
-    /// Hex's workspace in the same home, through Windows.
+    /// Voinc's workspace in the same home, through Windows.
     fn unc_workspace(&self) -> PathBuf {
         self.unc
             .join(".local")
             .join("share")
-            .join("hex")
+            .join("voinc")
             .join("opencode")
     }
 
@@ -145,9 +145,9 @@ impl WslHome {
         self.workspace_ready.store(false, Ordering::Release);
     }
 
-    /// Hex's workspace as the service in WSL sees it.
+    /// Voinc's workspace as the service in WSL sees it.
     fn linux_workspace(&self) -> String {
-        format!("{}/.local/share/hex/opencode", self.linux)
+        format!("{}/.local/share/voinc/opencode", self.linux)
     }
 
     /// `host` as a server in this distribution sees it, using the
@@ -546,7 +546,7 @@ fn run_shared_lookup(
     if spawn {
         let helper = Arc::clone(&pending);
         let spawned = std::thread::Builder::new()
-            .name("hex-wsl-opencode".into())
+            .name("voinc-wsl-opencode".into())
             .spawn(move || {
                 let _clear = ClearOnDrop(&helper);
                 let started = Instant::now();
@@ -753,7 +753,7 @@ mod tests {
         assert_eq!(trimmed.linux, "/home/dax");
         assert_eq!(
             localhost.linux_workspace(),
-            "/home/dax/.local/share/hex/opencode"
+            "/home/dax/.local/share/voinc/opencode"
         );
     }
 
@@ -789,20 +789,20 @@ mod tests {
 
     #[test]
     fn the_workspace_is_created_somewhere_windows_can_write_it() {
-        let root = std::env::temp_dir().join(format!("hex-wsl-workspace-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("voinc-wsl-workspace-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let home = WslHome::for_test(root.join("home"), "/home/dax");
         assert_eq!(home.state_dir(), root.join("home/.local/state/opencode"));
-        let workspace = root.join("home/.local/share/hex/opencode");
+        let workspace = root.join("home/.local/share/voinc/opencode");
         assert_eq!(
             home.workspace().unwrap(),
-            "/home/dax/.local/share/hex/opencode"
+            "/home/dax/.local/share/voinc/opencode"
         );
         assert!(workspace.is_dir());
         fs::remove_dir_all(&workspace).unwrap();
         assert_eq!(
             home.workspace().unwrap(),
-            "/home/dax/.local/share/hex/opencode"
+            "/home/dax/.local/share/voinc/opencode"
         );
         assert!(
             !workspace.exists(),
@@ -1144,7 +1144,7 @@ mod tests {
     #[test]
     fn a_capture_folder_follows_the_automount_read_with_the_home() {
         let root = std::env::temp_dir().join(format!(
-            "hex-wsl-directory-{}-{:?}",
+            "voinc-wsl-directory-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));

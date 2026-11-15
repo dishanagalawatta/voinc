@@ -2,9 +2,9 @@
   "capture": "scrawl-1792476731395-8c0.scrawl",
   "savedDecision": "send CANVAS",
   "page": {
-    "url": "https://studio.example.ts.net:8444/raw/2026-10-19-hex-shout2/index.html",
+    "url": "https://studio.example.ts.net:8444/raw/2026-10-19-voinc-shout2/index.html",
     "served": "https://studio.example.ts.net:8444/raw/",
-    "file": "2026-10-19-hex-shout2/index.html",
+    "file": "2026-10-19-voinc-shout2/index.html",
     "modifiedMs": 1792476552399,
     "writes": [
       {
@@ -109,7 +109,7 @@
       "mode": "display",
       "app": "Brave Browser",
       "bundleId": "com.brave.Browser",
-      "windowTitle": "Hex hero · Shout v2",
+      "windowTitle": "Voinc hero · Shout v2",
       "displayId": 3,
       "frame": {
         "x": 0.0,
@@ -346,12 +346,12 @@
         "pointer": {
           "kind": "words",
           "words": [
-            "hex",
+            "voinc",
             "hero",
             "shout"
           ]
         },
-        "note": "window title \"Hex hero · Shout v2\""
+        "note": "window title \"Voinc hero · Shout v2\""
       },
       {
         "source": "speech",
@@ -389,9 +389,9 @@
       },
       {
         "id": "ses_000000000023Fixture0000035",
-        "title": "HEX",
-        "directory": "/Users/example/code/open-source/hex",
-        "repo": "/Users/example/code/open-source/hex",
+        "title": "VOINC",
+        "directory": "/Users/example/code/open-source/voinc",
+        "repo": "/Users/example/code/open-source/voinc",
         "updatedMs": 1792476689995,
         "viewedMs": 1792474513485
       },

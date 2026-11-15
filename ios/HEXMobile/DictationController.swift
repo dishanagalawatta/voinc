@@ -729,7 +729,7 @@ final class DictationController {
             }
 
             let captureURL = fileManager.temporaryDirectory
-                .appendingPathComponent("hex-dictation-\(captureGeneration)-\(UUID().uuidString)")
+                .appendingPathComponent("voinc-dictation-\(captureGeneration)-\(UUID().uuidString)")
                 .appendingPathExtension("wav")
 
             do {

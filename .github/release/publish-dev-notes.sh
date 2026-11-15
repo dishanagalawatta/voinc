@@ -44,7 +44,7 @@ jq -e --arg version "$version" --arg commit "$commit" '
       (keys == ["title", "url"])
       and (.title | text(200))
       and (.url | type == "string"
-        and test("^https://github\\.com/anomalyco/hex/(pull/[0-9]{1,7}|commit/[0-9a-f]{40})$"))))
+        and test("^https://github\\.com/dishanagalawatta/voinc/(pull/[0-9]{1,7}|commit/[0-9a-f]{40})$"))))
 ' "$canonical" > /dev/null || die "The dev notes are not the expected shape for $version ($commit)."
 
 # Replace the branch with one commit that has no parent, so the repository

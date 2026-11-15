@@ -1,7 +1,7 @@
-//! The Output pane (the `modes` experiment): what Hex does to every
+//! The Output pane (the `modes` experiment): what Voinc does to every
 //! dictation before it pastes it, and what some apps use instead, read from
 //! `dictation_processing`. The pane only shows the steps; the person's agent
-//! changes them through `hex settings`, so the pane leads with Edit with
+//! changes them through `voinc settings`, so the pane leads with Edit with
 //! agent, which copies a prompt saying where the steps live and what each
 //! can be.
 
@@ -80,7 +80,7 @@ pub(super) fn poll(ui: &mut Ui, clock: f64, tx: &mut Tx) -> bool {
     changed
 }
 
-/// What runs a step: Hex itself, a script from the person's config, or
+/// What runs a step: Voinc itself, a script from the person's config, or
 /// OpenCode rewriting.
 #[derive(Clone, Copy, PartialEq)]
 enum Runner {
@@ -296,7 +296,7 @@ fn trust_card(ui: &Ui, p: Paint) -> Option<El> {
         ));
     }
     lines.push(
-        tr("Hex asks again whenever the config changes. Until you allow it, they paste your words unchanged")
+        tr("Voinc asks again whenever the config changes. Until you allow it, they paste your words unchanged")
             .into(),
     );
     let hash = permissions.hash.clone();
@@ -349,7 +349,7 @@ fn every_dictation(ui: &Ui, p: Paint, mode: &DictationMode) -> El {
         vec![
             note(
                 "no-steps",
-                tr("No steps yet. Hex pastes your words as it heard them"),
+                tr("No steps yet. Voinc pastes your words as it heard them"),
                 p.muted(),
             )
             .into(),
@@ -385,7 +385,7 @@ fn without_processing(ui: &Ui, p: Paint) -> El {
             &MIC,
             tr("Dictate without processing"),
             ShortcutTarget::RawDictation,
-            Some(tr("Pastes your words as Hex heard them")),
+            Some(tr("Pastes your words as Voinc heard them")),
         ),
     )
 }
@@ -480,7 +480,7 @@ fn typed_text(ui: &Ui, p: Paint) -> El {
     )
 }
 
-/// A sentence in, and what Hex would paste for it out.
+/// A sentence in, and what Voinc would paste for it out.
 fn try_card(ui: &Ui, p: Paint, mode: &DictationMode) -> El {
     let c = &p.k.c;
     let input = TextInput::new(&ui.output.trial)
@@ -491,7 +491,7 @@ fn try_card(ui: &Ui, p: Paint, mode: &DictationMode) -> El {
         .key("try-input");
     let trial = ui.output.trial.text.trim();
     let (result, ink) = if trial.is_empty() {
-        (tr("What Hex pastes").to_string(), p.faint())
+        (tr("What Voinc pastes").to_string(), p.faint())
     } else {
         (preview(mode, trial), p.text())
     };
@@ -541,7 +541,7 @@ fn try_card(ui: &Ui, p: Paint, mode: &DictationMode) -> El {
 
 /// Labs › Fix results in Output: Vocabulary opens the shared vocabulary
 /// sheet, and Fix this (once there is a sentence) copies Edit with agent's
-/// prompt ending with the sentence and what Hex pastes for it.
+/// prompt ending with the sentence and what Voinc pastes for it.
 fn fix_row(ui: &Ui, p: Paint, trial: &str) -> El {
     let vocabulary = Button::new(tr("Vocabulary"))
         .variant(ButtonVariant::Ghost)
@@ -614,7 +614,7 @@ fn app_row(ui: &Ui, p: Paint, index: usize, mode: &DictationMode, steps: &[Step]
         places.join(", ")
     };
     let summary = if steps.is_empty() {
-        tr("Pastes your words as Hex heard them").to_string()
+        tr("Pastes your words as Voinc heard them").to_string()
     } else {
         tr_fill(
             "Only: {}",
@@ -711,7 +711,7 @@ fn allow_config(ui: &mut Ui, hash: &str) {
     ui.modes.approved = Some(hash.into());
 }
 
-/// Fix this: copies the agent prompt naming the Try sentence and what Hex
+/// Fix this: copies the agent prompt naming the Try sentence and what Voinc
 /// pastes for it (Labs › Fix results in Output).
 fn fix_this(ui: &mut Ui, tx: &mut Tx) {
     if !ui.settings.labs.output_fixes {
@@ -728,22 +728,22 @@ fn fix_this(ui: &mut Ui, tx: &mut Tx) {
 }
 
 /// What Edit with agent copies: where the steps live, their shape, the
-/// built-in ones, and how to change them while Hex runs, so any coding
-/// agent can do it. With `fix`, a sentence and what Hex pastes for it,
+/// built-in ones, and how to change them while Voinc runs, so any coding
+/// agent can do it. With `fix`, a sentence and what Voinc pastes for it,
 /// it ends asking for the right result.
 fn agent_prompt(fix: Option<(&str, &str)>) -> String {
     let want = match fix {
         Some((said, pasted)) => {
-            format!("When I say \"{said}\", Hex pastes \"{pasted}\". It should paste: ")
+            format!("When I say \"{said}\", Voinc pastes \"{pasted}\". It should paste: ")
         }
         None => String::new(),
     };
     let path = crate::app_settings::path().map_or_else(
-        |_| "Hex's settings.json".into(),
+        |_| "Voinc's settings.json".into(),
         |path| path.display().to_string(),
     );
     format!(
-        "I use Hex for dictation. Change what it does to my words before it pastes them.\n\
+        "I use Voinc for dictation. Change what it does to my words before it pastes them.\n\
          \n\
          The steps live in {path} under `dictation_processing`:\n\
          - `default_mode` runs on every dictation, in this order: `replacements` (a \
@@ -756,28 +756,28 @@ fn agent_prompt(fix: Option<(&str, &str)>) -> String {
          \n\
          `post_processing` rewrites the text with a model through OpenCode: \
          {{\"enabled\": true, \"prompt\": \"<how to rewrite>\", \"model\": \
-         \"<provider/model>\", \"deadline_seconds\": 30}}. Leave `model` out and Hex \
+         \"<provider/model>\", \"deadline_seconds\": 30}}. Leave `model` out and Voinc \
          picks a fast one you have connected; set it only if I ask for a particular \
          model (`opencode2 models` lists them). \
-         If the rewrite fails or runs past the deadline, Hex pastes the text without it.\n\
+         If the rewrite fails or runs past the deadline, Voinc pastes the text without it.\n\
          \n\
          Built-in transformations: \"lowercase\", \"no-trailing-punctuation\", \
-         \"spongebob-case\". Others are functions in ~/.config/hex/hex.config.ts \
-         (run `hex commands init` for its typings; the API, including fetch and \
+         \"spongebob-case\". Others are functions in ~/.config/voinc/voinc.config.ts \
+         (run `voinc commands init` for its typings; the API, including fetch and \
          node:child_process, is documented at {TRANSFORMS_DOCS}).\n\
          \n\
-         Names Hex should know (people, products, projects) go in a vocabulary, not in \
-         replacements. Hex hears them better and the AI rewrite spells them right. The \
-         shared list covers every app: `hex vocabulary add <term> --sounds-like a,b` \
+         Names Voinc should know (people, products, projects) go in a vocabulary, not in \
+         replacements. Voinc hears them better and the AI rewrite spells them right. The \
+         shared list covers every app: `voinc vocabulary add <term> --sounds-like a,b` \
          (and `list`, `remove`). A mode can add its own in `vocabulary`, a list of \
          terms (\"Rune\") or {{\"term\", \"sounds_like\": [...]}} for words it's often \
          heard as. Use replacements for fixed swaps and deletions, such as a word to an \
          emoji or dropping \"um\".\n\
          \n\
-         Read the current value with `hex settings get dictation_processing`, then \
-         change it with `hex settings set dictation_processing.default_mode '<json>'` \
-         (or `dictation_processing.modes`), which Hex applies at once. Don't edit the \
-         file while Hex runs.\n\
+         Read the current value with `voinc settings get dictation_processing`, then \
+         change it with `voinc settings set dictation_processing.default_mode '<json>'` \
+         (or `dictation_processing.modes`), which Voinc applies at once. Don't edit the \
+         file while Voinc runs.\n\
          \n\
          What I want: {want}"
     )
@@ -799,7 +799,7 @@ pub(super) fn fixture(ui: &mut Ui) {
     let global = &mut ui.settings.dictation_processing.default_mode;
     global.replacements = vec![
         pair("open code", "OpenCode"),
-        pair("hex app", "Hex"),
+        pair("voinc app", "Voinc"),
         pair("um", ""),
     ];
     global.transformations = vec![
@@ -817,7 +817,7 @@ pub(super) fn fixture(ui: &mut Ui) {
     modes[0].transformations = vec!["smart-punctuation".into()];
     modes[1].applications = vec!["WezTerm".into(), "Zed".into()];
     modes[1].replacements = vec![pair("dash dash", "--")];
-    ui.output.trial = TextEdit::new("Um, open code shipped the hex app today.".to_string());
+    ui.output.trial = TextEdit::new("Um, open code shipped the voinc app today.".to_string());
 }
 
 /// The fixture with a config asking to fetch and run programs.
@@ -862,7 +862,7 @@ mod tests {
         let fix = agent_prompt(Some(("open code shipped", "opencode shipped")));
         assert!(fix.starts_with(plain.as_str()));
         assert!(fix.ends_with(
-            "What I want: When I say \"open code shipped\", Hex pastes \"opencode shipped\". It should paste: "
+            "What I want: When I say \"open code shipped\", Voinc pastes \"opencode shipped\". It should paste: "
         ));
     }
 }

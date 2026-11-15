@@ -1,8 +1,8 @@
 //! The download pill and the inline language capsule button.
 //!
 //! [`pill`] carries [`PILL`] as a shared element, so the centerpiece loader on
-//! `"Setting up Hex"` flies smoothly up to the top bar during the demo and
-//! permissions, then back to centre stage for `"Hex is ready"`.
+//! `"Setting up Voinc"` flies smoothly up to the top bar during the demo and
+//! permissions, then back to centre stage for `"Voinc is ready"`.
 
 use crate::desktop::i18n::{tr, tr_named};
 use rune::{Align, El, Spring, Transition, el, icon, row, text};
@@ -16,7 +16,7 @@ use super::stories::{Flow, Onboard, Step};
 
 /// Shared-element id carried by the thin single-hexagon mark from the top-bar
 /// pill to the Ready landing.
-pub(crate) const PILL: &str = "hex-mark";
+pub(crate) const PILL: &str = "voinc-mark";
 /// Shared-element id of the download capsule itself, so the centred progress
 /// capsule and the top-bar pill are one shape that moves and widens.
 pub(crate) const CAPSULE: &str = "download-capsule";

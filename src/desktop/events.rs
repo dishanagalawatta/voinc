@@ -119,7 +119,7 @@ pub enum DictationPhase {
     /// The paste shortcut was sent. No platform confirms that the focused
     /// application accepted it, so this does not prove the text landed.
     Pasted,
-    /// `hex dictation stop --print` received the text instead of a paste.
+    /// `voinc dictation stop --print` received the text instead of a paste.
     Printed,
     Edited,
     VoiceAction,
@@ -355,7 +355,7 @@ impl EventLog {
 impl VoiceEvent {
     /// The event as it is written: what was said stays out of the log. The
     /// log is a plain file kept for diagnosis, never trimmed by History's
-    /// retention or Clear all, and `hex logs` prints it, so dictated words
+    /// retention or Clear all, and `voinc logs` prints it, so dictated words
     /// live only in History.
     fn without_words(&self) -> Self {
         let mut event = self.clone();
@@ -685,7 +685,7 @@ mod tests {
     #[test]
     fn reopening_log_preserves_existing_events() {
         let path = std::env::temp_dir().join(format!(
-            "hex-events-{}-{}.ndjson",
+            "voinc-events-{}-{}.ndjson",
             std::process::id(),
             now_ms()
         ));
@@ -704,7 +704,7 @@ mod tests {
     #[test]
     fn reader_tails_complete_records_and_resets_at_session_boundaries() {
         let path = std::env::temp_dir().join(format!(
-            "hex-event-reader-{}-{}.ndjson",
+            "voinc-event-reader-{}-{}.ndjson",
             std::process::id(),
             now_ms()
         ));
@@ -746,7 +746,7 @@ mod tests {
     fn the_log_is_private() {
         use std::os::unix::fs::PermissionsExt;
         let directory = std::env::temp_dir().join(format!(
-            "hex-private-log-{}-{}",
+            "voinc-private-log-{}-{}",
             std::process::id(),
             now_ms()
         ));
@@ -768,7 +768,7 @@ mod tests {
     #[test]
     fn the_log_never_keeps_what_was_said() {
         let path = std::env::temp_dir().join(format!(
-            "hex-no-words-{}-{}.ndjson",
+            "voinc-no-words-{}-{}.ndjson",
             std::process::id(),
             now_ms()
         ));
@@ -794,7 +794,7 @@ mod tests {
     #[test]
     fn a_bounded_flush_writes_every_queued_event() {
         let path = std::env::temp_dir().join(format!(
-            "hex-bounded-flush-{}-{}.ndjson",
+            "voinc-bounded-flush-{}-{}.ndjson",
             std::process::id(),
             now_ms()
         ));
@@ -811,7 +811,7 @@ mod tests {
     #[test]
     fn reader_streams_large_logs_and_keeps_context_outside_the_retained_rows() {
         let path = std::env::temp_dir().join(format!(
-            "hex-large-event-reader-{}-{}.ndjson",
+            "voinc-large-event-reader-{}-{}.ndjson",
             std::process::id(),
             now_ms()
         ));
@@ -851,7 +851,7 @@ mod tests {
     #[test]
     fn reader_skips_oversized_records_through_their_newline_and_recovers() {
         let path = std::env::temp_dir().join(format!(
-            "hex-oversized-event-reader-{}-{}.ndjson",
+            "voinc-oversized-event-reader-{}-{}.ndjson",
             std::process::id(),
             now_ms()
         ));
@@ -885,7 +885,7 @@ mod tests {
     #[cfg_attr(windows, ignore = "replacement detection uses Unix file identity")]
     fn reader_resets_partial_record_state_on_truncation_and_replacement() {
         let path = std::env::temp_dir().join(format!(
-            "hex-replaced-event-reader-{}-{}.ndjson",
+            "voinc-replaced-event-reader-{}-{}.ndjson",
             std::process::id(),
             now_ms()
         ));

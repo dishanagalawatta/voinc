@@ -1,5 +1,5 @@
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 @MainActor
 final class KeyboardBridgeTests: XCTestCase {
@@ -75,14 +75,14 @@ final class KeyboardBridgeTests: XCTestCase {
 
     func testKeyboardSetupLaunchRoundTripsWithoutAHandoff() {
         let request = KeyboardLaunchRequest.setup
-        XCTAssertEqual(request.url.absoluteString, "hex-dictation://keyboard/setup")
+        XCTAssertEqual(request.url.absoluteString, "voinc-dictation://keyboard/setup")
         XCTAssertEqual(KeyboardLaunchRequest(url: request.url), request)
         XCTAssertFalse(request.isHandoffExpired(at: 1_000_000))
     }
 
     @MainActor
     func testFullAccessSeenAtIsStoredInTheAppGroup() {
-        let suiteName = "hex.tests.fullAccess.\(UUID().uuidString)"
+        let suiteName = "voinc.tests.fullAccess.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let bridge = KeyboardBridge(defaults: defaults)
@@ -93,7 +93,7 @@ final class KeyboardBridgeTests: XCTestCase {
     }
 
     func testKeyboardRecordingLaunchRequiresAJob() {
-        let url = URL(string: "hex-dictation://keyboard/record")!
+        let url = URL(string: "voinc-dictation://keyboard/record")!
         XCTAssertNil(KeyboardLaunchRequest(url: url))
     }
 
@@ -146,7 +146,7 @@ final class KeyboardBridgeTests: XCTestCase {
             String(localized: CancelHexDictationIntent.description.descriptionText),
         ]
 
-        // Read user-facing strings from compiled Metadata.appintents inside HEX.app and HEXWidgets.appex,
+        // Read user-facing strings from compiled Metadata.appintents inside VOINC.app and HEXWidgets.appex,
         // plus source literals when #filePath is not CAS prefix-mapped (/^wt).
         let userKeys: Set<String> = ["title", "shortTitle", "description", "key", "phrases", "basePhrases", "template"]
         func collectUserStrings(_ node: Any) {

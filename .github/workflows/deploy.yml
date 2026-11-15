@@ -1,7 +1,7 @@
 name: Deploy
 
-# Builds site/ and deploys its Worker (the site at /hex and the files at
-# /hex/files: built installers and appcast, the dev notes, and the frozen
+# Builds site/ and deploys its Worker (the site at /voinc and the files at
+# /voinc/files: built installers and appcast, the dev notes, and the frozen
 # 2.3.1 bucket). Pull requests run no site check (CI is minimal; the deploy
 # builds the site and checks every download link). A push (or a dispatch) on
 # dev deploys the dev site (https://dev.anoma.ly/hex); on production, which
@@ -15,7 +15,7 @@ name: Deploy
 # - deploy runs in the mode's infra environment (infra-dev or
 #   infra-production, each admitting only its own branch) and mints a
 #   short-lived Cloudflare token for that mode's Worker from the token issuer
-#   after assuming the environment's role, github/hex-infra-<mode>
+#   after assuming the environment's role, github/voinc-infra-<mode>
 #   (.github/release/cloudflare-token.sh). The AWS session is a step output
 #   given only to the token step, and the token only to the Deploy step. It
 #   checks out only .github/release/, verifies the artifact against that
@@ -134,8 +134,8 @@ jobs:
         name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          role-to-assume: arn:aws:iam::604439173067:role/github/hex-infra-${{ env.MODE }}
-          role-session-name: hex-${{ github.run_id }}
+          role-to-assume: arn:aws:iam::604439173067:role/github/voinc-infra-${{ env.MODE }}
+          role-session-name: voinc-${{ github.run_id }}
           role-duration-seconds: 900
           aws-region: us-east-1
           output-env-credentials: false
@@ -173,7 +173,7 @@ jobs:
         run: |
           host=$([ "$MODE" = dev ] && echo dev.anoma.ly || echo anoma.ly)
           for attempt in 1 2 3 4 5 6; do
-            status=$(curl --silent --output /dev/null --write-out '%{http_code}' "https://$host/hex/")
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' "https://$host/voinc/")
             [ "$status" = 200 ] && break
             sleep 10
           done
@@ -184,7 +184,7 @@ jobs:
         run: |
           host=$([ "$MODE" = dev ] && echo dev.anoma.ly || echo anoma.ly)
           for name in install-linux.sh install-windows.ps1 appcast.xml; do
-            curl -fsS "https://$host/hex/files/$name?check=$GITHUB_RUN_ID" -o "$RUNNER_TEMP/$name"
+            curl -fsS "https://$host/voinc/files/$name?check=$GITHUB_RUN_ID" -o "$RUNNER_TEMP/$name"
           done
           cmp "$RUNNER_TEMP/install-linux.sh" ../.github/release/install-linux.sh
           cmp "$RUNNER_TEMP/install-windows.ps1" ../.github/release/install-windows.ps1

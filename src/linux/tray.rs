@@ -1,7 +1,7 @@
 //! The Linux tray icon, a Rune tray (StatusNotifierItem). A click shows the
 //! window; the menu is the one `tray_menu` builds for Linux and Windows. A
 //! desktop without a tray host (GNOME without an extension, i3bar) shows
-//! nothing, and Hex runs on as before.
+//! nothing, and Voinc runs on as before.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -38,7 +38,7 @@ pub(crate) fn start(
         tray_icon::SIZE,
         tray_icon::pixels(desktop_prefers_light()),
     );
-    let spec = rune::TraySpec::new("hex", "Hex", icon)
+    let spec = rune::TraySpec::new("voinc", "Voinc", icon)
         .tooltip(view.tooltip())
         .menu(view.menu());
     let show = move |token| {
@@ -52,14 +52,14 @@ pub(crate) fn start(
         rune::TrayEvent::Activate { token } => show(token),
         rune::TrayEvent::Menu(id) => match TrayCommand::from_id(&id) {
             Some(TrayCommand::Show) => show(None),
-            // As the window's Quit Hex: drains accepted work, then exits.
+            // As the window's Quit Voinc: drains accepted work, then exits.
             Some(TrayCommand::Quit) => shutdown.store(true, Ordering::Release),
             Some(command) => perform(&host, &published, command),
             None => {}
         },
         _ => {}
     });
-    tray.inspect_err(|error| tracing::warn!(%error, "Hex has no tray icon"))
+    tray.inspect_err(|error| tracing::warn!(%error, "Voinc has no tray icon"))
         .ok()
 }
 

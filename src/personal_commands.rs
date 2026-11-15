@@ -1,4 +1,4 @@
-//! Custom transformations from the user's `hex.config.ts` (or `hex.config.js`),
+//! Custom transformations from the user's `voinc.config.ts` (or `voinc.config.js`),
 //! run in-process by embedded QuickJS ([`script`]) on one worker thread. The
 //! worker loads the config, reloads it when the config folder changes (keeping
 //! the last good registration when a reload fails), and answers transformation
@@ -32,11 +32,11 @@ use io::Capabilities;
 use script::Script;
 pub use trust::Permissions;
 
-/// The config file names Hex looks for, in the config folder.
-const CONFIG_FILES: [&str; 2] = ["hex.config.ts", "hex.config.js"];
-/// Files Hex owns in the config folder and rewrites when they differ.
+/// The config file names Voinc looks for, in the config folder.
+const CONFIG_FILES: [&str; 2] = ["voinc.config.ts", "voinc.config.js"];
+/// Files Voinc owns in the config folder and rewrites when they differ.
 const MANAGED_FILES: [(&str, &str); 2] = [
-    ("hex.d.ts", include_str!("personal_commands/hex.d.ts")),
+    ("voinc.d.ts", include_str!("personal_commands/voinc.d.ts")),
     ("AGENTS.md", include_str!("personal_commands/AGENTS.md")),
 ];
 /// Starting points written only where the user has none.
@@ -44,7 +44,7 @@ const TEMPLATE_FILES: [(&str, &str); 1] = [(
     "tsconfig.json",
     include_str!("personal_commands/tsconfig.json"),
 )];
-const TEMPLATE_CONFIG: &str = include_str!("personal_commands/hex.config.ts");
+const TEMPLATE_CONFIG: &str = include_str!("personal_commands/voinc.config.ts");
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
 const RELOAD_DEBOUNCE: Duration = Duration::from_millis(350);
 const MAX_REGISTRATION_BYTES: usize = 256 * 1024;
@@ -286,15 +286,15 @@ pub fn workspace_configured() -> bool {
         .is_ok_and(|workspace| matches!(find_config(&workspace), Ok(Some(_)) | Err(_)))
 }
 
-/// Creates the config folder with Hex's typings and agent notes, and a
-/// starter `hex.config.ts` unless a config already exists.
+/// Creates the config folder with Voinc's typings and agent notes, and a
+/// starter `voinc.config.ts` unless a config already exists.
 pub fn initialize_workspace() -> Result<PathBuf> {
     let workspace = crate::app_paths::personal_commands_workspace()?;
     initialize_workspace_at(&workspace)?;
     Ok(workspace)
 }
 
-/// Loads `~/.config/hex`'s config as Hex does and summarizes its transformations.
+/// Loads `~/.config/voinc`'s config as Voinc does and summarizes its transformations.
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub fn check_workspace() -> Result<String> {
     let workspace = crate::app_paths::personal_commands_workspace()?;
@@ -310,7 +310,7 @@ fn check_workspace_at(workspace: &Path) -> Result<String> {
         .spawn(move || {
             let Some(config) = find_config(&workspace)? else {
                 return Err(eyre!(
-                    "no hex.config.ts or hex.config.js in {}",
+                    "no voinc.config.ts or voinc.config.js in {}",
                     workspace.display()
                 ));
             };
@@ -352,7 +352,7 @@ fn initialize_workspace_at(workspace: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Writes the typings and agent notes this build of Hex ships, where they
+/// Writes the typings and agent notes this build of Voinc ships, where they
 /// differ, so an existing folder follows app updates.
 fn refresh_managed_files(workspace: &Path) -> Result<()> {
     for (name, contents) in MANAGED_FILES {
@@ -1263,8 +1263,8 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let root = std::env::temp_dir().join(format!("hex-watch-{unique}"));
-        let outside = std::env::temp_dir().join(format!("hex-watch-outside-{unique}.ts"));
+        let root = std::env::temp_dir().join(format!("voinc-watch-{unique}"));
+        let outside = std::env::temp_dir().join(format!("voinc-watch-outside-{unique}.ts"));
         fs::create_dir_all(&root).unwrap();
         fs::write(&outside, "first").unwrap();
         std::os::unix::fs::symlink(&outside, root.join("linked.ts")).unwrap();
@@ -1290,7 +1290,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let root = std::env::temp_dir().join(format!("hex-status-{unique}"));
+        let root = std::env::temp_dir().join(format!("voinc-status-{unique}"));
         let path = root.join("personal-commands.json");
         let status = StatusSnapshot {
             active_generation: Some(4),
@@ -1331,10 +1331,10 @@ mod tests {
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos();
-            let root = std::env::temp_dir().join(format!("hex-scripts-{unique}"));
-            let workspace = root.join("hex");
+            let root = std::env::temp_dir().join(format!("voinc-scripts-{unique}"));
+            let workspace = root.join("voinc");
             fs::create_dir_all(&workspace).unwrap();
-            fs::write(workspace.join("hex.config.ts"), config).unwrap();
+            fs::write(workspace.join("voinc.config.ts"), config).unwrap();
             let (requests, request_receiver) = mpsc::sync_channel(4);
             let mut worker = Worker {
                 transformations: Arc::new(TransformationClient::default()),
@@ -1355,7 +1355,7 @@ mod tests {
         }
 
         fn write(&mut self, config: &str) {
-            fs::write(self.worker.workspace.join("hex.config.ts"), config).unwrap();
+            fs::write(self.worker.workspace.join("voinc.config.ts"), config).unwrap();
             self.worker.reload();
         }
 
@@ -1428,7 +1428,7 @@ mod tests {
     #[test]
     fn legacy_configs_with_commands_still_load_transformations() {
         let harness = Harness::new(
-            r#"import { choice, defineHexConfig, digit, letter, openUrl, union } from "@hex/commands"
+            r#"import { choice, defineHexConfig, digit, letter, openUrl, union } from "@voinc/commands"
 export default defineHexConfig({
   transformations: {
     exclaim: { name: "Exclaim", transform: (text) => `${text}!` },
@@ -1441,7 +1441,7 @@ export default defineHexConfig({
     "control-key": {
       phrases: ["control {key}"],
       captures: { key: union(letter(), digit(), choice(["home", "end"] as const)) },
-      run: ({ hex, captures }) => hex.press({ key: String(captures.key), modifiers: ["control"] }),
+      run: ({ voinc, captures }) => voinc.press({ key: String(captures.key), modifiers: ["control"] }),
     },
   },
 })
@@ -1459,7 +1459,7 @@ export default defineHexConfig({
     #[test]
     fn transformations_chain_with_built_ins_and_failures_keep_nothing() {
         let harness = Harness::new(
-            r#"import { defineHexConfig } from "@hex/commands"
+            r#"import { defineHexConfig } from "@voinc/commands"
 export default defineHexConfig({
   transformations: {
     exclaim: { name: "Exclaim", transform: (text: string): string => `${text}!` },
@@ -1541,7 +1541,7 @@ export default defineHexConfig({
         assert!(
             harness
                 .error()
-                .contains("SyntaxError: hex.config.ts:2:1: TypeScript enums"),
+                .contains("SyntaxError: voinc.config.ts:2:1: TypeScript enums"),
             "{}",
             harness.error()
         );
@@ -1556,14 +1556,14 @@ export default defineHexConfig({
             harness.error()
         );
         assert!(
-            harness.error().contains("hex.config.ts:3:"),
+            harness.error().contains("voinc.config.ts:3:"),
             "{}",
             harness.error()
         );
 
-        fs::remove_file(harness.worker.workspace.join("hex.config.ts")).unwrap();
+        fs::remove_file(harness.worker.workspace.join("voinc.config.ts")).unwrap();
         fs::write(
-            harness.worker.workspace.join("hex.config.js"),
+            harness.worker.workspace.join("voinc.config.js"),
             "export default {\n  transformations: {\n    a: { name: \"x\" transform: (t) => t },\n  },\n}\n",
         )
         .unwrap();
@@ -1574,11 +1574,11 @@ export default defineHexConfig({
             harness.error()
         );
         assert!(
-            harness.error().contains("hex.config.js:3:"),
+            harness.error().contains("voinc.config.js:3:"),
             "{}",
             harness.error()
         );
-        fs::remove_file(harness.worker.workspace.join("hex.config.js")).unwrap();
+        fs::remove_file(harness.worker.workspace.join("voinc.config.js")).unwrap();
 
         harness.write("throw new Error(\"top level\")\nexport default {}\n");
         assert!(
@@ -1593,7 +1593,7 @@ export default defineHexConfig({
         assert!(harness.generation() > generation);
         assert_eq!(harness.transform(&["echo"], "new").unwrap(), "new?");
 
-        fs::remove_file(harness.worker.workspace.join("hex.config.ts")).unwrap();
+        fs::remove_file(harness.worker.workspace.join("voinc.config.ts")).unwrap();
         harness.worker.reload();
         assert_eq!(harness.worker.status.host_state, HostState::NotConfigured);
         assert!(harness.worker.loaded.is_none());
@@ -1643,7 +1643,7 @@ export default defineHexConfig({
         for import in [
             "node:fs",
             "effect",
-            "@hex/commands/effect",
+            "@voinc/commands/effect",
             "../outside.ts",
             "hex:host",
         ] {
@@ -1667,7 +1667,7 @@ export default defineHexConfig({
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let workspace = std::env::temp_dir().join(format!("hex-init-{unique}"));
+        let workspace = std::env::temp_dir().join(format!("voinc-init-{unique}"));
         initialize_workspace_at(&workspace).unwrap();
         assert!(
             check_workspace_at(&workspace)
@@ -1675,24 +1675,24 @@ export default defineHexConfig({
                 .contains("1 transformation")
         );
         assert_eq!(
-            fs::read_to_string(workspace.join("hex.config.ts")).unwrap(),
+            fs::read_to_string(workspace.join("voinc.config.ts")).unwrap(),
             TEMPLATE_CONFIG
         );
-        for name in ["hex.d.ts", "AGENTS.md", "tsconfig.json"] {
+        for name in ["voinc.d.ts", "AGENTS.md", "tsconfig.json"] {
             assert!(workspace.join(name).is_file(), "{name}");
         }
-        fs::write(workspace.join("hex.config.ts"), "// mine\n").unwrap();
-        fs::write(workspace.join("hex.d.ts"), "// stale\n").unwrap();
+        fs::write(workspace.join("voinc.config.ts"), "// mine\n").unwrap();
+        fs::write(workspace.join("voinc.d.ts"), "// stale\n").unwrap();
         initialize_workspace_at(&workspace).unwrap();
         assert_eq!(
-            fs::read_to_string(workspace.join("hex.config.ts")).unwrap(),
+            fs::read_to_string(workspace.join("voinc.config.ts")).unwrap(),
             "// mine\n"
         );
         assert_eq!(
-            fs::read_to_string(workspace.join("hex.d.ts")).unwrap(),
+            fs::read_to_string(workspace.join("voinc.d.ts")).unwrap(),
             MANAGED_FILES[0].1
         );
-        fs::write(workspace.join("hex.config.js"), "export default {}\n").unwrap();
+        fs::write(workspace.join("voinc.config.js"), "export default {}\n").unwrap();
         assert!(find_config(&workspace).is_err());
         fs::remove_dir_all(workspace).unwrap();
     }

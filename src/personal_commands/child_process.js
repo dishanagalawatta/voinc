@@ -1,6 +1,6 @@
 // `node:child_process` for scripts: Node's `execFile` and `exec`, with
-// their callbacks, errors, and `util.promisify` forms. Hex adds one option,
-// `input`, written to the program's stdin. `hex.d.ts` types the subset.
+// their callbacks, errors, and `util.promisify` forms. Voinc adds one option,
+// `input`, written to the program's stdin. `voinc.d.ts` types the subset.
 
 import io from "hex:io"
 

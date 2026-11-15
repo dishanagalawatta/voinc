@@ -2,9 +2,9 @@
   "capture": "scrawl-1792524740501-170ef-9.scrawl",
   "savedDecision": "send CANVAS",
   "page": {
-    "url": "https://studio.example.ts.net:8444/raw/2026-10-20-hex-motion/index.html",
+    "url": "https://studio.example.ts.net:8444/raw/2026-10-20-voinc-motion/index.html",
     "served": "https://studio.example.ts.net:8444/raw/",
-    "file": "2026-10-20-hex-motion/index.html",
+    "file": "2026-10-20-voinc-motion/index.html",
     "modifiedMs": 1792526983885,
     "writes": [
       {
@@ -53,7 +53,7 @@
       "mode": "display",
       "app": "Brave Browser",
       "bundleId": "com.brave.Browser",
-      "windowTitle": "Hex Motion & Metal Rendering — Before / After",
+      "windowTitle": "Voinc Motion & Metal Rendering — Before / After",
       "displayId": 3,
       "frame": {
         "x": 0.0,
@@ -376,13 +376,13 @@
         "pointer": {
           "kind": "words",
           "words": [
-            "hex",
+            "voinc",
             "motion",
             "metal",
             "rendering"
           ]
         },
-        "note": "window title \"Hex Motion & Metal Rendering — Before / After\""
+        "note": "window title \"Voinc Motion & Metal Rendering — Before / After\""
       },
       {
         "source": "speech",
@@ -420,9 +420,9 @@
       },
       {
         "id": "ses_000000000023Fixture0000035",
-        "title": "HEX",
-        "directory": "/Users/example/code/open-source/hex",
-        "repo": "/Users/example/code/open-source/hex",
+        "title": "VOINC",
+        "directory": "/Users/example/code/open-source/voinc",
+        "repo": "/Users/example/code/open-source/voinc",
         "updatedMs": 1792524691979,
         "viewedMs": 1792522910999
       },

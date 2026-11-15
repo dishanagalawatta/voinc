@@ -1455,8 +1455,8 @@ mod tests {
 
     const OPENCODE_INTERFACE: &str = include_str!("fixtures/opencode-interface.json");
     const ARTIFACTS: [&str; 3] = [
-        include_str!("fixtures/artifact-hex-shout2.json"),
-        include_str!("fixtures/artifact-hex-motion.json"),
+        include_str!("fixtures/artifact-voinc-shout2.json"),
+        include_str!("fixtures/artifact-voinc-motion.json"),
         include_str!("fixtures/artifact-lot.json"),
     ];
     const DEV_SITE_KNOBS: &str = include_str!("fixtures/dev-site-knobs.json");
@@ -1577,11 +1577,11 @@ mod tests {
         assert_eq!(found(&bundle.target, &[]), Some((opencode, false)));
         let mut target = bundle.target.clone();
         // Kit's own apps: their checkout is named like them.
-        target.app = Some("Hex".into());
-        target.bundle_id = Some("com.example.Hex".into());
+        target.app = Some("Voinc".into());
+        target.bundle_id = Some("com.example.Voinc".into());
         assert_eq!(
             found(&target, &[]).map(|f| f.0),
-            Some(PathBuf::from("/Users/example/code/open-source/hex"))
+            Some(PathBuf::from("/Users/example/code/open-source/voinc"))
         );
         // A browser's name says nothing.
         target.app = Some("Brave Browser".into());
@@ -1942,16 +1942,16 @@ mod tests {
     }
 
     const CANVAS: &str = "ses_000000000021Fixture0000033";
-    const HEX: &str = "ses_000000000023Fixture0000035";
+    const VOINC: &str = "ses_000000000023Fixture0000035";
     const GAME_ENGINE: &str = "ses_00000000002aFixture0000042";
 
     /// Three captures of pages on the shared artifact gallery (`:8444/raw/…`, served by a server
     /// whose working directory is gpu-gallery) were all sent to CANVAS, the session in
-    /// gpu-gallery, on the port's 95 points. Their pages were published by HEX, HEX and GAME
+    /// gpu-gallery, on the port's 95 points. Their pages were published by VOINC, VOINC and GAME
     /// ENGINE.
     #[test]
     fn artifact_gallery_pages_go_to_whoever_published_them() {
-        for (json, publisher) in ARTIFACTS.iter().zip([HEX, HEX, GAME_ENGINE]) {
+        for (json, publisher) in ARTIFACTS.iter().zip([VOINC, VOINC, GAME_ENGINE]) {
             let (_, _, then) = fixture(json);
             assert_eq!(then, "send CANVAS");
             let (evidence, judgement) = replay_page(json, true);
@@ -1972,7 +1972,7 @@ mod tests {
     /// Without OpenCode's history the page's words still lead, and nothing goes to CANVAS.
     #[test]
     fn without_history_an_artifact_page_never_goes_to_the_servers_session() {
-        for (json, publisher) in ARTIFACTS.iter().zip([Some(HEX), Some(HEX), None]) {
+        for (json, publisher) in ARTIFACTS.iter().zip([Some(VOINC), Some(VOINC), None]) {
             let (evidence, judgement) = replay_page(json, false);
             let text = explain(&evidence, &judgement);
             match (&judgement.decision, publisher) {
@@ -1994,7 +1994,7 @@ mod tests {
                 "/api/session/ses_child" => {
                     r#"{"id":"ses_child","title":"sub","parentID":"ses_000000000023Fixture0000035"}"#
                 }
-                _ => r#"{"id":"ses_000000000023Fixture0000035","title":"HEX"}"#,
+                _ => r#"{"id":"ses_000000000023Fixture0000035","title":"VOINC"}"#,
             };
             Ok(body.as_bytes().to_vec())
         }

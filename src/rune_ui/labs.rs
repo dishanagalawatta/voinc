@@ -25,7 +25,7 @@ use crate::desktop::i18n::{tr, tr_fill};
 use crate::labs::{Feature, Group};
 
 pub(super) static LABS_ICON: Icon = Icon {
-    name: "hex-labs",
+    name: "voinc-labs",
     view: 16.0,
     body: r#"<path d="M6.25 2.5h3.5M6.75 2.5v4L3.2 12.3a.8.8 0 0 0 .7 1.2h8.2a.8.8 0 0 0 .7-1.2L9.25 6.5v-4M4.8 10h6.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>"#,
 };
@@ -153,7 +153,7 @@ pub(super) enum Lab {
 }
 
 impl Lab {
-    /// Its stable id, in `hex://labs/<id>`.
+    /// Its stable id, in `voinc://labs/<id>`.
     pub(super) fn id(self) -> &'static str {
         match self {
             Self::Feature(feature) => feature.name(),
@@ -214,7 +214,7 @@ impl Store {
     }
 }
 
-/// What a `hex://labs` link asks the store to show.
+/// What a `voinc://labs` link asks the store to show.
 #[cfg_attr(
     not(any(target_os = "macos", all(test, target_os = "linux"))),
     allow(dead_code)
@@ -261,7 +261,7 @@ pub(super) fn reveal(ui: &mut Ui, link: &LabsLink, tx: &mut Tx) {
     match shown(ui).into_iter().find(|row| row.lab.id() == id) {
         Some(row) if link.category.is_none() => ui.lab_store.group = Some(row.group),
         Some(_) => {}
-        None => tracing::warn!(feature = %id, "a Labs link named no feature this Hex has"),
+        None => tracing::warn!(feature = %id, "a Labs link named no feature this Voinc has"),
     }
 }
 
@@ -284,7 +284,7 @@ struct Row {
     title: &'static str,
     about: &'static str,
     on: bool,
-    /// Can't be switched: on while an installed Hex Microphone driver or
+    /// Can't be switched: on while an installed Voinc Microphone driver or
     /// the dictation model needs it, off under an organization's lock.
     locked: bool,
     group: Group,
@@ -346,9 +346,9 @@ fn rows(ui: &Ui) -> Vec<Row> {
             on: super::fun::running(ui),
             locked,
             about: if locked {
-                tr("On while the Hex Microphone driver is installed. Uninstall the driver in Voice Filter to turn it off.")
+                tr("On while the Voinc Microphone driver is installed. Uninstall the driver in Voice Filter to turn it off.")
             } else {
-                tr("Hex Microphone virtual input and real-time voice filters")
+                tr("Voinc Microphone virtual input and real-time voice filters")
             },
             ..row(Feature::VoiceFilter, Some(&VOICE_FILTER_ICON), tr("Voice Filter"), "")
         });
@@ -408,7 +408,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
             Feature::SubtitleExport,
             None,
             tr("Subtitle export"),
-            tr("Export meeting transcripts as SRT or VTT subtitles with hex meetings show"),
+            tr("Export meeting transcripts as SRT or VTT subtitles with voinc meetings show"),
         ));
         // macOS's meeting controller reads the call app's audio output, so
         // Linux renders of macOS scenes leave it out.
@@ -417,7 +417,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
                 Feature::StopWhenCallEnds,
                 Some(&TIMER),
                 tr("Stop when the call ends"),
-                tr("Stop a recording Hex started on its own 30 s after the call app leaves the microphone and goes quiet"),
+                tr("Stop a recording Voinc started on its own 30 s after the call app leaves the microphone and goes quiet"),
             ));
             // Only macOS's capsules know the screen to snap a drag against.
             rows.push(row(
@@ -449,7 +449,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
             Feature::MeetingFinishedEvent,
             Some(&GLOBE),
             tr("Meeting finished event"),
-            tr("Tell apps on this computer when a meeting's transcript is ready. They get only the meeting's ID, through Hex's local API"),
+            tr("Tell apps on this computer when a meeting's transcript is ready. They get only the meeting's ID, through Voinc's local API"),
         ));
         rows.push(row(
             Feature::FollowLiveTranscript,
@@ -497,7 +497,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
             Feature::AppModelSwitching,
             Some(&KEYBOARD),
             tr("Switch model with app"),
-            tr("Each mode can pick a speech model; Hex switches to it when you change apps"),
+            tr("Each mode can pick a speech model; Voinc switches to it when you change apps"),
         ));
     }
     // macOS's and Windows' pasters can leave a dictation on the clipboard.
@@ -524,7 +524,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
             Feature::ReturnToApp,
             Some(&PANEL),
             tr("Return to app"),
-            tr("If another app comes to the front while you dictate, Hex switches back to the app you started in before pasting. If it can't, nothing is pasted and Paste last dictation has the text."),
+            tr("If another app comes to the front while you dictate, Voinc switches back to the app you started in before pasting. If it can't, nothing is pasted and Paste last dictation has the text."),
         ));
     }
     // macOS's shortcut machine takes a shortcut without a key.
@@ -547,13 +547,13 @@ fn rows(ui: &Ui) -> Vec<Row> {
             Feature::CapsLockDictation,
             Some(&KEYBOARD),
             tr("Caps Lock dictation"),
-            tr("Press Caps Lock to start dictation and again to finish. Hex keeps Caps Lock off and uses its light while it records and transcribes"),
+            tr("Press Caps Lock to start dictation and again to finish. Voinc keeps Caps Lock off and uses its light while it records and transcribes"),
         ));
         rows.push(row(
             Feature::PauseBrowser,
             Some(&GLOBE),
             tr("Also pause the browser"),
-            tr("While dictating with Pause media: YouTube and other tabs, resumed only if Hex paused them"),
+            tr("While dictating with Pause media: YouTube and other tabs, resumed only if Voinc paused them"),
         ));
         // macOS's listener only, so Linux renders of macOS scenes leave it out.
         if cfg!(target_os = "macos") {
@@ -597,22 +597,22 @@ fn rows(ui: &Ui) -> Vec<Row> {
                 Feature::HideMenuBarIcon,
                 None,
                 tr("Hide menu bar icon"),
-                tr("Hide Hex's icon from the menu bar. Shortcuts keep working; open Hex again from Finder or Spotlight for Settings"),
+                tr("Hide Voinc's icon from the menu bar. Shortcuts keep working; open Voinc again from Finder or Spotlight for Settings"),
             ));
-            // macOS's status item offers Pause Hex while its keyboard
+            // macOS's status item offers Pause Voinc while its keyboard
             // listener stays up.
             rows.push(row(
                 Feature::PauseMenu,
                 None,
                 tr("Pause from menu bar"),
-                tr("Add Pause Hex to the menu bar. While paused, Hex ignores its shortcuts so other apps get the keys"),
+                tr("Add Pause Voinc to the menu bar. While paused, Voinc ignores its shortcuts so other apps get the keys"),
             ));
-            // macOS's app menu Quit Hex closes the window instead.
+            // macOS's app menu Quit Voinc closes the window instead.
             rows.push(row(
                 Feature::QuitClosesWindow,
                 None,
                 tr("⌘Q closes Settings"),
-                tr("⌘Q closes the Settings window instead of quitting Hex. Dictation keeps running; quit from the menu bar icon"),
+                tr("⌘Q closes the Settings window instead of quitting Voinc. Dictation keeps running; quit from the menu bar icon"),
             ));
             // macOS's HUD reads the screen's notch from NSScreen.
             rows.push(row(
@@ -621,7 +621,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
                 tr("Notch indicator"),
                 tr("On a screen with a notch, the recording indicator grows out of the notch instead of sitting below the menu bar"),
             ));
-            // Hex's session tap takes the shortcut; ScreenCaptureKit shoots.
+            // Voinc's session tap takes the shortcut; ScreenCaptureKit shoots.
             #[cfg(hex_capture)]
             rows.push(row(
                 Feature::Screenshots,
@@ -653,7 +653,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
             Feature::SectionKeyAlone,
             Some(&KEYBOARD),
             tr("Section key alone"),
-            tr("Use the § key, left of 1 on ISO keyboards, as a shortcut without a modifier. Hex takes § from every app while it's bound"),
+            tr("Use the § key, left of 1 on ISO keyboards, as a shortcut without a modifier. Voinc takes § from every app while it's bound"),
         ));
         // Linux's shortcut machine reads it with the listener's options.
         rows.push(row(
@@ -730,7 +730,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
         Feature::HistoryStats,
         None,
         tr("Dictation stats"),
-        tr("Add a Stats button to History that shows a summary of your retained dictations, with hex history stats"),
+        tr("Add a Stats button to History that shows a summary of your retained dictations, with voinc history stats"),
     ));
     rows.push(row(
         Feature::KeepRecordings,
@@ -778,19 +778,19 @@ fn rows(ui: &Ui) -> Vec<Row> {
         Feature::TranscribeFiles,
         None,
         tr("Transcribe files"),
-        tr("Adds hex transcribe <file> to turn a WAV recording into text with your dictation model."),
+        tr("Adds voinc transcribe <file> to turn a WAV recording into text with your dictation model."),
     ));
     rows.push(row(
         Feature::ApiProcessing,
         None,
         tr("Process API transcripts"),
-        tr("Apps can ask Hex's local API for transcripts with Global mode's processing applied."),
+        tr("Apps can ask Voinc's local API for transcripts with Global mode's processing applied."),
     ));
     rows.push(row(
         Feature::ApiTimestamps,
         None,
         tr("Timestamps in API transcripts"),
-        tr("Apps can ask Hex's local API for each segment's or word's start and end times."),
+        tr("Apps can ask Voinc's local API for each segment's or word's start and end times."),
     ));
     rows.push(row(
         Feature::SpeakersOnly,
@@ -986,7 +986,7 @@ fn flip(ui: &mut Ui, lab: Lab) {
         Feature::AppModelSwitching => ui.open = None,
         // A notice already on screen leaves with its lab.
         Feature::FailureNotices if !on => crate::rune_ui::live_text::dismiss_failure(),
-        // Hex hears the browser through System Audio Recording.
+        // Voinc hears the browser through System Audio Recording.
         Feature::PauseBrowser if on && !ui.platform.system_audio => {
             ui.ask(super::platform::PlatformRequest::SystemAudio);
         }

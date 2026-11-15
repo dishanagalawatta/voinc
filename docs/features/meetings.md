@@ -1,6 +1,6 @@
 # Meetings (beta)
 
-Record a call locally: Hex captures the other participants (system audio) and
+Record a call locally: Voinc captures the other participants (system audio) and
 you (microphone) as separate tracks, transcribes them on this Mac, and saves a
 Markdown transcript with `You` and `Them` turns. Recording starts automatically
 only for calls from a website or app set to Always record, and never stops
@@ -19,7 +19,7 @@ Labs > Meetings switch (macOS)                       // meetings.opt-in; off by 
 │   menu-bar items, call detection, Option-Control-V
 │   Settings view: Call recording, After a meeting, Calendar, Detected calls, Advanced ▸
 │   ├── System Audio Recording                  // meetings.permission; asked only now
-│   │   ├── Untrusted row shown / Allow -> retired Hex IDs cleared (`ScreenCapture` + `AudioCapture`)
+│   │   ├── Untrusted row shown / Allow -> retired Voinc IDs cleared (`ScreenCapture` + `AudioCapture`)
 │   │   ├── Allow -> macOS prompt the first time (tour's permission_control)
 │   │   ├── Decided before -> Privacy pane + drag guide ("System Audio Recording Only")
 │   │   ├── Asked -> pulse; TCC preflight re-read on each poll, no reopen needed
@@ -28,7 +28,7 @@ Labs > Meetings switch (macOS)                       // meetings.opt-in; off by 
 │   │   └── Granted -> the Allow pill morphs into a green Allowed; moves to Advanced
 │   ├── After a meeting -> Summaries, Keep meetings, Keep audio
 │   │   (Labs › Expire meeting audio separately), Transcript folder
-│   │   (~/Documents/Hex Meetings; Reveal / choose; its error shows here)
+│   │   (~/Documents/Voinc Meetings; Reveal / choose; its error shows here)
 │   │   └── Summaries pop-up (meetings.summaries; one-time migration
 │   │       "meeting-summaries-choice" from the two retired switches)
 │   │       ├── Off -> "No titles or summaries"
@@ -43,7 +43,7 @@ Labs > Meetings switch (macOS)                       // meetings.opt-in; off by 
 │   │       └── OpenCode -> "Sends the transcript to your OpenCode model";
 │   │           Model nests under it: a searchable picker of the running
 │   │           OpenCode's models (refreshed each time it opens; no Refresh),
-│   │           "Hex picks a fast model" first (clears meetings.opencode_model
+│   │           "Voinc picks a fast model" first (clears meetings.opencode_model
 │   │           -> the ranked fast models); a pick is used alone, no fallback.
 │   │           OpenCode missing or failing -> a notice with Check again /
 │   │           Retry, the saved model kept and shown by its ID (#1107, #1301)
@@ -64,10 +64,10 @@ Labs > Meetings switch (macOS)                       // meetings.opt-in; off by 
            the pane leaves the sidebar
 
 Debug builds -> Always in the sidebar (DEVELOPER_FEATURES_ENABLED)
-Agents -> hex mcp (read-only MCP server; works whether or not Meetings is on)
-Subtitles -> hex meetings show <id> --srt | --vtt   // Labs › Subtitle export, off by default (#633)
+Agents -> voinc mcp (read-only MCP server; works whether or not Meetings is on)
+Subtitles -> voinc meetings show <id> --srt | --vtt   // Labs › Subtitle export, off by default (#633)
              one cue per transcript entry (You / Them), timed by entry offsets,
-             not word timings; off -> refused naming hex labs on subtitle-export
+             not word timings; off -> refused naming voinc labs on subtitle-export
              (docs/transcript-cli.md; no export button in the window yet)
 Apps -> GET /meetings/events on the local API      // Labs › Meeting finished event, off by default (#964)
         one SSE event per meeting once its final transcript is written:
@@ -130,7 +130,7 @@ System audio                                      // meetings.system-audio
     recording, every active output is heard. While a detected call app has
     no playback session yet, or its sessions can't be read, every output is
     heard until the 2 s check finds the app's outputs. When none of the
-    app's outputs open, Hex hears every output and stops following the app
+    app's outputs open, Voinc hears every output and stops following the app
     for that source. Silence while nothing plays is padded on resume. A
     route check every 2 s reopens on a changed output list while hearing
     every one, or when the app's outputs move (by endpoint id): a changed
@@ -208,7 +208,7 @@ Offer capsule can't open (Linux; GNOME on Wayland opens no interactive
 Files -> Reveal files opens the recording folder (selected in Explorer,
     opened by xdg-open); Reveal Markdown additionally appears while the
     exported .md exists and selects it (Explorer gets `/select,"<path>"`,
-    with the switch outside the quotes so a folder such as `Hex Meetings`
+    with the switch outside the quotes so a folder such as `Voinc Meetings`
     stays one path) or opens the folder holding it (xdg-open); Delete moves
     to the freedesktop Trash or the Recycle Bin
 ```
@@ -223,7 +223,7 @@ a real Windows PC has not been observed.
 
 Not on Linux and Windows yet: the Option-Control-V meeting paste shortcut,
 Copy section from the tray, dragging the recording capsule to another corner,
-the `hex meetings` and `hex mcp` commands (shared-control), and website names
+the `voinc meetings` and `voinc mcp` commands (shared-control), and website names
 for browser calls. Verified: Linux and Windows x64 build and lint
 (`cargo clippy`, `cargo xwin clippy`); the PipeWire monitor capture and
 pw-dump parsing were checked by hand on Arch/niri. Not verified: a recorded
@@ -335,7 +335,7 @@ The Webex app is `com.webex.meetingmanager`, `com.cisco.webexmeetingsapp`, or
 Cisco's current `Cisco-Systems.Spark` bundle, and `CiscoCollabHost.exe` is its
 Windows host. Signal, Telegram, WeChat, LINE, Element, Messenger, and GroupMe
 keep WhatsApp's about-20 s threshold because voice notes and clips hold the
-microphone too; Webex and Phone take the normal 2 s. On macOS, where Hex reads
+microphone too; Webex and Phone take the normal 2 s. On macOS, where Voinc reads
 the browser's page, pages on `voice.google.com` (Google Voice), `messenger.com`,
 `teams.live.com` (the Teams source), `facetime.apple.com` (FaceTime), and
 `web.groupme.com` are named, and any `webex.com` subdomain is Webex, with one
@@ -350,7 +350,7 @@ always-listed row. Their Ask / Always record / Never offer choices work as the
 existing services' do. Off,
 offers are unchanged: a Signal or Telegram process is not a meeting app, and
 those pages are unknown pages (a plain "Browser call" after 20 s). The
-microphone app list in `hex meeting probe` and the logs still resolves and
+microphone app list in `voinc meeting probe` and the logs still resolves and
 merges these apps' helpers under the parent app, because canonicalization is
 not gated; offers and Settings are. Phone calls are not verified on a real
 call: Continuity call audio may be held by `com.apple.avconferenced` instead
@@ -403,14 +403,14 @@ microphone is queried once a second for 30 s, enough to name the call before
 the 20 s unknown-page threshold; after that it is queried every 30 s, and the
 page remembered from the last answer names the call in between. Answers and
 the remembered page are dropped
-while Hex records, Meetings is off, the browser is snoozed for a call without
+while Voinc records, Meetings is off, the browser is snoozed for a call without
 a meeting code, or no browser holds
 the microphone; a query in flight at that moment is not repeated beside itself,
 and its answer is discarded. When a browser's page is found for a run already
 under way (the first pass had no answer yet), the run keeps counting, now
 toward the known service's 2 s. When no answer names a page, the last page a browser showed while
 it held the microphone names the call for 60 s (`BrowserPageMemory`), so the
-site survives a failed query, Hex being in front, or the 30 s between slow
+site survives a failed query, Voinc being in front, or the 30 s between slow
 queries. Safari, Chrome, Firefox and
 Edge expose no URL, so their calls are unnamed unless the foreground context
 says otherwise. Banshee has no recognised room path, so any `banshee.app` page
@@ -493,8 +493,8 @@ Brave WebRTC `getUserMedia({audio: true})` reproduction on Pro confirmed
 `NSRunningApplication == nil` before parent/bundle resolution and resolved to
 `com.brave.Browser` and `com.tinyspeck.slackmacgap` afterward.
 
-The capsules have no `--snap` scene. `HEX_CAPSULE_SNAPS=<folder> cargo test
---bin hex capsule_snapshots` renders the offer, its choices, the
+The capsules have no `--snap` scene. `VOINC_CAPSULE_SNAPS=<folder> cargo test
+--bin voinc capsule_snapshots` renders the offer, its choices, the
 calendar reminders, and the automatic-recording states in light and dark on a
 Mac with a GPU.
 
@@ -523,13 +523,13 @@ Lead time reached (or Mac wakes within 5 min of the start)   // meetings.reminde
      │   ├── Not now -> close; this call is not offered when detected
      │   ├── Join & record (only with a link) -> open the link, then record
      │   └── Record -> recording titled "Design sync" with its attendees
-     └── Service set to Always record: "Starts in 1 min · Hex records automatically"
+     └── Service set to Always record: "Starts in 1 min · Voinc records automatically"
          ├── Don't record -> close; the detected call neither offers nor auto-records
          └── Join (only with a link) -> open the link; Always record starts on detection
   -> Closes 60 s after the start (at least 30 s after showing); withdrawn if the
      meeting is cancelled, moved, or reminders are turned off. One at a time: an
      overlapping meeting's reminder waits until this one is answered or closes.
-     Waits while Hex records; a recording that starts closes it.
+     Waits while Voinc records; a recording that starts closes it.
 Detected call during a calendar meeting on the same service
   -> recording takes the calendar title and attendees
 ```
@@ -537,7 +537,7 @@ Detected call during a calendar meeting on the same service
 Settings persist as `meetings.calendar` (`connected`, `excluded_calendars`,
 `remind`, `lead_minutes`) in `settings.json`; missing means not connected, so
 files from older builds stay off. Every calendar is included unless excluded.
-Hex never asks for calendar access at launch: only Connect calendar calls
+Voinc never asks for calendar access at launch: only Connect calendar calls
 `requestFullAccessToEvents` (`NSCalendarsFullAccessUsageDescription`). With
 Meetings off there is no Calendar card, no EventKit read, and no reminder.
 
@@ -652,7 +652,7 @@ Record (offer, menu bar "Record Meeting", Meetings pane, or voice command)
      │   disabled until there is text
      │   └── Both read the Parakeet in-call transcript (TranscriptReader) once a
      │       second on the ticker thread, never on the main thread
-     ├── Open -> activates Hex, then opens the active meeting in the Meetings pane
+     ├── Open -> activates Voinc, then opens the active meeting in the Meetings pane
      └── Stop -> Stop & Transcribe
   -> Settings window may stay closed
 
@@ -678,12 +678,12 @@ Labs › Movable meeting capsules (macOS, off by default; #1093) // meetings.pan
   there
 
 Labs › Stop when the call ends (macOS, off by default; #835) // meetings.auto-stop
-  Only a recording Hex started on its own (Always record); manual, offered,
+  Only a recording Voinc started on its own (Always record); manual, offered,
   and calendar recordings are never stopped
   -> The call app counts as present while it holds the microphone OR any of
      its Core Audio processes plays output (WhatsApp keeps the microphone
      while muted; its output stays open until hang-up)
-  -> Both off for about 3 s -> capsule says "Hex stops recording in 30 s
+  -> Both off for about 3 s -> capsule says "Voinc stops recording in 30 s
      unless you keep recording."
      ├── App back on the microphone or output within 30 s -> nothing stops
      ├── Keep recording -> nothing stops for this absence; leaving again re-arms
@@ -727,7 +727,7 @@ Meetings > Import audio… (macOS; Labs › Import audio, off by default) // mee
     │   no manifest, and the next launch's sweep removes that folder once its
     │   lock is free
     ├── After final.pending -> next launch finishes it (the pending-finals
-    │   thread), exactly like a recording Hex quit during
+    │   thread), exactly like a recording Voinc quit during
     └── During the final pass -> Interrupted with final.pending kept, so the
         next launch finishes it
 ```
@@ -746,7 +746,7 @@ Capture sources (meeting/capture.rs)                // meetings.capture
 │   │   device UID, ahead of the saved device and the default (#1086)
 │   │   ├── App switches input mid-call -> followed within 1 s, same track
 │   │   ├── App reports no input (muted) -> keeps the one it followed
-│   │   └── Not reported, not listed, Hex Microphone, or won't open -> as below
+│   │   └── Not reported, not listed, Voinc Microphone, or won't open -> as below
 │   │      // a_meeting_follows_the_input_its_call_app_records_from,
 │   │      // a_meeting_finds_the_input_its_call_uses_by_uid; unverified on a real call
 │   ├── System default changes, the Settings microphone changes, or a missing
@@ -783,7 +783,7 @@ Capture sources (meeting/capture.rs)                // meetings.capture
 │          // a_dropped_warning_update_is_not_committed_and_is_retried,
 │          // only_an_input_the_call_app_reports_counts_as_held;
 │          // not verified on a live device or call app
-└── System audio -> Core Audio process tap (global, excluding Hex) on a private
+└── System audio -> Core Audio process tap (global, excluding Voinc) on a private
     aggregate device; no display dependency
     └── Tap not authorized + Screen Recording granted -> ScreenCaptureKit fallback
 
@@ -893,7 +893,7 @@ While recording                                      // meetings.rolling
      ├── Backlog over 120 s of audio -> oldest chunks skipped, track marked
      │   incomplete; rebuilt from its WAV after Stop
      └── Model failure -> transcript.rolling.error.txt -> "Live transcript unavailable."
-  -> Every in-call view reads it: Meetings pane, `hex meetings show`, MCP,
+  -> Every in-call view reads it: Meetings pane, `voinc meetings show`, MCP,
      provisional titles (TranscriptReader)
 
 Copy new or Option-Control-V while recording       // meetings.copy-through-now
@@ -923,11 +923,11 @@ Stop & Transcribe
   -> Any track that fell behind or failed -> stream its WAV in 1 s blocks
   -> Join on one timeline -> Echo suppression -> Final publication
 
-Hex quits while recording                           // meetings.quit
+Voinc quits while recording                           // meetings.quit
   -> Capture stops; WAVs and manifest finalized; no chunk starts, no model loads
   -> Interrupted with its rolling draft + final.pending beside the manifest
-Hex quits during Stop & Transcribe's final pass (#1284)
-  -> Same: Interrupted + final.pending, never Failed with "Hex is quitting"
+Voinc quits during Stop & Transcribe's final pass (#1284)
+  -> Same: Interrupted + final.pending, never Failed with "Voinc is quitting"
   -> Next launch, Meetings on, no recording, once the dictation engine is up
      (or 30 s without one) -> full-WAV final pass -> Complete + Markdown + notes
      ├── Quit again or model not installed -> stays pending
@@ -1170,7 +1170,7 @@ Option-Control-V -> `MeetingPasteCursor` in `meeting/delta.rs` over the transcri
 │   merge); an entry is new when its midpoint is outside them, so nothing
 │   repeats or drops when the final transcript replaces rolling after Stop, and
 │   text the final pass recovers for audio rolling skipped still pastes
-└── Resets when Hex restarts
+└── Resets when Voinc restarts
 ```
 
 ### Meetings Pane
@@ -1215,7 +1215,7 @@ Delete… (overflow menu) -> "Trash recording & Markdown" (or "Trash recording")
 ```
 
 Choice: Delete trashes the Markdown copy too, since it holds the transcript;
-a separate notes file Hex tracks goes with it, and all stay recoverable from
+a separate notes file Voinc tracks goes with it, and all stay recoverable from
 the Trash. Sources:
 [rune_ui/meetings.rs](../../src/rune_ui/meetings.rs), the requests in
 [rune_ui/macos_host.rs](../../src/rune_ui/macos_host.rs), and `RevealTarget` /
@@ -1265,14 +1265,14 @@ Meeting controller, Meetings on or off           // meetings.retention
 │   -> the recording folder (audio, transcripts, notes and summary, live
 │      drafts) to the Trash, never removed outright
 │   -> the exported Markdown to the Trash only while its SHA-256 still
-│      matches the copy Hex last wrote (manifest `export_sha256`; Hex's own
+│      matches the copy Voinc last wrote (manifest `export_sha256`; Voinc's own
 │      heading and notes rewrites keep it current); an edited copy stays
 │   -> a tracked separate notes file to the Trash only while its SHA-256
 │      matches `notes_export_sha256`; an edited copy stays
 ├── Skips recording, transcribing, writing-notes, and final.pending
 │   meetings; a later pass retries them
-└── Nothing expires while Hex is not running
-Queries (`hex meetings`, `hex mcp`, the pane) -> leave out expired meetings
+└── Nothing expires while Voinc is not running
+Queries (`voinc meetings`, `voinc mcp`, the pane) -> leave out expired meetings
     at once, before a pass moves them; a process that never loaded settings
     reads `meetings.retention` from settings.json without writing it
 ```
@@ -1299,10 +1299,10 @@ Meeting controller, lab on and an audio retention chosen // labs.expire_meeting_
 ├── Interrupted, failed, starting, recording, transcribing, and pending
 │   meetings keep their audio; a later pass retries them
 ├── Forever or omitted -> nothing moves
-└── Nothing expires while Hex is not running
+└── Nothing expires while Voinc is not running
 Audio gone -> the meeting still lists, opens, searches, exports, and copies
-    its text; transcribing it again (debug `hex meeting transcribe` or
-    `hex meeting echo`) fails saying its audio was deleted, without
+    its text; transcribing it again (debug `voinc meeting transcribe` or
+    `voinc meeting echo`) fails saying its audio was deleted, without
     changing the meeting's status
 ```
 
@@ -1368,8 +1368,8 @@ Final publication complete                               // meetings.notes
      ├── Labs › Descriptive meeting file names on (off by default) -> after
      │   the block is written, the file is renamed to the final title,
      │   keeping its date and time prefix; a taken name adds " (2)"
-     ├── Heading -> final title, only while it still reads Hex's last title
-     ├── <!-- hex:notes --> ## Summary (one paragraph) above ## Transcript
+     ├── Heading -> final title, only while it still reads Voinc's last title
+     ├── <!-- voinc:notes --> ## Summary (one paragraph) above ## Transcript
      │   └── Footer names the writer: "Written on this Mac by Apple
      │       Intelligence", "Written by <provider/model> through OpenCode", or,
      │       for older notes without written_by, no writer at all (#1125;
@@ -1378,7 +1378,7 @@ Final publication complete                               // meetings.notes
      │   beside the transcript: title, date, duration, app, a relative
      │   percent-encoded transcript link (its text Markdown-escaped), summary,
      │   chapters, and its own footer saying the transcript has the details;
-     │   rewritten only while its SHA-256 is still Hex's copy, never recreated
+     │   rewritten only while its SHA-256 is still Voinc's copy, never recreated
      │   once deleted
      ├── Text outside the block is preserved; changed mid-write -> not written
      └── Missing file -> manifest only
@@ -1408,7 +1408,7 @@ the title, or renaming the meeting renames the file in place to
 its own file is never a collision, a taken name gets `" (2)"`, no copy is made,
 and Reveal, Trash, and retention follow the manifest's new `export_path`. A
 failed rename leaves the old path and never fails the notes or the rename. If
-Hex stops between the file rename and the manifest write, the manifest keeps
+Voinc stops between the file rename and the manifest write, the manifest keeps
 the old path: Reveal falls back to the recording folder and the Markdown stays
 in the folder untouched. With Labs › Separate notes file on, the export is
 `<stem>.transcript.md` and its notes are `<stem>.notes.md`; export chooses a
@@ -1417,7 +1417,7 @@ stem free of both, a descriptive rename moves the pair together (keeping a
 move, and an unedited tracked notes file is re-rendered so its heading and
 transcript link follow notes, a rename, or chapter retitles
 ([meeting/notes_file.rs](../../src/meeting/notes_file.rs)). The transcript
-keeps its own `<!-- hex:notes -->` summary block and footer throughout. A notes
+keeps its own `<!-- voinc:notes -->` summary block and footer throughout. A notes
 file the user deletes stops being tracked and is never written back, even by a
 later regeneration.
 
@@ -1446,9 +1446,9 @@ model): `a_short_transcript_is_sent_whole_in_one_call`,
 `meeting_menu_offers_one_action_per_state`. The recorder thread, manifest write,
 and menu/pane refresh during a real recording are unexercised.
 
-Real model (debug CLI): `hex meeting summarize <file.md> [--excerpt-chars N]`
+Real model (debug CLI): `voinc meeting summarize <file.md> [--excerpt-chars N]`
 times the provisional title at the point a recording would ask for it, then the
-final title and summary, without saving; `hex meeting summarize <id>` writes
+final title and summary, without saving; `voinc meeting summarize <id>` writes
 them like Regenerate.
 
 Observed (2026-10-15, Mac Studio M2 Max, macOS 27.0.1, context 8,192 tokens,
@@ -1500,7 +1500,7 @@ After final publication, inside the notes thread       // meetings.chapters.refi
   -> Each call first waits (≤30 s) for dictation; a stop or quit ends the pass
      with nothing saved, so the next notes run redoes it
 Copy section (pane, per chapter; menu bar "Copy Section" while recording;
-`hex meetings show --chapter N`)
+`voinc meetings show --chapter N`)
   -> "## <name>\n\n<line>\n\n" + the transcript lines that start inside the
      chapter, joined into turns only within it (one shared function)
 ```
@@ -1517,7 +1517,7 @@ not the default. A boundary pass that changes the title also renames the
 exported Markdown with Labs › Descriptive meeting file names on, under the
 same date and time prefix and collision rules as notes.
 
-Read surfaces: `hex meetings chapters <id> [--json]`, `hex meetings show <id>
+Read surfaces: `voinc meetings chapters <id> [--json]`, `voinc meetings show <id>
 --chapter N`, a `## Chapters` list in `show`, `chapters` in `show --json`
 (JSON stays version 1), and MCP `get_chapters`.
 
@@ -1538,7 +1538,7 @@ and CLI give the same section when one speaker's turn crosses a boundary);
 submenu, the recorder writing chapters during a real recording, and the
 `meetings-chapters` scene on a Mac screen are unexercised.
 
-Real model (debug CLI): `hex meeting chapters <file.md>` runs the live passes
+Real model (debug CLI): `voinc meeting chapters <file.md>` runs the live passes
 as a recording would, then the boundary pass, without saving.
 
 Observed (2026-10-23, Mac mini, debug build) on a synthetic 15-minute, three
@@ -1552,19 +1552,19 @@ current one), which is why Rust's name overlap decides.
 
 ### Agent Access (MCP)
 
-The release CLI also supports `hex meetings list`, `show <id|latest>` (with
+The release CLI also supports `voinc meetings list`, `show <id|latest>` (with
 `--from`/`--to` offsets or `--chapter N`), `chapters <id>`, and `search <query>`
 through this query layer. See the [transcript CLI map](transcript-cli.md)
 and [versioned JSON contract](../transcript-cli.md).
 
 ```ts
-hex mcp [--meetings-dir <path>]                     // meetings.mcp; release builds
+voinc mcp [--meetings-dir <path>]                     // meetings.mcp; release builds
 ├── MCP over stdio; independent of the Meetings opt-in (read-only)
 ├── Dispatches before process logging, the instance lock, GUI, and permissions
-│   └── Safe beside the running app; logs only to stderr (HEX_MCP_LOG)
-├── Default folder: Application Support/hex/meetings (hex on older builds)
+│   └── Safe beside the running app; logs only to stderr (VOINC_MCP_LOG)
+├── Default folder: Application Support/voinc/meetings (voinc on older builds)
 │   └── --meetings-dir -> any mirrored copy (rsync of that folder)
-├── A copy named hex-meetings-mcp -> always `hex mcp` with the same flags
+├── A copy named voinc-meetings-mcp -> always `voinc mcp` with the same flags
 │   (no subcommand never falls back to listening)
 └── Tools (all readOnlyHint)
     ├── list_meetings(since?, until?, query?, limit?, include_in_progress?)
@@ -1586,7 +1586,7 @@ hex mcp [--meetings-dir <path>]                     // meetings.mcp; release bui
         └── "N. mm:ss–mm:ss · name" + line each, whether boundaries were
             corrected, a get_transcript start/end hint; or "No chapters are
             stored" ("No chapters yet" while recording); never generates any
-Resources: hex-meeting://<id> -> Markdown (metadata, notes, transcript)
+Resources: voinc-meeting://<id> -> Markdown (metadata, notes, transcript)
 ```
 
 Read-only and private: the server opens files for reading only, never writes,
@@ -1623,13 +1623,13 @@ three passages, while a typo of a rare word still finds it. A term's match in a
 passage is its exact stem when present, then the best score, kind, and
 alphabetically first stem, so ties are deterministic. `"Quoted words"` are
 required exact (stemmed) phrases; `fuzzy: false` keeps only exact stems.
-`hex history --search` shares this ranker, counting an entry's raw and final
+`voinc history --search` shares this ranker, counting an entry's raw and final
 text as one document.
 
 Semantic search is not shipped. On-device candidates are Apple NaturalLanguage
 `NLContextualEmbedding` (asset download, macOS 14+) or the older static
 `NLEmbedding` sentence model, through a Swift bridge like `apple_speech`, with a
-cache under `~/Library/Caches/hex/meeting-index` keyed by meeting
+cache under `~/Library/Caches/voinc/meeting-index` keyed by meeting
 fingerprints. Full-text with stemming and fuzzy matching answered the real
 queries below; embeddings wait until a query fails for lack of paraphrase.
 
@@ -1654,7 +1654,7 @@ schemas (including `from`/`to`) and read-only annotations, tools/call including
 stdout carries only JSON-RPC, no Application Support state created).
 
 Observed (2026-10-23, Mac Studio, debug build, live meetings folder, read-only):
-`hex meetings search "images database blob storage media"` dropped from 315 to
+`voinc meetings search "images database blob storage media"` dropped from 315 to
 140 matching passages, with no fuzzy-only hit in the top 25 (before: four,
 through `blog`, `blow`, `believe`, `made`, and `motto`); the top hit remains the
 in-progress meeting's 115:02 passage, and 6 of the top 10 fall in its
@@ -1669,29 +1669,29 @@ meetings without WAVs): first launch of a freshly signed binary 440 ms to
 #### Another Mac's Meetings (Mirror)
 
 ```ts
-Don't: MCP client config runs `ssh pro hex mcp`         // one SSH per client
+Don't: MCP client config runs `ssh pro voinc mcp`         // one SSH per client
   -> 41 OpenCode instances = 41 SSH sessions -> the Pro's sshd reset connections
 
 Do: one periodic pull, then local servers               // meetings.mcp.mirror
 scripts/sync-meetings-mirror.sh (LaunchAgent template, every 120 s,
   ProcessType Background, Nice 10, LowPriorityIO)
 ├── ONE rsync over ssh (BatchMode, ConnectTimeout 5, --timeout 60)
-│   pro:Library/Application Support/hex/meetings/
-│   -> ~/Library/Caches/hex-meetings-mirror/ (0700)
+│   pro:Library/Application Support/voinc/meetings/
+│   -> ~/Library/Caches/voinc-meetings-mirror/ (0700)
 ├── Skips *.wav, *.lock, *.tmp; --delay-updates (files land together at the
 │   end); --delete-delay (meetings trashed on the Pro disappear)
 └── Pro asleep / unreachable -> exit 0 silently; next run retries
-Each MCP client -> local `hex mcp --meetings-dir <mirror>` (no SSH, no lock)
+Each MCP client -> local `voinc mcp --meetings-dir <mirror>` (no SSH, no lock)
 └── No lock in the mirror -> a meeting still recording on the Pro reads as
     `interrupted` with its rolling transcript so far; final once published
 ```
 
-Template: [hex-meetings-mirror.plist](../../scripts/launchd/hex-meetings-mirror.plist)
+Template: [voinc-meetings-mirror.plist](../../scripts/launchd/voinc-meetings-mirror.plist)
 (placeholders for the checkout and home; not installed automatically).
 
 Observed (2026-10-15, Studio pulling from the Pro): one sync 0.44 s, 8 meetings,
 1.0 MB, no WAVs or locks; unreachable host exits 0 at once, unanswered address
-exits 0 after the 5 s connect timeout. `hex-meetings-mcp --meetings-dir` (release
+exits 0 after the 5 s connect timeout. `voinc-meetings-mcp --meetings-dir` (release
 build in `~/.local/bin`) over stdio: first launch of the new binary 378 ms to
 `initialize` (Gatekeeper), then 7 ms; `list_meetings` 3.5–11 ms cold, 0.5 ms
 warm; searches 0.6–1.5 ms; a 48,000-char `get_transcript` 0.6 ms;

@@ -15,7 +15,7 @@ impl SettingsFile {
     fn new(data: &[u8]) -> Self {
         let sequence = crate::app_settings::SETTINGS_TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
         let directory = std::env::temp_dir().join(format!(
-            "hex-settings-recovery-{}-{sequence}",
+            "voinc-settings-recovery-{}-{sequence}",
             std::process::id()
         ));
         fs::create_dir_all(&directory).unwrap();
@@ -239,7 +239,7 @@ fn malformed_json_uses_defaults_and_refuses_to_be_replaced() {
     assert!(message.contains("isn't valid JSON"), "{message}");
     assert!(message.contains("line 4 column 1"), "{message}");
     assert!(
-        message.contains("Fix or remove it, then restart Hex"),
+        message.contains("Fix or remove it, then restart Voinc"),
         "{message}"
     );
     assert!(message.contains("Nothing was saved"), "{message}");
@@ -252,11 +252,11 @@ fn malformed_json_uses_defaults_and_refuses_to_be_replaced() {
     let error = modified.write_to(&file.path).unwrap_err();
     let message = format!("{error:#}");
     assert!(
-        message.contains("couldn't be read when Hex loaded it"),
+        message.contains("couldn't be read when Voinc loaded it"),
         "{message}"
     );
     assert!(
-        message.contains("Restart Hex to load the fixed file"),
+        message.contains("Restart Voinc to load the fixed file"),
         "{message}"
     );
     assert_eq!(fs::read(&file.path).unwrap(), b"{}");
@@ -284,11 +284,11 @@ fn stale_defaults_cannot_replace_a_file_fixed_while_the_process_runs() {
     let error = stale.write_to(&file.path).unwrap_err();
     let message = format!("{error:#}");
     assert!(
-        message.contains("couldn't be read when Hex loaded it"),
+        message.contains("couldn't be read when Voinc loaded it"),
         "{message}"
     );
     assert!(
-        message.contains("Restart Hex to load the fixed file"),
+        message.contains("Restart Voinc to load the fixed file"),
         "{message}"
     );
     assert_eq!(fs::read(&file.path).unwrap(), fixed);
@@ -301,7 +301,7 @@ fn stale_defaults_cannot_replace_a_file_fixed_while_the_process_runs() {
     let (read, _) = AppSettings::read_from(&file.path).unwrap();
     assert_eq!(read.sound_effect_volume, 0.37);
     let error = stale.write_to(&file.path).unwrap_err();
-    assert!(format!("{error:#}").contains("couldn't be read when Hex loaded it"));
+    assert!(format!("{error:#}").contains("couldn't be read when Voinc loaded it"));
     assert_eq!(fs::read(&file.path).unwrap(), fixed);
     assert!(file.backups().is_empty());
 
@@ -323,7 +323,7 @@ fn non_object_json_uses_defaults_and_refuses_to_be_replaced() {
         let message = format!("{error:#}");
         assert!(message.contains("must be a JSON object"), "{message}");
         assert!(
-            message.contains("Fix or remove it, then restart Hex"),
+            message.contains("Fix or remove it, then restart Voinc"),
             "{message}"
         );
         assert_eq!(fs::read(&file.path).unwrap(), original);
@@ -337,7 +337,7 @@ fn a_broken_settings_file_is_named_at_launch_with_its_parse_error() {
     let note = launch_note(&file.path).unwrap();
     assert!(note.contains("started with defaults"), "{note}");
     assert!(note.contains("Your file wasn't changed"), "{note}");
-    assert!(note.contains("then restart Hex"), "{note}");
+    assert!(note.contains("then restart Voinc"), "{note}");
     assert!(note.contains("line 4 column 1"), "{note}");
 
     let file = SettingsFile::new(b"[]");

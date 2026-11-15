@@ -438,7 +438,7 @@ fn transcribe_again(
     let (sender, receiver) = channel();
     let waker = ui.modes.waker.clone();
     let started = std::thread::Builder::new()
-        .name("hex-transcribe-again".into())
+        .name("voinc-transcribe-again".into())
         .spawn(move || {
             let _ = sender.send(crate::history::recordings::retranscribe(&path, selection));
             if let Some(waker) = &waker {

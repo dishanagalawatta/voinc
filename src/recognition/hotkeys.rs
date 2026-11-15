@@ -54,7 +54,7 @@ pub(super) struct Hotkeys {
     /// presses arrive from the caps-lock worker, not the shortcut matcher.
     pub(super) caps_lock: DictationHotkey,
     /// The recording (or the last) skips processing: the raw shortcut or
-    /// `hex dictation start --raw` started it.
+    /// `voinc dictation start --raw` started it.
     pub(super) raw_capture: bool,
     /// Whether the listener last saw shortcuts suspended, so that a capture
     /// a command starts during a pause is left alone.

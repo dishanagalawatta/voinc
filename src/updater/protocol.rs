@@ -510,7 +510,7 @@ mod tests {
             channel: None,
         };
         for (app, artifact, reason) in [
-            ("hex", "desktop", "wrong_app"),
+            ("voinc", "desktop", "wrong_app"),
             ("example", "cli", "wrong_artifact"),
         ] {
             assert_eq!(
@@ -524,23 +524,23 @@ mod tests {
     fn target_urls_resolve_against_the_manifest() {
         let manifest = "https://anoma.ly/release/hex/desktop/stable.json";
         assert_eq!(
-            resolve_url(manifest, "/release/hex/files/abc/Hex.zip").as_deref(),
+            resolve_url(manifest, "/release/voinc/files/abc/Voinc.zip").as_deref(),
             Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
         );
         assert_eq!(
             resolve_url(
                 "https://dev.anoma.ly/release/hex/desktop/dev.json",
-                "/release/hex/files/abc/Hex.zip"
+                "/release/voinc/files/abc/Voinc.zip"
             )
             .as_deref(),
             Some("https://dev.anoma.ly/release/hex/files/abc/Hex.zip")
         );
         assert_eq!(
-            resolve_url(manifest, "../files/abc/Hex.zip").as_deref(),
+            resolve_url(manifest, "../files/abc/Voinc.zip").as_deref(),
             Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
         );
         assert_eq!(
-            resolve_url(manifest, "files/abc/Hex.zip").as_deref(),
+            resolve_url(manifest, "files/abc/Voinc.zip").as_deref(),
             Some("https://anoma.ly/release/hex/desktop/files/abc/Hex.zip")
         );
         assert_eq!(

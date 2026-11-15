@@ -2,13 +2,13 @@
 //! x86-64-v3 (AVX2, BMI2, FMA, F16C; `.github/release/check-x86-baseline.sh`),
 //! so on an older processor the first transcription would die with an
 //! illegal instruction (issue #592). `main` calls [`require`] first, before
-//! anything that could reach ggml; Hex's own Rust is compiled for the
+//! anything that could reach ggml; Voinc's own Rust is compiled for the
 //! baseline x86-64, so this check itself runs anywhere.
 //!
 //! `--version` and `--help` stay available on any CPU: installers and the
-//! updater run `hex --version` to check what they install.
+//! updater run `voinc --version` to check what they install.
 
-pub const MESSAGE: &str = "Hex needs a 2013 or newer processor (Intel Haswell / AMD Excavator or later) with AVX2. This PC's processor isn't supported.";
+pub const MESSAGE: &str = "Voinc needs a 2013 or newer processor (Intel Haswell / AMD Excavator or later) with AVX2. This PC's processor isn't supported.";
 
 /// Whether this processor has every x86-64-v3 feature ggml is built with.
 pub fn supported() -> bool {
@@ -32,7 +32,7 @@ pub fn require() {
         return;
     }
     eprintln!("{MESSAGE}");
-    // `hex service` never opens windows; its stderr reaches the journal.
+    // `voinc service` never opens windows; its stderr reaches the journal.
     if arguments
         .get(1)
         .is_none_or(|argument| argument != "service")
@@ -46,7 +46,7 @@ pub fn require() {
 fn show() {
     use windows_sys::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MB_OK, MessageBoxW};
     let wide = |text: &str| text.encode_utf16().chain([0]).collect::<Vec<u16>>();
-    let (text, title) = (wide(MESSAGE), wide("Hex"));
+    let (text, title) = (wide(MESSAGE), wide("Voinc"));
     // Both strings are NUL-terminated UTF-16 that outlive the call.
     unsafe {
         MessageBoxW(
@@ -58,10 +58,10 @@ fn show() {
     };
 }
 
-/// For Hex opened from the launcher, where nobody sees stderr: a desktop
+/// For Voinc opened from the launcher, where nobody sees stderr: a desktop
 /// dialog when one of these tools is installed and a display is up. A
 /// terminal already shows stderr, and a unit under a service manager
-/// (hex.service sets NOTIFY_SOCKET) must not block on a dialog that its
+/// (voinc.service sets NOTIFY_SOCKET) must not block on a dialog that its
 /// restarts would repeat.
 #[cfg(target_os = "linux")]
 fn show() {
@@ -74,9 +74,9 @@ fn show() {
         return;
     }
     let attempts: [(&str, &[&str]); 3] = [
-        ("zenity", &["--error", "--title=Hex", "--text", MESSAGE]),
-        ("kdialog", &["--title", "Hex", "--error", MESSAGE]),
-        ("notify-send", &["--urgency=critical", "Hex", MESSAGE]),
+        ("zenity", &["--error", "--title=Voinc", "--text", MESSAGE]),
+        ("kdialog", &["--title", "Voinc", "--error", MESSAGE]),
+        ("notify-send", &["--urgency=critical", "Voinc", MESSAGE]),
     ];
     for (program, arguments) in attempts {
         let shown = Command::new(program)
@@ -103,10 +103,10 @@ mod tests {
                 .map(std::ffi::OsString::from)
                 .collect::<Vec<_>>()
         };
-        assert!(exempt(&args(&["hex", "--version"])));
-        assert!(exempt(&args(&["hex", "--help"])));
-        assert!(!exempt(&args(&["hex"])));
-        assert!(!exempt(&args(&["hex", "--version", "app"])));
-        assert!(!exempt(&args(&["hex", "transcribe", "a.wav"])));
+        assert!(exempt(&args(&["voinc", "--version"])));
+        assert!(exempt(&args(&["voinc", "--help"])));
+        assert!(!exempt(&args(&["voinc"])));
+        assert!(!exempt(&args(&["voinc", "--version", "app"])));
+        assert!(!exempt(&args(&["voinc", "transcribe", "a.wav"])));
     }
 }

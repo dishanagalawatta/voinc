@@ -1,6 +1,6 @@
 import CoreGraphics
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 final class HexKeyGestureTests: XCTestCase {
     func testTapDoesNothing() {

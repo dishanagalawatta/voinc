@@ -72,7 +72,7 @@ struct KeyboardSetupCard: View {
 
             VStack(spacing: 0) {
                 row(
-                    title: "Hex Keyboard",
+                    title: "Voinc Keyboard",
                     status: keyboardStatus,
                     done: monitor.keyboardAdded == true
                 )

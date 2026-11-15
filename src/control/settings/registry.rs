@@ -1,4 +1,4 @@
-//! The `hex settings` key registry: every key, its kind, the retired names,
+//! The `voinc settings` key registry: every key, its kind, the retired names,
 //! and the capability each key needs.
 
 use crate::app_settings::HotkeySlot;
@@ -78,7 +78,7 @@ const fn read_only(key: &'static str, kind: Kind, about: &'static str, why: &'st
 }
 
 const UNIT: Kind = Kind::Number { min: 0.0, max: 1.0 };
-const MODEL_CHANGE: &str = "change the transcription model with `hex model use`";
+const MODEL_CHANGE: &str = "change the transcription model with `voinc model use`";
 
 /// Choice keys whose values are numbers in settings.json.
 pub(super) const NUMERIC_CHOICES: [&str; 2] =
@@ -126,7 +126,7 @@ pub(super) const KEYS: &[Key] = &[
             "analog",
             "thock",
         ]),
-        "Which sounds play; classic, Hex's original tones, is the default",
+        "Which sounds play; classic, Voinc's original tones, is the default",
     ),
     optional(
         "microphone",
@@ -182,7 +182,7 @@ pub(super) const KEYS: &[Key] = &[
         "cancel_hotkey",
         Kind::Shortcut(HotkeySlot::Cancel),
         "Toggle mode's cancel shortcut, Escape by default: discards the recording, \
-         nothing pasted or saved. Hex takes the key only while a toggled recording runs",
+         nothing pasted or saved. Voinc takes the key only while a toggled recording runs",
     ),
     optional(
         "raw_dictation_hotkey",
@@ -239,7 +239,7 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "show_dock_icon",
         Kind::Bool,
-        "Keep Hex in the Dock when Settings is closed (macOS)",
+        "Keep Voinc in the Dock when Settings is closed (macOS)",
     ),
     read_only(
         "transcription.model",
@@ -257,7 +257,7 @@ pub(super) const KEYS: &[Key] = &[
         "transcription_recents",
         Kind::Json,
         "Recently used models, each with its language",
-        "Hex records these as you switch models",
+        "Voinc records these as you switch models",
     ),
     key(
         "vocabulary_boost",
@@ -372,7 +372,7 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "labs.subtitle_export",
         Kind::Bool,
-        "Labs: export meeting transcripts as SRT or VTT subtitles with hex meetings show --srt|--vtt",
+        "Labs: export meeting transcripts as SRT or VTT subtitles with voinc meetings show --srt|--vtt",
     ),
     key(
         "labs.second_dictation_shortcut",
@@ -451,7 +451,7 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "labs.history_stats",
         Kind::Bool,
-        "Labs: a summary of retained dictations at the top of History, and hex history stats",
+        "Labs: a summary of retained dictations at the top of History, and voinc history stats",
     ),
     key(
         "labs.recent_dictations",
@@ -461,17 +461,17 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "labs.hide_menu_bar_icon",
         Kind::Bool,
-        "Labs: hide Hex's menu bar icon while nothing records; shortcuts keep working, and opening Hex again from Finder or Spotlight shows Settings (macOS)",
+        "Labs: hide Voinc's menu bar icon while nothing records; shortcuts keep working, and opening Voinc again from Finder or Spotlight shows Settings (macOS)",
     ),
     key(
         "labs.quit_closes_window",
         Kind::Bool,
-        "Labs: the app menu's Quit Hex (⌘Q) closes the Settings window instead of quitting Hex; dictation keeps running, and the menu bar icon still quits (macOS)",
+        "Labs: the app menu's Quit Voinc (⌘Q) closes the Settings window instead of quitting Voinc; dictation keeps running, and the menu bar icon still quits (macOS)",
     ),
     key(
         "labs.caps_lock_dictation",
         Kind::Bool,
-        "Labs: a Caps Lock press starts and stops dictation hands-free, and its light shows when Hex records and transcribes; Caps Lock stays off so typing is unchanged (macOS)",
+        "Labs: a Caps Lock press starts and stops dictation hands-free, and its light shows when Voinc records and transcribes; Caps Lock stays off so typing is unchanged (macOS)",
     ),
     key(
         "labs.caps_lock_light",
@@ -501,7 +501,7 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "labs.stop_when_call_ends",
         Kind::Bool,
-        "Labs: a meeting recording Hex started on its own stops 30 s after its call app leaves the microphone and goes quiet, unless you keep recording (macOS)",
+        "Labs: a meeting recording Voinc started on its own stops 30 s after its call app leaves the microphone and goes quiet, unless you keep recording (macOS)",
     ),
     key(
         "labs.more_call_apps",
@@ -531,7 +531,7 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "labs.annotate_replay",
         Kind::Bool,
-        "Labs: keep a rolling 15-second screen buffer so hex capture replay or capture.replay_hotkey saves what just happened; macOS shows the screen-recording dot the whole time it's on (macOS 27+)",
+        "Labs: keep a rolling 15-second screen buffer so voinc capture replay or capture.replay_hotkey saves what just happened; macOS shows the screen-recording dot the whole time it's on (macOS 27+)",
     ),
     key(
         "labs.gnome_clipboard_restore",
@@ -601,30 +601,30 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "labs.transcribe_files",
         Kind::Bool,
-        "Labs: hex transcribe <file> turns a WAV recording into text with the selected dictation model",
+        "Labs: voinc transcribe <file> turns a WAV recording into text with the selected dictation model",
     ),
     key(
         "labs.api_processing",
         Kind::Bool,
-        "Labs: apps using Hex's local API can ask for transcripts with Global mode's corrections, \
+        "Labs: apps using Voinc's local API can ask for transcripts with Global mode's corrections, \
          rewrite, and transformations applied (process=global)",
     ),
     key(
         "labs.api_timestamps",
         Kind::Bool,
-        "Labs: apps using Hex's local API can ask for each segment's or word's start and end times \
+        "Labs: apps using Voinc's local API can ask for each segment's or word's start and end times \
          in a transcript, as the speech model heard them (timestamps=segment|word)",
     ),
     key(
         "labs.speakers_only",
         Kind::Bool,
         "Labs: While dictating applies only while the default output is speakers; headphones are \
-         left alone, and outputs Hex can't classify count as speakers",
+         left alone, and outputs Voinc can't classify count as speakers",
     ),
     key(
         "labs.pause_menu",
         Kind::Bool,
-        "Labs: the menu bar offers Pause Hex, which makes every capture shortcut inert until \
+        "Labs: the menu bar offers Pause Voinc, which makes every capture shortcut inert until \
          Resume; a restart starts unpaused (macOS)",
     ),
     key(
@@ -635,7 +635,7 @@ pub(super) const KEYS: &[Key] = &[
     optional(
         "meetings.output_folder",
         Kind::Path,
-        "Folder for meeting Markdown; none uses ~/Documents/Hex Meetings",
+        "Folder for meeting Markdown; none uses ~/Documents/Voinc Meetings",
     ),
     key(
         "meetings.summaries",
@@ -645,7 +645,7 @@ pub(super) const KEYS: &[Key] = &[
     optional(
         "meetings.opencode_model",
         Kind::Text,
-        "The OpenCode provider/model meeting notes use when meetings.summaries is opencode; none lets Hex pick a fast model",
+        "The OpenCode provider/model meeting notes use when meetings.summaries is opencode; none lets Voinc pick a fast model",
     ),
     key(
         "meetings.show_recording_indicator",
@@ -696,7 +696,7 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "experimental.hex_microphone",
         Kind::Bool,
-        "Labs: the Voice Filter and its Hex Microphone virtual input",
+        "Labs: the Voice Filter and its Voinc Microphone virtual input",
     ),
     key(
         "experimental.hex_microphone_mode",
@@ -711,22 +711,22 @@ pub(super) const KEYS: &[Key] = &[
             "underwater",
             "far",
         ]),
-        "What Hex Microphone does to your voice while you dictate",
+        "What Voinc Microphone does to your voice while you dictate",
     ),
     key(
         "experimental.hex_microphone_comfort_noise",
         Kind::Bool,
-        "Hex Microphone fills silence with soft noise",
+        "Voinc Microphone fills silence with soft noise",
     ),
     key(
         "experimental.hex_microphone_strength",
         UNIT,
-        "How strongly Hex Microphone applies its filter, from 0 to 1",
+        "How strongly Voinc Microphone applies its filter, from 0 to 1",
     ),
     key(
         "enable_on_launch",
         Kind::Bool,
-        "Start listening when Hex opens (Windows and Linux)",
+        "Start listening when Voinc opens (Windows and Linux)",
     ),
     key(
         "paste_with_shift",
@@ -736,7 +736,7 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "gnome_keyboard_shortcuts",
         Kind::Bool,
-        "Hex's own GNOME custom keyboard shortcuts, for GNOME without a shortcuts portal (Linux)",
+        "Voinc's own GNOME custom keyboard shortcuts, for GNOME without a shortcuts portal (Linux)",
     ),
     key(
         "share_dictation_shortcut",
@@ -788,7 +788,7 @@ pub(super) const CAPTURE_KEYS: &[Key] = &[
     key(
         "capture.transcriber",
         Kind::Choice(&["parakeet", "apple"]),
-        "What transcribes a capture's narration: Hex's loaded model or Apple's",
+        "What transcribes a capture's narration: Voinc's loaded model or Apple's",
     ),
     optional(
         "capture.folder",
@@ -819,7 +819,7 @@ pub(super) const CAPTURE_KEYS: &[Key] = &[
     key(
         "capture.show_overlays_in_recordings",
         Kind::Bool,
-        "Let screen recordings, captures included, show Hex's capsules, ink, and HUD (for demos)",
+        "Let screen recordings, captures included, show Voinc's capsules, ink, and HUD (for demos)",
     ),
 ];
 #[cfg(not(hex_capture))]
@@ -844,7 +844,7 @@ pub(super) const RETIRED: &[(&str, &str)] = &[
     ),
 ];
 
-/// Settings that act only where Hex has a capability (by its
+/// Settings that act only where Voinc has a capability (by its
 /// `rune_ui::capabilities` name), the same one that shows their row in the
 /// window. The first matching prefix decides.
 pub(super) const NEEDS: &[(&str, &str)] = &[

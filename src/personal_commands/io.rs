@@ -308,7 +308,7 @@ impl Io {
                     let sender = self.sender.clone();
                     let loopback_only = self.loopback_only;
                     let spawned = thread::Builder::new()
-                        .name("hex-config-fetch".into())
+                        .name("voinc-config-fetch".into())
                         .spawn(move || {
                             let outcome = fetch::send(request, timeout, loopback_only);
                             FETCHES.fetch_sub(1, Ordering::AcqRel);
@@ -502,12 +502,12 @@ fn refuse_unless(
     tracing::warn!(
         target: "hex_config",
         capability,
-        "a transformation needs permission; allow it in Hex's Output pane"
+        "a transformation needs permission; allow it in Voinc's Output pane"
     );
     Err(Exception::throw_message(
         ctx,
         &format!(
-            "Hex has not allowed this config to {action}. Allow it in Hex's Output pane; Hex asks again whenever the config changes"
+            "Voinc has not allowed this config to {action}. Allow it in Voinc's Output pane; Voinc asks again whenever the config changes"
         ),
     ))
 }

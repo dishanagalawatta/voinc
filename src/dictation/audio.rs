@@ -329,7 +329,7 @@ impl DictationAudio {
     }
 
     /// Counts the active capture as intentional now, without a hold: a
-    /// `hex dictation start` has no shortcut press to judge. True when the
+    /// `voinc dictation start` has no shortcut press to judge. True when the
     /// open capture just became intentional; a capture still waiting for the
     /// microphone becomes intentional when it opens and reports
     /// `ReadyIntentional`.
@@ -1948,7 +1948,7 @@ mod tests {
 
     #[test]
     fn startup_microphone_failure_keeps_audio_owner_alive() {
-        let device = "Hex nonexistent microphone for startup recovery test";
+        let device = "Voinc nonexistent microphone for startup recovery test";
         let input = DictationAudio::with_input(
             RecoveringAudioInput::failed_for_test(device),
             device.into(),

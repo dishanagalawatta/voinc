@@ -14,9 +14,9 @@ fi
 
 target_dir=${CARGO_TARGET_DIR:-"$root/target"}
 cargo build --locked --release --manifest-path "$root/Cargo.toml"
-version=$("$target_dir/release/hex" --version | awk 'NF { value=$NF } END { print value }')
+version=$("$target_dir/release/voinc" --version | awk 'NF { value=$NF } END { print value }')
 
-HEX_INSTALL_SOURCE=1 \
-HEX_INSTALL_ARTIFACT="$target_dir/release/hex" \
-HEX_INSTALL_VERSION="$version" \
+VOINC_INSTALL_SOURCE=1 \
+VOINC_INSTALL_ARTIFACT="$target_dir/release/voinc" \
+VOINC_INSTALL_VERSION="$version" \
   exec "$installer"

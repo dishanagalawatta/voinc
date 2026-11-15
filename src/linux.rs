@@ -38,15 +38,15 @@ use crate::linux::service::{Activation, Launch};
 
 #[derive(Parser)]
 #[command(
-    name = "hex",
+    name = "voinc",
     version = crate::VERSION,
     about = "Local, observable voice recognition (Linux beta)",
     long_about = "Local, observable voice recognition (Linux beta).\n\n\
         Control commands (status, dictation, settings, model, window, …) drive the one running \
-        Hex over its owner-only socket and never launch it, except `start` and `restart`. Every \
+        Voinc over its owner-only socket and never launch it, except `start` and `restart`. Every \
         one takes --json for a versioned reply (docs/cli.md). Exit codes: 0 done or nothing to \
-        change, 1 refused or failed, 2 usage, 3 Hex isn't running.",
-    after_help = "Run `hex <command> --help` for details, or `hex settings list` for every setting."
+        change, 1 refused or failed, 2 usage, 3 Voinc isn't running.",
+    after_help = "Run `voinc <command> --help` for details, or `voinc settings list` for every setting."
 )]
 struct Cli {
     #[command(subcommand)]
@@ -57,23 +57,23 @@ struct Cli {
 enum Command {
     #[command(flatten)]
     Control(ControlCli),
-    /// Open the Hex window, starting Hex when it is not running (the default).
+    /// Open the Voinc window, starting Voinc when it is not running (the default).
     App {
-        /// Start Hex in the background without opening the window.
+        /// Start Voinc in the background without opening the window.
         #[arg(long)]
         hidden: bool,
         /// Arguments for a headless render, such as `--snap out.png --scene dark`.
         #[arg(last = true)]
         rune_args: Vec<String>,
     },
-    /// Run Hex in the foreground without opening the window (systemd's entry point).
+    /// Run Voinc in the foreground without opening the window (systemd's entry point).
     Service {
         /// Run only the local API as a direct child whose stdin is owned by
         /// the host application (the TypeScript SDK).
         #[arg(long, hide = true)]
         embedded: bool,
     },
-    /// Quit Hex after its accepted work finishes (same as `hex quit`).
+    /// Quit Voinc after its accepted work finishes (same as `voinc quit`).
     #[command(hide = true)]
     Stop,
     /// Run X11 or Wayland hotkey dictation and automatic paste until interrupted.
@@ -99,11 +99,11 @@ enum SessionAdoption {
     Launcher,
 }
 
-/// The service and the foreground `hex dictate` listener adopt the session's
+/// The service and the foreground `voinc dictate` listener adopt the session's
 /// Wayland display when their unit or shell has none (#756, #1506). A
 /// launcher adopts only behind Xwayland's `DISPLAY`, before it computes or
 /// writes the session environment; with no display at all it keeps today's
-/// behavior, including "Start Hex from your graphical login session" when it
+/// behavior, including "Start Voinc from your graphical login session" when it
 /// would start the unit. The window, commands that only forward or read, and
 /// the embedded service keep whatever display their parent gave them.
 fn session_adoption(command: &Command) -> Option<SessionAdoption> {
@@ -111,8 +111,8 @@ fn session_adoption(command: &Command) -> Option<SessionAdoption> {
         Command::Service { embedded: false } | Command::Dictate { .. } => {
             Some(SessionAdoption::Service)
         }
-        // `hex start` spawns `hex app --hidden`, which is the launcher that
-        // writes session.env; `hex restart` writes it itself.
+        // `voinc start` spawns `voinc app --hidden`, which is the launcher that
+        // writes session.env; `voinc restart` writes it itself.
         Command::App { rune_args, .. } if rune_args.is_empty() => Some(SessionAdoption::Launcher),
         Command::Control(ControlCli::Restart { .. }) => Some(SessionAdoption::Launcher),
         _ => None,
@@ -127,7 +127,7 @@ pub(crate) fn run(shutdown: &'static AtomicBool) -> Result<()> {
         hidden: false,
         rune_args: Vec::new(),
     });
-    // Before the log, which starts a thread, and before `hex restart` writes
+    // Before the log, which starts a thread, and before `voinc restart` writes
     // session.env: a launcher and the service it talks to must agree on the
     // session (#756, #1506).
     let adopted = match session_adoption(&command) {
@@ -137,8 +137,8 @@ pub(crate) fn run(shutdown: &'static AtomicBool) -> Result<()> {
         }
         None => None,
     };
-    // Control and read commands talk to the running Hex or read files: no
-    // log, lock, or Hex of their own.
+    // Control and read commands talk to the running Voinc or read files: no
+    // log, lock, or Voinc of their own.
     let command = match command {
         Command::Control(command) => crate::control::cli::finish(crate::control::cli::run(command)),
         Command::Stop => crate::control::cli::finish(crate::control::cli::send(
@@ -198,7 +198,7 @@ pub(crate) fn run(shutdown: &'static AtomicBool) -> Result<()> {
                 None,
                 Default::default(),
                 // Only shortcuts drive a foreground listener: the service's
-                // `hex` commands can't reach it.
+                // `voinc` commands can't reach it.
                 crate::linux::input::CommandQueue::disconnected(),
                 Default::default(),
                 std::sync::mpsc::channel().1,
@@ -214,7 +214,7 @@ pub(crate) fn run(shutdown: &'static AtomicBool) -> Result<()> {
     }
 }
 
-/// Forwards to the running Hex, starts its systemd unit, or becomes Hex.
+/// Forwards to the running Voinc, starts its systemd unit, or becomes Voinc.
 fn launch(
     activation: &Activation,
     show: bool,
@@ -269,7 +269,7 @@ mod tests {
             })),
             Some(SessionAdoption::Launcher)
         );
-        // `hex start` sends the detached `hex app --hidden` that adopts.
+        // `voinc start` sends the detached `voinc app --hidden` that adopts.
         assert_eq!(
             session_adoption(&Command::Control(ControlCli::Start {
                 output: Default::default(),
@@ -291,29 +291,29 @@ mod tests {
         Cli::command().debug_assert();
         let parse = |arguments: &[&str]| Cli::try_parse_from(arguments).map(|cli| cli.command);
         for arguments in [
-            &["hex", "status", "--json"][..],
-            &["hex", "dictation", "stop", "--print"],
-            &["hex", "paste-last"],
-            &["hex", "typed-text"],
-            &["hex", "settings", "set", "sound_effects", "off"],
-            &["hex", "model", "use", "parakeet_v3", "--language", "pl"],
-            &["hex", "model", "install"],
-            &["hex", "model", "status"],
-            &["hex", "window", "show", "history"],
-            &["hex", "vocabulary", "add", "Rune"],
-            &["hex", "history", "clear", "--yes"],
-            &["hex", "check-for-updates"],
-            &["hex", "launch-at-login", "on"],
-            &["hex", "logs", "-n", "5"],
-            &["hex", "meetings", "list"],
-            &["hex", "mcp"],
-            &["hex", "commands", "check"],
-            &["hex", "onboarding", "reset"],
-            &["hex", "annotate", "status"],
-            &["hex", "capture", "draw"],
-            &["hex", "labs"],
-            &["hex", "restart", "--force"],
-            &["hex", "start"],
+            &["voinc", "status", "--json"][..],
+            &["voinc", "dictation", "stop", "--print"],
+            &["voinc", "paste-last"],
+            &["voinc", "typed-text"],
+            &["voinc", "settings", "set", "sound_effects", "off"],
+            &["voinc", "model", "use", "parakeet_v3", "--language", "pl"],
+            &["voinc", "model", "install"],
+            &["voinc", "model", "status"],
+            &["voinc", "window", "show", "history"],
+            &["voinc", "vocabulary", "add", "Rune"],
+            &["voinc", "history", "clear", "--yes"],
+            &["voinc", "check-for-updates"],
+            &["voinc", "launch-at-login", "on"],
+            &["voinc", "logs", "-n", "5"],
+            &["voinc", "meetings", "list"],
+            &["voinc", "mcp"],
+            &["voinc", "commands", "check"],
+            &["voinc", "onboarding", "reset"],
+            &["voinc", "annotate", "status"],
+            &["voinc", "capture", "draw"],
+            &["voinc", "labs"],
+            &["voinc", "restart", "--force"],
+            &["voinc", "start"],
         ] {
             assert!(
                 matches!(parse(arguments), Ok(Some(Command::Control(_)))),
@@ -321,14 +321,14 @@ mod tests {
             );
         }
         assert!(matches!(
-            parse(&["hex", "quit", "--force"]),
+            parse(&["voinc", "quit", "--force"]),
             Ok(Some(Command::Control(ControlCli::Quit { force: true, .. })))
         ));
-        assert!(matches!(parse(&["hex", "stop"]), Ok(Some(Command::Stop))));
+        assert!(matches!(parse(&["voinc", "stop"]), Ok(Some(Command::Stop))));
         assert!(matches!(
-            parse(&["hex", "app", "--hidden"]),
+            parse(&["voinc", "app", "--hidden"]),
             Ok(Some(Command::App { hidden: true, .. }))
         ));
-        assert!(matches!(parse(&["hex"]), Ok(None)));
+        assert!(matches!(parse(&["voinc"]), Ok(None)));
     }
 }

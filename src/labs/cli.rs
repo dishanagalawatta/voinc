@@ -1,4 +1,4 @@
-//! `hex labs`: list the features, turn one on or off, and open its row.
+//! `voinc labs`: list the features, turn one on or off, and open its row.
 
 use clap::Subcommand;
 use color_eyre::Result;
@@ -26,12 +26,12 @@ pub enum LabsCommand {
     On { feature: String },
     /// Turn a Labs feature off.
     Off { feature: String },
-    /// Print the link that opens Hex's Labs page at a feature's row (macOS).
+    /// Print the link that opens Voinc's Labs page at a feature's row (macOS).
     #[cfg(target_os = "macos")]
     Link { feature: String },
 }
 
-/// `hex labs`: edits `settings.json`; a running Hex applies most changes
+/// `voinc labs`: edits `settings.json`; a running Voinc applies most changes
 /// when it next starts.
 pub fn run(command: Option<&LabsCommand>) -> Result<()> {
     #[cfg(target_os = "macos")]
@@ -45,7 +45,7 @@ pub fn run(command: Option<&LabsCommand>) -> Result<()> {
         );
         return Ok(());
     }
-    // Listing, or handing the change to a running Hex, never writes the file.
+    // Listing, or handing the change to a running Voinc, never writes the file.
     let settings = AppSettings::read()?;
     let (name, on) = match command {
         None | Some(LabsCommand::List) => {
@@ -70,14 +70,14 @@ pub fn run(command: Option<&LabsCommand>) -> Result<()> {
         && crate::audio::hex_microphone::driver_bundle_installed()
     {
         return Err(eyre!(
-            "voice-filter stays on while the Hex Microphone driver is installed; uninstall the driver in its pane to turn it off"
+            "voice-filter stays on while the Voinc Microphone driver is installed; uninstall the driver in its pane to turn it off"
         ));
     }
     if !on && let Some(why) = feature.off_refusal(&settings) {
         return Err(eyre!(why));
     }
     let state = if on { "on" } else { "off" };
-    // A running Hex saves and applies it at once, as its Labs row would.
+    // A running Voinc saves and applies it at once, as its Labs row would.
     if let Some(reply) = crate::control::cli::set_in_running_hex(
         feature.settings_key(),
         if on { "true" } else { "false" },
@@ -102,7 +102,7 @@ pub fn run(command: Option<&LabsCommand>) -> Result<()> {
 }
 
 /// The feature `name` names, if this OS has it and `reaches` admits it.
-/// Features that left Labs: `hex labs` still knows their names.
+/// Features that left Labs: `voinc labs` still knows their names.
 const GRADUATED: [(&str, &str); 2] = [
     (
         "custom-models",
@@ -122,7 +122,7 @@ pub(super) fn resolve(name: &str, reaches: impl Fn(Feature) -> bool + Copy) -> R
         .filter(|feature| feature.on_this_os() && reaches(*feature))
         .ok_or_else(|| {
             eyre!(
-                "unknown Labs feature {name:?}; this Hex has: {}",
+                "unknown Labs feature {name:?}; this Voinc has: {}",
                 Feature::available_where(reaches)
                     .map(Feature::name)
                     .collect::<Vec<_>>()
@@ -142,7 +142,7 @@ fn list(settings: &AppSettings) -> String {
             || (feature == Feature::VoiceFilter
                 && crate::audio::hex_microphone::driver_bundle_installed());
         out.push_str(&format!(
-            "{:<width$}  {:<7}  {:<8}  {} (hex settings {})\n",
+            "{:<width$}  {:<7}  {:<8}  {} (voinc settings {})\n",
             feature.name(),
             if feature.managed().is_some() {
                 "managed"
@@ -159,8 +159,8 @@ fn list(settings: &AppSettings) -> String {
     out
 }
 
-/// `hex experiments …`, from before Labs.
+/// `voinc experiments …`, from before Labs.
 pub fn run_retired_experiments() -> Result<()> {
-    println!("Experiments are now Labs: hex labs, hex labs on|off <feature>");
+    println!("Experiments are now Labs: voinc labs, voinc labs on|off <feature>");
     Ok(())
 }

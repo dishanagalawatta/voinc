@@ -162,7 +162,7 @@ pub(super) fn deliver(out: &Out, png: &[u8], words: &str) -> anyhow::Result<()> 
             save::write(&folder, png).map(|_| ())
         }
         Out::Send(dest) => {
-            let folder = std::env::temp_dir().join("hex-screenshots");
+            let folder = std::env::temp_dir().join("voinc-screenshots");
             let path = save::write(&folder, png)?;
             let text = if words.is_empty() { SEND_TEXT } else { words };
             crate::capture_host::send_image(&dest.session, text, &path)
@@ -201,7 +201,7 @@ impl ClipExport {
             }
             Out::Send(dest) => {
                 // The whole recording is already saved; only a cut is new.
-                let folder = std::env::temp_dir().join("hex-screenshots");
+                let folder = std::env::temp_dir().join("voinc-screenshots");
                 let movie = match self.trim {
                     Some(_) => {
                         let movie = save::recording_path(&folder);
@@ -248,7 +248,7 @@ pub(super) fn load_sessions(overlay: Option<OverlayHandle<Editor>>) {
         return;
     };
     let spawned = std::thread::Builder::new()
-        .name("hex-screenshot-sessions".into())
+        .name("voinc-screenshot-sessions".into())
         .spawn(move || {
             let sessions = match recent_sessions() {
                 Ok(dests) => Sessions::Ready(dests),

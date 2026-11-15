@@ -29,7 +29,7 @@ pub enum StatusItemAction {
     StartMeeting,
     StopMeeting,
     CopyLastMeetingTranscript,
-    /// Pause Hex, or Resume Hex while shortcuts are suspended (Labs › Pause
+    /// Pause Voinc, or Resume Voinc while shortcuts are suspended (Labs › Pause
     /// from menu bar).
     TogglePause,
     /// Copy chapter `n` of the recording meeting (Labs).
@@ -372,7 +372,7 @@ pub fn install() -> Result<Receiver<StatusItemAction>> {
         MainThreadMarker::new().ok_or_else(|| eyre!("status item requires the main thread"))?;
     let (actions, receiver) = sync_channel(8);
     let target = StatusItemTarget::new(actions, mtm);
-    let menu = NSMenu::initWithTitle(NSMenu::alloc(mtm), &NSString::from_str("Hex"));
+    let menu = NSMenu::initWithTitle(NSMenu::alloc(mtm), &NSString::from_str("Voinc"));
     let meeting_sections_menu =
         NSMenu::initWithTitle(NSMenu::alloc(mtm), &NSString::from_str("Copy Section"));
     let recent_menu = NSMenu::initWithTitle(
@@ -470,8 +470,8 @@ pub fn install() -> Result<Receiver<StatusItemAction>> {
     let button = item
         .button(mtm)
         .ok_or_else(|| eyre!("status item button is unavailable"))?;
-    let symbol = status_bar_icon(IDLE_ICON_PNG, "Hex")?;
-    let recording_symbol = status_bar_icon(RECORDING_ICON_PNG, "Hex is recording a meeting")?;
+    let symbol = status_bar_icon(IDLE_ICON_PNG, "Voinc")?;
+    let recording_symbol = status_bar_icon(RECORDING_ICON_PNG, "Voinc is recording a meeting")?;
     button.setImage(Some(&symbol));
     // SAFETY: the target answers `menuNeedsUpdate:` and outlives the menu's
     // weak delegate reference (both live in STATUS_ITEM for the app's life).
@@ -520,7 +520,7 @@ pub fn install() -> Result<Receiver<StatusItemAction>> {
 fn status_bar_icon(png: &[u8], accessibility_description: &str) -> Result<Retained<NSImage>> {
     let data = NSData::with_bytes(png);
     let image = NSImage::initWithData(NSImage::alloc(), &data)
-        .ok_or_else(|| eyre!("could not decode Hex status item icon"))?;
+        .ok_or_else(|| eyre!("could not decode Voinc status item icon"))?;
     image.setSize(NSSize::new(STATUS_ICON_POINTS, STATUS_ICON_POINTS));
     image.setTemplate(true);
     image.setAccessibilityDescription(Some(&NSString::from_str(accessibility_description)));
@@ -691,10 +691,10 @@ fn icon_shown(hide: bool, meeting_active: bool) -> bool {
     !hide || meeting_active
 }
 
-/// Labs › Pause from menu bar's row: Pause Hex while shortcuts run, Resume
-/// Hex while they are paused or a resume waits for a neutral keyboard.
+/// Labs › Pause from menu bar's row: Pause Voinc while shortcuts run, Resume
+/// Voinc while they are paused or a resume waits for a neutral keyboard.
 fn pause_title(suspended: bool) -> &'static str {
-    if suspended { "Resume Hex" } else { "Pause Hex" }
+    if suspended { "Resume Voinc" } else { "Pause Voinc" }
 }
 
 /// A meeting title short enough for one menu line.
@@ -768,10 +768,10 @@ fn refresh_restore_capture() {
     });
 }
 
-/// Shows Pause Hex while Labs › Pause from menu bar is on, reads Resume Hex
+/// Shows Pause Voinc while Labs › Pause from menu bar is on, reads Resume Voinc
 /// while shortcuts are suspended, and resumes at once if the lab turned off
 /// under a pause. The title follows the pause state itself, so it reads
-/// Resume Hex while a resume waits for a neutral keyboard too.
+/// Resume Voinc while a resume waits for a neutral keyboard too.
 pub fn update_pause() {
     let on = crate::labs::pause_menu();
     crate::shortcut_pause::reconcile(on);
@@ -1011,7 +1011,7 @@ mod tests {
                 "Copy Section".into(),
                 "Record Meeting".into(),
                 "—".into(),
-                "Pause Hex".into(),
+                "Pause Voinc".into(),
                 "Paste Last Dictation".into(),
                 "Copy Recent Dictation".into(),
                 "Copy Last Meeting Transcript".into(),
@@ -1071,10 +1071,10 @@ mod tests {
     #[test]
     fn the_pause_row_reads_pause_or_resume() {
         // Suspended covers a pause and the resume that waits for a neutral
-        // keyboard, so the row never says Pause Hex while keys are inert.
-        assert_eq!(pause_title(false), "Pause Hex");
-        assert_eq!(pause_title(true), "Resume Hex");
-        assert_eq!(Row::PauseHex.title().as_deref(), Some("Pause Hex"));
+        // keyboard, so the row never says Pause Voinc while keys are inert.
+        assert_eq!(pause_title(false), "Pause Voinc");
+        assert_eq!(pause_title(true), "Resume Voinc");
+        assert_eq!(Row::PauseHex.title().as_deref(), Some("Pause Voinc"));
         assert!(Row::PauseHex.action().is_some());
         assert!(Row::PauseHex.starts_hidden());
     }
@@ -1107,8 +1107,8 @@ mod tests {
     #[test]
     fn status_bar_icons_load_as_18pt_retina_templates() {
         for (png, description) in [
-            (IDLE_ICON_PNG, "Hex"),
-            (RECORDING_ICON_PNG, "Hex is recording a meeting"),
+            (IDLE_ICON_PNG, "Voinc"),
+            (RECORDING_ICON_PNG, "Voinc is recording a meeting"),
         ] {
             let icon = status_bar_icon(png, description).unwrap();
             assert!(icon.isTemplate());

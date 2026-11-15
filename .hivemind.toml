@@ -4,14 +4,14 @@ batch_max = 4
 verify = [
   "cargo test --locked --workspace --lib",
   "[ -d sdk/node_modules ] || (cd sdk && bun install --frozen-lockfile)",
-  "HEX_TEAM_ID=${HEX_TEAM_ID:-QC99C9JE59} HEX_CAPTURE=1 HEX_LOCAL_BUILD=1 scripts/build-app.sh",
+  "VOINC_TEAM_ID=${VOINC_TEAM_ID:-QC99C9JE59} VOINC_CAPTURE=1 VOINC_LOCAL_BUILD=1 scripts/build-app.sh",
 ]
 
 [land.app]
-target = "/Applications/Hex.app"
-bundle = "target/app/Hex.app"
-id = "anomaly.hex"
-exe = "hex"
+target = "/Applications/Voinc.app"
+bundle = "target/app/Voinc.app"
+id = "io.voinc.voinc"
+exe = "voinc"
 wait_idle = 30
-install_cmd = "if [ -x \"$HOME/Library/Caches/hex-install/install-gate.sh\" ]; then while [ \"$(\"$HOME/Library/Caches/hex-install/install-gate.sh\")\" != ready ]; do sleep 5; done; fi && if [ -f \"$HOME/code/home/tools/hex-autobuild/install.py\" ]; then python3 \"$HOME/code/home/tools/hex-autobuild/install.py\" \"${HIVEMIND_LAND_HEAD:0:8}\" \"$PWD/target/app/Hex.app\"; else rm -rf /Applications/Hex.app && ditto \"$PWD/target/app/Hex.app\" /Applications/Hex.app && open -g /Applications/Hex.app; fi"
-stamp = "~/Library/Caches/hex-install/installed-rev"
+install_cmd = "if [ -x \"$HOME/Library/Caches/voinc-install/install-gate.sh\" ]; then while [ \"$(\"$HOME/Library/Caches/voinc-install/install-gate.sh\")\" != ready ]; do sleep 5; done; fi && if [ -f \"$HOME/code/home/tools/voinc-autobuild/install.py\" ]; then python3 \"$HOME/code/home/tools/voinc-autobuild/install.py\" \"${HIVEMIND_LAND_HEAD:0:8}\" \"$PWD/target/app/Voinc.app\"; else rm -rf /Applications/Voinc.app && ditto \"$PWD/target/app/Voinc.app\" /Applications/Voinc.app && open -g /Applications/Voinc.app; fi"
+stamp = "~/Library/Caches/voinc-install/installed-rev"

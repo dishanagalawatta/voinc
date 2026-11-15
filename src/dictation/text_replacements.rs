@@ -330,9 +330,9 @@ mod tests {
 
     #[test]
     fn duplicate_phrases_use_settings_order_deterministically() {
-        let replacements = ReplacementSet::new(&[rule("hex", "first"), rule("HEX", "second")]);
+        let replacements = ReplacementSet::new(&[rule("voinc", "first"), rule("VOINC", "second")]);
 
-        assert_eq!(replacements.replace("hex"), "first");
+        assert_eq!(replacements.replace("voinc"), "first");
     }
 
     #[test]

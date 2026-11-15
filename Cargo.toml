@@ -1,13 +1,13 @@
 [package]
-name = "hex"
+name = "voinc"
 version = "3.4.0"
 edition = "2024"
-default-run = "hex"
+default-run = "voinc"
 license = "MIT"
-repository = "https://github.com/anomalyco/hex"
+repository = "https://github.com/dishanagalawatta/voinc"
 
 # Crates imported from Scrawl live under `crates/`. Plain `cargo build` and
-# `cargo test` still select only Hex; pass `--workspace` or `-p` for the others.
+# `cargo test` still select only Voinc; pass `--workspace` or `-p` for the others.
 # `crates/capture` and `crates/capture-core` are excluded so `--workspace`
 # never builds them: they compile only as the macOS and Linux dependencies
 # of the `capture` experiment, and `-p scrawl-capture` / `-p capture-core` test and lint
@@ -36,10 +36,10 @@ onnx-benchmark = ["dep:transcribe-rs"]
 strip = true
 
 # transcribe.cpp 0.4.1 plus one ggml patch that builds only the Vulkan
-# shaders Hex's models use (see `CMAKE_ARGS` in .cargo/config.toml),
-# Parakeet's vocabulary rescoring (branches hex/parakeet-vocabulary and
-# hex/vocabulary-sounds-like), and a Metal residency heartbeat that sleeps once
-# its keep-alive runs out (branch hex/metal-idle-residency). Drop this once a
+# shaders Voinc's models use (see `CMAKE_ARGS` in .cargo/config.toml),
+# Parakeet's vocabulary rescoring (branches voinc/parakeet-vocabulary and
+# voinc/vocabulary-sounds-like), and a Metal residency heartbeat that sleeps once
+# its keep-alive runs out (branch voinc/metal-idle-residency). Drop this once a
 # transcribe.cpp release carries them.
 [patch.crates-io]
 transcribe-cpp = { git = "https://github.com/anomalyco/transcribe.cpp", rev = "bcb639faa4c74a2300ba19e30360cb2355b1663a" }
@@ -76,7 +76,7 @@ transcribe-rs = { git = "https://github.com/cjpais/transcribe-rs", rev = "e37c66
 unicode-normalization = "0.1.25"
 unicode-segmentation = "1.13.3"
 url = "2.5.8"
-# Hex's HTTPS (`net`): model downloads, update checks, and transformation
+# Voinc's HTTPS (`net`): model downloads, update checks, and transformation
 # scripts' `fetch`, over the platform's TLS and trusted roots.
 # `native-tls`, not `native-tls-no-default`: ureq 3.4 checks the former's
 # name and panics on any https request without it.
@@ -117,7 +117,7 @@ zbus = { version = "6.1.0", default-features = false, features = ["tokio", "prox
 # The desktop UI, and Annotate (Scrawl's capture engine), compiled into
 # every desktop build (`capture.enabled`).
 [target.'cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))'.dependencies]
-# `hex mcp`.
+# `voinc mcp`.
 rmcp = { version = "3.5.1", default-features = false, features = ["server", "macros", "transport-io"] }
 tokio = { version = "1.53.1", features = ["rt", "io-std"] }
 anyhow = "1.0.104"

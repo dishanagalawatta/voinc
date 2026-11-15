@@ -28,7 +28,7 @@ nonisolated enum KeyKind: Equatable, Hashable, Sendable {
     case delete
     case space
     case returnKey
-    case hex
+    case voinc
     case globe
 }
 
@@ -275,7 +275,7 @@ nonisolated struct KeyboardLayout: Equatable, Sendable {
         }
         add(.delete, row: 2, x: right - modW, w: modW, label: "delete")
 
-        // Row 4: 123/ABC, globe?, field extras, space, Hex, return.
+        // Row 4: 123/ABC, globe?, field extras, space, Voinc, return.
         let returnW = lw * returnWidthRatio + m.gap
         var leading: [(KeyKind, CGFloat, String)] = [
             layer == .letters
@@ -296,7 +296,7 @@ nonisolated struct KeyboardLayout: Equatable, Sendable {
             leading.append((.character("@"), lw, "@"))
             trailing.append((.character("."), lw, "."))
         }
-        trailing.append((.hex, modW, "hex"))
+        trailing.append((.voinc, modW, "voinc"))
         trailing.append((.returnKey, returnW, "return"))
 
         let fixed = (leading + trailing).reduce(0) { $0 + $1.1 }

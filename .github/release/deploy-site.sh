@@ -15,16 +15,16 @@
 mode=$1
 case "$mode" in
   dev)
-    worker=hex-dev-site host=dev.anoma.ly
+    worker=voinc-dev-site host=dev.anoma.ly
     ;;
   production)
-    worker=hex-production-site host=anoma.ly
+    worker=voinc-production-site host=anoma.ly
     ;;
   *) die "Unknown site mode: $mode" ;;
 esac
 # The frozen 2.3.1 files are the only bucket content left, the same for both
 # environments, and the Worker only reads them; CI holds no R2 credential.
-bucket=hex-production-files
+bucket=voinc-production-files
 : "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_API_TOKEN}"
 : "${CLOUDFLARE_ACCOUNT_ID:?Set CLOUDFLARE_ACCOUNT_ID}"
 
@@ -50,8 +50,8 @@ jq -e --arg worker "$worker" --arg host "$host" --arg bucket "$bucket" '
   and ((.compatibilityFlags // []) | all(type == "string"))
   and .assets == {runWorkerFirst: true}
   and .triggers == [
-    {type: "fetch", pattern: "\($host)/hex", zone: "anoma.ly"},
-    {type: "fetch", pattern: "\($host)/hex/*", zone: "anoma.ly"}
+    {type: "fetch", pattern: "\($host)/voinc", zone: "anoma.ly"},
+    {type: "fetch", pattern: "\($host)/voinc/*", zone: "anoma.ly"}
   ]
   and .workersDev == false
   and .previewUrls == false

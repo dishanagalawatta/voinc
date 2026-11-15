@@ -82,7 +82,7 @@ pub enum HistoryKind {
     Dictation,
     Send,
     VoiceAction,
-    /// `hex dictation stop --print`: never pasted, so Paste Last skips it.
+    /// `voinc dictation stop --print`: never pasted, so Paste Last skips it.
     Printed,
     /// Dictate without processing: pasted as heard, with no step run.
     Raw,
@@ -823,7 +823,7 @@ mod tests {
 
     fn temp_path(name: &str) -> PathBuf {
         let directory =
-            std::env::temp_dir().join(format!("hex-history-{}-{name}", std::process::id()));
+            std::env::temp_dir().join(format!("voinc-history-{}-{name}", std::process::id()));
         let _ = fs::remove_dir_all(&directory);
         fs::create_dir_all(&directory).unwrap();
         directory.join("history.json")

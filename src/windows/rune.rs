@@ -1,4 +1,4 @@
-//! Hex on Windows: one tray process per login session.
+//! Voinc on Windows: one tray process per login session.
 //!
 //! - The main thread runs Rune's event loop and the window; the Rune tray
 //!   runs on its own thread.
@@ -73,11 +73,11 @@ pub(crate) enum Request {
     CancelModel,
     /// The window saved `settings.json`; adopt it.
     ReloadSettings,
-    /// The tray's Enable / Disable Hex.
+    /// The tray's Enable / Disable Voinc.
     ToggleListening,
     /// The tray's Paste last dictation, into the app its menu covered.
     PasteLast,
-    /// The window's Quit Hex: stop the listener, then end the app.
+    /// The window's Quit Voinc: stop the listener, then end the app.
     Quit,
 }
 
@@ -123,7 +123,7 @@ type Wake = Arc<dyn Fn() + Send + Sync>;
 struct Shared {
     published: Mutex<Option<Arc<Published>>>,
     wakers: Mutex<Vec<Wake>>,
-    /// Where `hex` dictation commands go while a listener runs.
+    /// Where `voinc` dictation commands go while a listener runs.
     listener: Mutex<Option<mpsc::Sender<crate::windows::dictation::ListenerCommand>>>,
 }
 
@@ -139,7 +139,7 @@ impl RuntimeHandle {
     pub(crate) fn send(&self, request: Request) -> Result<()> {
         self.requests
             .send(request)
-            .map_err(|_| eyre!("Hex's runtime stopped"))
+            .map_err(|_| eyre!("Voinc's runtime stopped"))
     }
 
     pub(crate) fn published(&self) -> Option<Arc<Published>> {
@@ -169,7 +169,7 @@ fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 
 pub fn open(event_path: PathBuf, shutdown: &'static AtomicBool, start_hidden: bool) -> Result<()> {
     if let Err(error) = crate::windows::login_item::follow_current_version() {
-        tracing::warn!(%error, "could not point Launch at login at this version of Hex");
+        tracing::warn!(%error, "could not point Launch at login at this version of Voinc");
     }
     let Some(instance) = crate::windows::app::AppInstance::claim(start_hidden)? else {
         return Ok(());
@@ -205,7 +205,7 @@ pub fn open(event_path: PathBuf, shutdown: &'static AtomicBool, start_hidden: bo
     let adding_tray = {
         let window = window.clone();
         std::thread::Builder::new()
-            .name("hex-tray-setup".into())
+            .name("voinc-tray-setup".into())
             .spawn(move || create_tray(window))
     };
     let hud = crate::rune_hud::install(&mut app);
@@ -224,7 +224,7 @@ pub fn open(event_path: PathBuf, shutdown: &'static AtomicBool, start_hidden: bo
     };
     let tray = match added_tray {
         Ok(tray) => {
-            // Closing gives the window and its swapchain back, so a Hex sitting
+            // Closing gives the window and its swapchain back, so a Voinc sitting
             // in the tray holds no Direct3D window and never passes for a game
             // to capture tools such as NVIDIA's Instant Replay (#1308). Opening
             // it again makes both, where the window was and at its size.
@@ -235,10 +235,10 @@ pub fn open(event_path: PathBuf, shutdown: &'static AtomicBool, start_hidden: bo
             };
             Some(Arc::new(tray))
         }
-        // Without a tray, closing the window quits: Hex must not run on
+        // Without a tray, closing the window quits: Voinc must not run on
         // with no way back to it.
         Err(error) => {
-            tracing::warn!(%error, "Windows system tray is unavailable; closing Hex will quit");
+            tracing::warn!(%error, "Windows system tray is unavailable; closing Voinc will quit");
             None
         }
     };
@@ -250,7 +250,7 @@ pub fn open(event_path: PathBuf, shutdown: &'static AtomicBool, start_hidden: bo
             shared: shared.clone(),
             history: history.clone(),
         })
-        .map_err(|_| eyre!("the Hex runtime already started"))?;
+        .map_err(|_| eyre!("the Voinc runtime already started"))?;
     let (control_calls, control_receiver) = mpsc::sync_channel(8);
     let (dictation_controls, dictations) = mpsc::sync_channel(8);
     let processing = crate::dictation::modes::ProcessingState::from_settings(&settings);
@@ -266,7 +266,7 @@ pub fn open(event_path: PathBuf, shutdown: &'static AtomicBool, start_hidden: bo
     let runtime_tray = tray.clone();
     let runtime_shared = shared.clone();
     let runtime = std::thread::Builder::new()
-        .name("hex-runtime".into())
+        .name("voinc-runtime".into())
         .spawn(move || {
             run_runtime(
                 event_path,
@@ -311,7 +311,7 @@ pub fn open(event_path: PathBuf, shutdown: &'static AtomicBool, start_hidden: bo
     Ok(())
 }
 
-/// Hex is ending: Rune runs this before the loop ends, including from Windows'
+/// Voinc is ending: Rune runs this before the loop ends, including from Windows'
 /// `WM_QUERYENDSESSION` and `WM_ENDSESSION` (also for a windowless launch),
 /// which may end the process before `app.run()` returns. Clear the GPU draw
 /// marker now, so a logoff or shutdown isn't read as a crash while drawing.
@@ -322,11 +322,11 @@ fn quit_hook(_: &mut Ui, _: &mut rune::Tx) {
 }
 
 /// Names the main thread, which runs Rune's event loop and draws, so
-/// profilers and debuggers tell it from Hex's other threads (which the
+/// profilers and debuggers tell it from Voinc's other threads (which the
 /// standard library names when they start).
 fn name_ui_thread() {
     use windows_sys::Win32::System::Threading::{GetCurrentThread, SetThreadDescription};
-    let name: Vec<u16> = "hex-ui".encode_utf16().chain([0]).collect();
+    let name: Vec<u16> = "voinc-ui".encode_utf16().chain([0]).collect();
     // SAFETY: `name` is a NUL-terminated UTF-16 string that outlives the
     // call, and the pseudo handle names the calling thread.
     unsafe { SetThreadDescription(GetCurrentThread(), name.as_ptr()) };
@@ -415,7 +415,7 @@ fn runtime_handle() -> RuntimeHandle {
         .expect("the runtime is set before control starts")
 }
 
-/// The Windows adapter `hex` control commands from the local API run
+/// The Windows adapter `voinc` control commands from the local API run
 /// through ([`crate::control::host`]).
 struct WindowsControl {
     runtime: RuntimeHandle,
@@ -423,7 +423,7 @@ struct WindowsControl {
     window: Mutex<rune::AppHandle<Ui>>,
 }
 
-/// Lets the local API write the reply before Hex quits.
+/// Lets the local API write the reply before Voinc quits.
 const QUIT_GRACE: Duration = Duration::from_millis(250);
 
 impl WindowsControl {
@@ -444,12 +444,12 @@ impl WindowsControl {
         let listener = lock(&self.shared.listener).clone().ok_or_else(|| {
             ControlError::new(
                 "not-ready",
-                "Hex is not listening; turn it on in the tray or the window",
+                "Voinc is not listening; turn it on in the tray or the window",
             )
         })?;
         listener
             .send(command)
-            .map_err(|_| ControlError::new("busy", "Hex's listener stopped; try again"))?;
+            .map_err(|_| ControlError::new("busy", "Voinc's listener stopped; try again"))?;
         crate::windows::dictation::wake();
         Ok(())
     }
@@ -460,7 +460,7 @@ impl crate::control::host::Host for WindowsControl {
         let published = self
             .runtime
             .published()
-            .ok_or_else(|| ControlError::new("not-ready", "Hex is starting; try again"))?;
+            .ok_or_else(|| ControlError::new("not-ready", "Voinc is starting; try again"))?;
         Ok(crate::control::host::HostState {
             settings: published.settings.clone(),
             listener: published.listener.clone(),
@@ -559,7 +559,7 @@ impl crate::control::host::Host for WindowsControl {
         })
     }
 
-    /// `hex restart` opens Hex again once this one has gone.
+    /// `voinc restart` opens Voinc again once this one has gone.
     fn quit(&self, _restart: bool) -> std::result::Result<(), ControlError> {
         let runtime = self.runtime.clone();
         std::thread::spawn(move || {
@@ -573,7 +573,7 @@ impl crate::control::host::Host for WindowsControl {
         crate::rune_ui::shortcut_rules()
     }
 
-    /// `hex annotate`: recording commands wait for the listener's capture
+    /// `voinc annotate`: recording commands wait for the listener's capture
     /// host; the captures folder is read here.
     fn annotate(&self, command: crate::control::ControlCommand) -> ControlReply {
         use crate::capture_host::{self as capture, CaptureCommand, CaptureControl};
@@ -598,7 +598,7 @@ impl crate::control::host::Host for WindowsControl {
             } => capture::send_capture(&capture, to, always),
             C::ScrawlCaptureUndo => {
                 capture::send_to_listener(CaptureControl::Command(CaptureCommand::Undo))
-                    .map(|()| ControlReply::done("Asked Hex to take the newest send back"))
+                    .map(|()| ControlReply::done("Asked Voinc to take the newest send back"))
                     .map_err(|error| ControlError::new("not-ready", format!("{error:#}")))
             }
             C::ScrawlCaptureRoute { capture, ask_jev } => {
@@ -717,7 +717,7 @@ struct Caption {
     system_dark: bool,
 }
 
-/// Identifies Hex's caption subclass among any others on the window.
+/// Identifies Voinc's caption subclass among any others on the window.
 const CAPTION_SUBCLASS: usize = 1;
 
 /// Blends the native title bar into the window: DWM paints the caption the
@@ -852,7 +852,7 @@ fn create_tray(window: rune::AppHandle<Ui>) -> Result<rune::Tray> {
         tray_icon::pixels(taskbar_is_light()),
     );
     let view = TrayView::default();
-    let spec = rune::TraySpec::new("hex", "Hex", icon)
+    let spec = rune::TraySpec::new("voinc", "Voinc", icon)
         .tooltip(view.tooltip())
         .menu(view.menu());
     let tray = rune::Tray::new(spec, move |event| match event {

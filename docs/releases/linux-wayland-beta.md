@@ -6,8 +6,8 @@ release gates; passing container tests alone does not establish those behaviors.
 - Add native Wayland dictation on compatible wlroots compositors, with a
   click-through recording/processing indicator. Shortcuts come from the
   desktop's GlobalShortcuts portal, and Settings shows what it granted;
-  without the portal, bind `hex dictation start|stop|toggle|cancel`,
-  `hex voice-action start|stop|toggle`, and `hex paste-last` in the
+  without the portal, bind `voinc dictation start|stop|toggle|cancel`,
+  `voinc voice-action start|stop|toggle`, and `voinc paste-last` in the
   compositor. No input-device access or `input` group is needed.
 - Keep shortcut changes, cancellation, and tray-less listener recovery
   manageable from Settings.

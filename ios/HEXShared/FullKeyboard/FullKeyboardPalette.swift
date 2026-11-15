@@ -18,9 +18,9 @@ struct FullKeyboardPalette: Equatable {
 
     private static func rgb(_ hex: UInt32, alpha: CGFloat = 1) -> UIColor {
         UIColor(
-            red: CGFloat((hex >> 16) & 0xFF) / 255,
-            green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255,
+            red: CGFloat((voinc >> 16) & 0xFF) / 255,
+            green: CGFloat((voinc >> 8) & 0xFF) / 255,
+            blue: CGFloat(voinc & 0xFF) / 255,
             alpha: alpha
         )
     }
@@ -52,7 +52,7 @@ struct FullKeyboardPalette: Equatable {
     static let cornerRadius: CGFloat = 8.5
 }
 
-/// The Hex mark (two hexagon outlines and a filled core) as UIKit paths.
+/// The Voinc mark (two hexagon outlines and a filled core) as UIKit paths.
 enum HexMarkPath {
     private static let outer: [CGPoint] = [
         CGPoint(x: 32, y: 4), CGPoint(x: 57, y: 18.5), CGPoint(x: 57, y: 45.5),

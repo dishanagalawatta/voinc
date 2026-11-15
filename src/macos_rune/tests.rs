@@ -19,8 +19,8 @@ fn the_pump_idles_unless_the_hud_animates() {
     assert!(pump_interval(false) >= 0.2);
 }
 
-/// ⌘Tab back to Hex opens its closed window (#1298), but never for a
-/// menu-bar-only Hex, an overlay that took the keyboard, or an open window.
+/// ⌘Tab back to Voinc opens its closed window (#1298), but never for a
+/// menu-bar-only Voinc, an overlay that took the keyboard, or an open window.
 #[test]
 fn switching_to_hex_opens_its_closed_window() {
     assert!(reopen_on_activation(true, false, false));
@@ -30,8 +30,8 @@ fn switching_to_hex_opens_its_closed_window() {
 }
 
 /// Setup or a missing menu-bar item always opens the window; otherwise a
-/// shown Dock icon opens it unless macOS started Hex at login (#1321), and a
-/// hidden one never does. `hex app --hidden` opens it only without the
+/// shown Dock icon opens it unless macOS started Voinc at login (#1321), and a
+/// hidden one never does. `voinc app --hidden` opens it only without the
 /// menu-bar item.
 #[test]
 fn login_item_launch_starts_without_the_window() {
@@ -291,13 +291,13 @@ fn hexs_own_window_applies_nothing_and_an_edit_waits_for_another_app() {
         language: "es".into(),
     });
     let mut fixture = Fixture::new(settings);
-    // Hex's own window names no mode, even though Global matches every app.
+    // Voinc's own window names no mode, even though Global matches every app.
     fixture.app(None, true);
     assert!(
         fixture.started.try_recv().is_err(),
-        "Hex's own window switched the model"
+        "Voinc's own window switched the model"
     );
-    // Editing Global while Hex is in front changes nothing yet.
+    // Editing Global while Voinc is in front changes nothing yet.
     fixture
         .runtime
         .settings

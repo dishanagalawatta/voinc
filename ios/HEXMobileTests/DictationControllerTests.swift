@@ -1,6 +1,6 @@
 import AVFAudio
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 @MainActor
 private final class FakeAudioCapture: ActiveAudioCapture {
@@ -143,7 +143,7 @@ final class DictationControllerTests: XCTestCase {
     private var defaults: UserDefaults!
 
     override func setUp() async throws {
-        suiteName = "hex.tests.\(UUID().uuidString)"
+        suiteName = "voinc.tests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)!
     }
 
@@ -375,7 +375,7 @@ final class DictationControllerTests: XCTestCase {
     func testRecordedWAVFixtureIsValidSilentTestInput() throws {
         let bundle = Bundle(for: Self.self)
         let wavURL = try XCTUnwrap(
-            bundle.url(forResource: "term-hex-1", withExtension: "wav"),
+            bundle.url(forResource: "term-voinc-1", withExtension: "wav"),
             "Expected recorded WAV fixture in test bundle"
         )
         let audioFile = try AVAudioFile(forReading: wavURL)

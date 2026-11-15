@@ -1,14 +1,14 @@
-//! `hex capsule-playground`: the real capsule in a window of its own, on a
+//! `voinc capsule-playground`: the real capsule in a window of its own, on a
 //! plain backdrop, driven by a fake host. Buttons step it through every
 //! state, "Play the whole flow" runs a capture end to end, and the panel
 //! tunes its timings, springs, and sounds live, then copies
 //! them back as the Rust constants.
 //!
-//! It runs beside the installed Hex without touching it: no capture host,
+//! It runs beside the installed Voinc without touching it: no capture host,
 //! settings, captures, tap, or network. Nothing records and nothing sends;
 //! the fake host only answers the capsule's actions with the inputs a real
 //! capture would bring. With Labs, the same states
-//! are stories in Hex's own window playground too ([`stories`]).
+//! are stories in Voinc's own window playground too ([`stories`]).
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -82,14 +82,14 @@ pub(crate) fn run(rune_args: Vec<String>) {
     }
     crate::feedback::set_volume(0.5);
     let spec = rune::AppSpec {
-        title: "Hex capsule playground",
+        title: "Voinc capsule playground",
         min_size: Some(WINDOW),
         scenes: SCENES,
         fonts: rune_theme_opencode::FONTS,
         families: rune_theme_opencode::FAMILIES,
         poll: Some(poll),
         on_key: Some(on_key),
-        ..rune::AppSpec::new("Hex capsule playground", WINDOW, init, super::view)
+        ..rune::AppSpec::new("Voinc capsule playground", WINDOW, init, super::view)
     };
     rune::App::new(spec).modifier_keys().args(rune_args).run();
 }
@@ -376,7 +376,7 @@ fn dest(name: &str, why: &str, folder: &str) -> Dest {
 fn recent() -> Vec<Dest> {
     vec![
         dest("RUNE", "2 min ago", "rune"),
-        dest("SCRAWL", "an hour ago", "hex"),
+        dest("SCRAWL", "an hour ago", "voinc"),
         dest("HOME", "yesterday", "home"),
     ]
 }
@@ -395,7 +395,7 @@ fn rule() -> Route {
 fn guess() -> Route {
     Route::Guess {
         suggested: vec![
-            dest("HEX", "you were just in it", "hex"),
+            dest("VOINC", "you were just in it", "voinc"),
             dest("SEER", "same page", "seer"),
             dest("HOME", "mentioned", "home"),
         ],
@@ -433,7 +433,7 @@ impl Playground {
             }
             Action::Undo { .. } => self.at(0.25, Step::Input(Input::Undone(Undone::TakenBack))),
             // System Settings granting it: first with a restart due, then
-            // as a fresh Hex sees it.
+            // as a fresh Voinc sees it.
             Action::Allow(need) => {
                 self.at(1.5, Step::Input(Input::Permission(need, Grant::Restart)));
             }
@@ -543,7 +543,7 @@ fn poll(s: &mut CapsuleState, wall: f64, tx: &mut Tx) -> bool {
     changed
 }
 
-/// The keys Hex's tap would hand the capsule, from the window instead.
+/// The keys Voinc's tap would hand the capsule, from the window instead.
 fn on_key(s: &mut CapsuleState, key: &KeyEvent, tx: &mut Tx) -> bool {
     use rune::Key;
     let Some(keys) = s.flow.keys() else {
@@ -808,7 +808,7 @@ fn states(p: Paint) -> El {
                     ]
                 }))
                 .child(state_button(p, "No permission", || vec![needs_screen()]))
-                .child(state_button(p, "Restart Hex", || {
+                .child(state_button(p, "Restart Voinc", || {
                     vec![
                         needs_screen(),
                         Step::Input(Input::Permission(
@@ -967,7 +967,7 @@ fn panel(p: Paint, pg: &Playground) -> El {
 }
 
 /// The tuning controls, their sliders `w` wide. Standalone, they also
-/// switch Hex's sounds and set their volume; inside Hex those stay Hex's.
+/// switch Voinc's sounds and set their volume; inside Voinc those stay Voinc's.
 fn tuning(p: Paint, pg: &Playground, w: f32, standalone: bool) -> El {
     let t = pg.tuning;
     let card = |key: &str| card(key, w);
@@ -1089,8 +1089,8 @@ fn tuning(p: Paint, pg: &Playground, w: f32, standalone: bool) -> El {
         ("Discard", Cue::Discarded),
         ("Failed", Cue::Failed),
     ];
-    // Standalone, the playground switches Hex's sounds and sets their
-    // volume; inside Hex those stay Hex's.
+    // Standalone, the playground switches Voinc's sounds and sets their
+    // volume; inside Voinc those stay Voinc's.
     let sound = card("sound-card")
         .children(standalone.then(|| {
             switch(p, "sound", "Sound", pg.sound, |pg, _| {

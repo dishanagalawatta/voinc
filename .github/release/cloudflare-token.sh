@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Mints a short-lived Cloudflare token for the current job from the token issuer
 # (anomalyco/secrets). Run after aws-actions/configure-aws-credentials has assumed the job's
-# role (the site deploy: arn:aws:iam::604439173067:role/github/hex-infra-<mode>), with its
+# role (the site deploy: arn:aws:iam::604439173067:role/github/voinc-infra-<mode>), with its
 # credentials in this step's env from the action's outputs (output-env-credentials: false): the Lambda
 # identifies the role from the SigV4 signature and mints only that stage's token. No repo,
 # stage, permission or TTL is sent in the request, and the token is pinned to the runner's IP
@@ -24,12 +24,12 @@ if ! [[ "$url" =~ $url_pattern ]]; then
 fi
 case "$account" in
   *[!0-9a-f]*|"")
-    echo "::error::CLOUDFLARE_ACCOUNT_ID must be a 32-character lowercase hex id." >&2
+    echo "::error::CLOUDFLARE_ACCOUNT_ID must be a 32-character lowercase voinc id." >&2
     exit 1
     ;;
 esac
 if [ ${#account} -ne 32 ]; then
-  echo "::error::CLOUDFLARE_ACCOUNT_ID must be a 32-character lowercase hex id." >&2
+  echo "::error::CLOUDFLARE_ACCOUNT_ID must be a 32-character lowercase voinc id." >&2
   exit 1
 fi
 for name in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN; do

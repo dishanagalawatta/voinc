@@ -364,7 +364,7 @@ pub struct Past {
 }
 
 /// What a caller adds to the question: earlier items, sessions to always put to Jev (pinned
-/// in Hex; they don't win on their own), and what was on screen.
+/// in Voinc; they don't win on their own), and what was on screen.
 #[derive(Clone, Debug, Default)]
 pub struct Asking {
     pub history: Vec<Past>,
@@ -374,7 +374,7 @@ pub struct Asking {
 
 // MARK: The screen
 
-/// What was on screen around an item, as text (never images): the state's `screen`. Hex sends
+/// What was on screen around an item, as text (never images): the state's `screen`. Voinc sends
 /// it with dictation; a capture fills the windows and the recorded app's session. Private: it
 /// goes to Jev and the saved decision only, never to scrawl.log.
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -571,7 +571,7 @@ fn name_in(value: Option<&Value>, max: usize) -> Option<String> {
     (!text.is_empty()).then_some(text)
 }
 
-/// `text` cut to about `max` characters around its middle, where Hex puts the cursor.
+/// `text` cut to about `max` characters around its middle, where Voinc puts the cursor.
 fn trim_around(text: &str, max: usize) -> String {
     let text = text.trim();
     let count = text.chars().count();
@@ -1892,9 +1892,9 @@ pub fn log_line(line: &Value) {
 /// How Kit corrected a route.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
-    /// Not sent after all (Esc or ✕ during the countdown; Hex's cancel).
+    /// Not sent after all (Esc or ✕ during the countdown; Voinc's cancel).
     Cancel,
-    /// Sent somewhere else (a chip, `scrawl send --reroute`, Hex's picker).
+    /// Sent somewhere else (a chip, `scrawl send --reroute`, Voinc's picker).
     Redirect,
     /// Pasted instead.
     Paste,
@@ -2133,7 +2133,7 @@ mod tests {
             clues,
             candidates: vec![
                 candidate("ses_home", "HOME", "/Users/k", 9_000),
-                candidate("ses_hex", "HEX", "/Users/k/code/hex", 10_000),
+                candidate("ses_hex", "VOINC", "/Users/k/code/voinc", 10_000),
                 candidate("ses_board", "PROBLEMS", "/Users/k/code/board", 8_000),
             ],
             now_ms: 100_000,
@@ -2189,7 +2189,7 @@ mod tests {
         judge(
             evidence,
             smart,
-            &json!({"kind": "capture", "transcript": "the hex icon"}),
+            &json!({"kind": "capture", "transcript": "the voinc icon"}),
             &Asking::default(),
             None,
             &HOOKS,
@@ -2203,7 +2203,7 @@ mod tests {
 
     #[test]
     fn a_sure_answer_sends_with_the_runner_up_one_click_away() {
-        // Targets newest first: t1 HEX, t2 HOME, t3 PROBLEMS.
+        // Targets newest first: t1 VOINC, t2 HOME, t3 PROBLEMS.
         reply("t1", 0.93, 0.9, json!({"t1": 0.95, "t2": 0.01, "t3": 0.04}));
         let (judgement, record) = run(&evidence(vec![]), &Thresholds::default());
         let dest = sent_to(&judgement).unwrap();
@@ -2217,7 +2217,7 @@ mod tests {
         assert!(instead.is_empty(), "4% isn't worth a chip");
         assert_eq!(record.band, Band::Send);
         assert_eq!(record.by, "jev");
-        assert_eq!(record.target.as_ref().unwrap().title, "HEX");
+        assert_eq!(record.target.as_ref().unwrap().title, "VOINC");
         assert_eq!(record.input_tokens, Some(1234));
         assert_eq!(record.model.as_deref(), Some("jev-1.13.0"));
     }
@@ -2238,7 +2238,7 @@ mod tests {
 
     #[test]
     fn an_ask_adds_smart_routings_best_when_jev_left_it_out() {
-        // Jev: HEX then HOME. The terminal points at the board's folder.
+        // Jev: VOINC then HOME. The terminal points at the board's folder.
         reply("t1", 0.6, 0.6, json!({"t1": 0.6, "t2": 0.3, "t3": 0.1}));
         let terminal = Clue::new(
             Source::Terminal,
@@ -2406,12 +2406,12 @@ mod tests {
         let terminal = Clue::new(
             Source::Terminal,
             Pointer::Folder(smart::Folder {
-                path: "/Users/k/code/hex/src".into(),
-                root: "/Users/k/code/hex".into(),
+                path: "/Users/k/code/voinc/src".into(),
+                root: "/Users/k/code/voinc".into(),
                 tree: true,
                 repo: None,
             }),
-            "the terminal's focused pane is in /Users/k/code/hex/src",
+            "the terminal's focused pane is in /Users/k/code/voinc/src",
         );
         let said = Clue::new(
             Source::Speech,
@@ -2428,7 +2428,7 @@ mod tests {
         let sent = SENT.with(|s| s.borrow().clone()).unwrap();
         assert_eq!(sent["model"], MODEL);
         let targets = sent["state"]["targets"].as_object().unwrap();
-        assert_eq!(targets["t1"]["title"], "HEX");
+        assert_eq!(targets["t1"]["title"], "VOINC");
         assert_eq!(targets["t1"]["last_active"], "1 min ago");
         assert_eq!(targets["t1"]["recent"]["user"], "last words in ses_hex");
         assert_eq!(targets["t2"]["title"], "HOME");
@@ -2551,7 +2551,7 @@ mod tests {
             },
             ..Asking::default()
         };
-        // Targets newest first: t1 HEX, t2 HOME, t3 PROBLEMS.
+        // Targets newest first: t1 VOINC, t2 HOME, t3 PROBLEMS.
         let sent = run_with(&evidence(vec![]), &asking, &json!({"kind": "dictation"}));
         let screen = &sent["state"]["screen"];
         assert_eq!(screen["windows"][0]["title"], "notes.txt");
@@ -2587,7 +2587,7 @@ mod tests {
                 })
                 .collect(),
             visible_text: Some("v".repeat(VISIBLE_CHARS)),
-            opencode_tab: Some("HEX".into()),
+            opencode_tab: Some("VOINC".into()),
             ..Screen::default()
         };
         let asking = Asking {
@@ -2750,7 +2750,7 @@ mod tests {
         );
         assert_eq!(line["decision"], "send");
         assert_eq!(line["to"]["id"], "ses_hex");
-        assert_eq!(line["to"]["title"], "HEX");
+        assert_eq!(line["to"]["title"], "VOINC");
         assert_eq!(
             (line["kind"].as_str(), line["event"].as_str()),
             (Some("capture"), Some("decision"))
@@ -2765,7 +2765,7 @@ mod tests {
             subject: Subject::Decision("d1"),
             action: Action::Redirect,
             detail: None,
-            from: Some(("ses_hex", "HEX")),
+            from: Some(("ses_hex", "VOINC")),
             to: Some(("ses_home", "HOME")),
             app: Some("Ghostty"),
         }
@@ -2840,7 +2840,7 @@ mod tests {
         let past = &sent["state"]["history"][0];
         assert_eq!(past["text"], "move the button");
         assert!(
-            past["went_to"].as_str().unwrap().ends_with("(HEX)"),
+            past["went_to"].as_str().unwrap().ends_with("(VOINC)"),
             "{past}"
         );
         let corrected = past["corrected_to"].as_str().unwrap();

@@ -89,7 +89,7 @@ pub struct LabsSettings {
     pub spoken_formatting: bool,
     /// Filler words such as "um" and "uh" are removed from dictations (issue 631).
     pub filler_words: bool,
-    /// `hex meetings show --srt|--vtt` exports a transcript as timed subtitles (macOS, issue 633).
+    /// `voinc meetings show --srt|--vtt` exports a transcript as timed subtitles (macOS, issue 633).
     pub subtitle_export: bool,
     /// `second_dictation_hotkey` dictates like the dictation shortcut (issue 627).
     pub second_dictation_shortcut: bool,
@@ -140,10 +140,10 @@ pub struct LabsSettings {
     /// The sidebar footer links this build's release notes.
     pub release_notes_link: bool,
     pub hide_menu_bar_icon: bool,
-    /// ⌘Q closes the Settings window instead of quitting Hex (macOS).
+    /// ⌘Q closes the Settings window instead of quitting Voinc (macOS).
     pub quit_closes_window: bool,
     /// A Caps Lock press starts and stops dictation, and its light follows
-    /// Hex's recording and processing (macOS).
+    /// Voinc's recording and processing (macOS).
     pub caps_lock_dictation: bool,
     /// Whether that light stays solid or blinks slowly while recording
     /// (macOS).
@@ -192,7 +192,7 @@ pub struct LabsSettings {
     /// for Modes rewriting and the Modes model picker when no Windows
     /// service answers (Windows).
     pub opencode_in_wsl: bool,
-    /// `hex transcribe <file>` turns a WAV recording into text with the
+    /// `voinc transcribe <file>` turns a WAV recording into text with the
     /// dictation model.
     pub transcribe_files: bool,
     /// The local API's `process=global` returns transcripts after Global
@@ -207,7 +207,7 @@ pub struct LabsSettings {
     /// A dictation mode's speech model and language follow the foreground
     /// application (macOS and Windows).
     pub app_model_switching: bool,
-    /// The menu bar offers Pause Hex, which makes every capture shortcut
+    /// The menu bar offers Pause Voinc, which makes every capture shortcut
     /// inert until Resume (macOS).
     pub pause_menu: bool,
     /// Settings › Labs' groups opened or closed by hand, by `labs::Group`

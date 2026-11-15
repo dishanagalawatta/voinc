@@ -1,5 +1,5 @@
 import XCTest
-@testable import HEX
+@testable import VOINC
 
 final class TranscriptCleanupGuardTests: XCTestCase {
     func testAcceptsMisheardWordsAndSpokenSelfCorrections() {

@@ -1,4 +1,4 @@
-//! Hex's in-app updater on every OS, a client of the Anomaly release service
+//! Voinc's in-app updater on every OS, a client of the Anomaly release service
 //! (`docs/plans/release-service.md`). One worker polls the channel's manifest
 //! 10 seconds after launch, then hourly or on "Check for updates", decides with the
 //! protocol's client rules, and for a direct install downloads the target,
@@ -7,7 +7,7 @@
 //! release replaces it, and Restart to update checks once more before it
 //! switches over. Versions are display text and never compared: whenever the
 //! channel's current release is not the running build (its target SHA-256,
-//! else its exact version), Hex takes it, and switching channels does so
+//! else its exact version), Voinc takes it, and switching channels does so
 //! after the user confirms. Package-managed installs only learn the command to run;
 //! source builds, test builds, and installs whose administrator set
 //! `DisableUpdates` never check. Manifests are not signed: HTTPS, the
@@ -38,7 +38,7 @@ use platform::Staged;
 #[cfg(target_os = "macos")]
 pub use platform::finish_on_launch;
 
-const APP: &str = "hex";
+const APP: &str = "voinc";
 const ARTIFACT: &str = "desktop";
 const ORIGIN: &str = "https://anoma.ly/release";
 const STARTUP_DELAY: Duration = Duration::from_secs(10);
@@ -59,14 +59,14 @@ const RESTART_MANIFEST_TIMEOUT: Duration = Duration::from_secs(15);
 /// How this install receives updates, which decides what the updater does.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Method {
-    /// Our installer's receipt (or, on macOS, a writable `Hex.app`): Hex
+    /// Our installer's receipt (or, on macOS, a writable `Voinc.app`): Voinc
     /// downloads and stages updates itself on this channel.
     Direct { channel: String },
-    /// A direct install Hex cannot replace (macOS: a read-only or translocated
+    /// A direct install Voinc cannot replace (macOS: a read-only or translocated
     /// location); updates link to the download.
     DownloadOnly,
     /// A package manager (`aur`, `deb-x64`, `rpm-arm64`, `nix`, `brew`, …) updates
-    /// it; Hex shows its command once it serves a newer version.
+    /// it; Voinc shows its command once it serves a newer version.
     #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
     Package(&'static str),
     /// Built from a checkout, which updates it.
@@ -94,8 +94,8 @@ impl Method {
 }
 
 /// The channel the Release workflow published this build on, stamped at
-/// build time beside its version (`HEX_BUILD_CHANNEL`).
-const BUILD_CHANNEL: Option<&str> = option_env!("HEX_BUILD_CHANNEL");
+/// build time beside its version (`VOINC_BUILD_CHANNEL`).
+const BUILD_CHANNEL: Option<&str> = option_env!("VOINC_BUILD_CHANNEL");
 
 /// The channel this build belongs to: the one it was published on, else
 /// (builds from before the stamp) `dev` for a dev version, else the
@@ -182,7 +182,7 @@ enum State {
 
 struct Shared {
     state: Mutex<State>,
-    /// A package manager installed Hex, so "up to date" is its to say.
+    /// A package manager installed Voinc, so "up to date" is its to say.
     packaged: bool,
     /// Set by "Check for updates" and `stop`; the worker waits on it between checks.
     wake: Mutex<Wake>,
@@ -253,7 +253,7 @@ pub struct Updater {
 impl Updater {
     pub fn start() -> Self {
         let method = platform::method();
-        let disabled = if option_env!("HEX_TEST_BUILD") == Some("1") || updates_off_by_env() {
+        let disabled = if option_env!("VOINC_TEST_BUILD") == Some("1") || updates_off_by_env() {
             Some(DesktopUpdateStatus::Unavailable)
         } else if crate::app_paths::is_local_build() {
             Some(DesktopUpdateStatus::SourceBuild)
@@ -361,7 +361,7 @@ impl Updater {
     pub fn status(&self) -> DesktopUpdateStatus {
         match &*lock(&self.shared.state) {
             State::Disabled(status) => status.clone(),
-            // A package manager updates Hex: its own checks only look for
+            // A package manager updates Voinc: its own checks only look for
             // the manager's command, so they show nothing of their own.
             State::Checking | State::Current | State::Failed if self.shared.packaged => {
                 DesktopUpdateStatus::PackageManager
@@ -386,7 +386,7 @@ impl Updater {
 
     /// Carries out an update control: check now, open the download, or
     /// restart into the staged update. A restart finishes on the worker;
-    /// [`Self::take_restart`] says when Hex must quit.
+    /// [`Self::take_restart`] says when Voinc must quit.
     pub fn act(&self, action: &DesktopAction) -> Result<()> {
         match action {
             DesktopAction::CheckForUpdates => self.check_now(),
@@ -421,7 +421,7 @@ impl Updater {
     }
 
     /// The outcome of Restart to update, once: `Ok` when the update starts
-    /// as soon as Hex quits, which the caller must now do.
+    /// as soon as Voinc quits, which the caller must now do.
     pub fn take_restart(&self) -> Option<Result<()>> {
         let mut restart = lock(&self.shared.restart);
         if !matches!(*restart, Restart::Done(_)) {
@@ -460,7 +460,7 @@ impl Updater {
             return;
         };
         if let Err(error) = crate::desktop::opencode_catalog::open_url(&url) {
-            tracing::warn!(%error, "could not open the Hex download");
+            tracing::warn!(%error, "could not open the Voinc download");
         }
     }
 
@@ -479,11 +479,11 @@ impl Updater {
     }
 }
 
-/// `HEX_DISABLE_UPDATES=1` turns this launch's updater off, as a test build
-/// has it: no checks, no network, nothing offered. For copies of Hex that
+/// `VOINC_DISABLE_UPDATES=1` turns this launch's updater off, as a test build
+/// has it: no checks, no network, nothing offered. For copies of Voinc that
 /// must stay quiet, such as benchmarks (docs/perf.md).
 fn updates_off_by_env() -> bool {
-    std::env::var_os("HEX_DISABLE_UPDATES").is_some_and(|value| value == "1")
+    std::env::var_os("VOINC_DISABLE_UPDATES").is_some_and(|value| value == "1")
 }
 
 /// Whether an administrator turned updates off (`DisableUpdates`), read
@@ -584,7 +584,7 @@ fn run(shared: &Shared, method: &Method) {
 }
 
 /// Switches to the newest staged update once Restart to update's final
-/// check has run, whatever its result. True when Hex now quits.
+/// check has run, whatever its result. True when Voinc now quits.
 fn finish_restart(shared: &Shared, next: State) -> bool {
     let mut state = lock(&shared.state);
     let staged = lock(&shared.staged).clone();
@@ -617,7 +617,7 @@ fn check(
     restarting: bool,
 ) -> Result<State> {
     let updates = updates_dir()?;
-    // Read each check, so a change from the window or `hex settings` applies
+    // Read each check, so a change from the window or `voinc settings` applies
     // at the next one.
     let setting = AppSettings::saved_update_channel();
     let home = home_channel(method, BUILD_CHANNEL, crate::VERSION);
@@ -665,7 +665,7 @@ fn check(
                 let installed = download_console(&manifest, &manifest_url, &user_agent, &updates)
                     .and_then(|file| file.map_or(Ok(()), |file| platform::install_console(&file)));
                 if let Err(error) = installed {
-                    tracing::warn!(error = %format!("{error:#}"), "could not add hex.com to this install");
+                    tracing::warn!(error = %format!("{error:#}"), "could not add voinc.com to this install");
                 }
             }
             Ok(State::Current)
@@ -722,7 +722,7 @@ fn check(
                 .and_then(|console| platform::stage(&file, console.as_deref(), &version));
             #[cfg(not(target_os = "windows"))]
             let staged = platform::stage(&file, &version);
-            let staged = staged.wrap_err_with(|| format!("could not stage Hex {version}"))?;
+            let staged = staged.wrap_err_with(|| format!("could not stage Voinc {version}"))?;
             *lock(&shared.staged) = Some(StagedUpdate {
                 staged,
                 sha256: target.sha256,
@@ -775,7 +775,7 @@ fn verify_linux_signature(
     platform::verify_signature(&target.sha256, &std::fs::read(file)?)
 }
 
-/// The release's `hex.com` (`<target>-cli`), checked against the manifest's
+/// The release's `voinc.com` (`<target>-cli`), checked against the manifest's
 /// size and SHA-256; none when the release has no console entry point.
 #[cfg(target_os = "windows")]
 fn download_console(
@@ -791,7 +791,7 @@ fn download_console(
         return Ok(None);
     };
     let url = protocol::resolve_url(manifest_url, &target.url)
-        .ok_or_else(|| eyre!("the hex.com URL {} is not usable", target.url))?;
+        .ok_or_else(|| eyre!("the voinc.com URL {} is not usable", target.url))?;
     transport::download(&url, user_agent, target, updates).map(Some)
 }
 
@@ -809,11 +809,11 @@ fn replaces_staged(decision: &Decision, staged_sha256: &str) -> bool {
     )
 }
 
-/// `HEX_RELEASE_BASE_URL` (HTTPS only) points a build at another service
+/// `VOINC_RELEASE_BASE_URL` (HTTPS only) points a build at another service
 /// origin, for local tests against a fixture service. Nothing defaults to the
 /// service's dev stage, which only tests the service itself.
 fn manifest_url(channel: &str) -> String {
-    let origin = std::env::var("HEX_RELEASE_BASE_URL")
+    let origin = std::env::var("VOINC_RELEASE_BASE_URL")
         .ok()
         .filter(|origin| origin.starts_with("https://"));
     format!(
@@ -892,7 +892,7 @@ mod tests {
     use super::*;
 
     fn temporary(name: &str) -> PathBuf {
-        let path = std::env::temp_dir().join(format!("hex-updater-{name}-{}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("voinc-updater-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&path);
         std::fs::create_dir_all(&path).unwrap();
         path
@@ -915,7 +915,7 @@ mod tests {
         let write = |value: serde_json::Value| {
             std::fs::write(root.join("install.json"), value.to_string()).unwrap()
         };
-        let receipt = |channel: &str, root_path: &Path| serde_json::json!({"app":"hex","artifact":"desktop","channel":channel,"method":"direct","root":root_path});
+        let receipt = |channel: &str, root_path: &Path| serde_json::json!({"app":"voinc","artifact":"desktop","channel":channel,"method":"direct","root":root_path});
         assert_eq!(receipt_channel(&root), None);
         write(receipt("stable", &root));
         assert_eq!(receipt_channel(&root).as_deref(), Some("stable"));
@@ -1018,7 +1018,7 @@ mod tests {
         let sha = sha.to_string().repeat(64);
         serde_json::json!({
             "schema": 1,
-            "app": "hex",
+            "app": "voinc",
             "artifact": "desktop",
             "channel": channel,
             "sequence": 1,
@@ -1030,7 +1030,7 @@ mod tests {
                 "distributions": [{ "kind": "direct" }],
                 "targets": {
                     "linux-x64": {
-                        "url": format!("/release/hex/files/{sha}/hex"),
+                        "url": format!("/release/voinc/files/{sha}/voinc"),
                         "sha256": sha,
                         "size": 1
                     }

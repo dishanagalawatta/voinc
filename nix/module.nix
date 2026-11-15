@@ -5,14 +5,14 @@
   ...
 }:
 let
-  cfg = config.programs.hex;
+  cfg = config.programs.voinc;
 in
 {
-  options.programs.hex = {
-    enable = lib.mkEnableOption "Hex local voice dictation";
+  options.programs.voinc = {
+    enable = lib.mkEnableOption "Voinc local voice dictation";
     package = lib.mkOption {
       type = lib.types.package;
-      description = "Hex package to install.";
+      description = "Voinc package to install.";
     };
   };
 
@@ -23,7 +23,7 @@ in
           "x86_64-linux"
           "aarch64-linux"
         ];
-        message = "The Hex Nix package supports x86_64-linux and aarch64-linux only.";
+        message = "The Voinc Nix package supports x86_64-linux and aarch64-linux only.";
       }
     ];
     environment.systemPackages = [ cfg.package ];

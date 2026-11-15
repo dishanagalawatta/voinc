@@ -20,7 +20,7 @@ use crate::desktop::i18n::{event_age, tr};
 use crate::history::captures::{self, CaptureEntry, CaptureKind};
 
 pub(super) static CAPTURES_ICON: Icon = Icon {
-    name: "hex-captures",
+    name: "voinc-captures",
     view: 24.0,
     body: include_str!("../../assets/icons/captures.svg"),
 };
@@ -117,21 +117,21 @@ impl CapturesPane {
                     3,
                     2,
                     CaptureKind::Shot,
-                    "Hex Screenshot 2026-11-08 at 14.03.22.png",
+                    "Voinc Screenshot 2026-11-08 at 14.03.22.png",
                     "",
                 ),
                 entry(
                     2,
                     48,
                     CaptureKind::Recording,
-                    "Hex Recording 2026-11-08 at 13.17.05.mp4",
+                    "Voinc Recording 2026-11-08 at 13.17.05.mp4",
                     "Here the deploy button stays grey after the build finishes, even though the logs say it passed.",
                 ),
                 entry(
                     1,
                     26 * 60,
                     CaptureKind::Shot,
-                    "Hex Screenshot 2026-11-07 at 11.40.51.png",
+                    "Voinc Screenshot 2026-11-07 at 11.40.51.png",
                     "The settings sheet clips its last row on a small display.",
                 ),
             ],
@@ -229,7 +229,7 @@ fn copy(ui: &mut Ui, id: u64) {
     #[cfg(target_os = "macos")]
     {
         let spawned = std::thread::Builder::new()
-            .name("hex-capture-copy".into())
+            .name("voinc-capture-copy".into())
             .spawn(move || {
                 if let Err(error) = crate::screenshots::save::copy_saved(&file, recording) {
                     tracing::warn!(%error, "could not copy the capture");

@@ -1,12 +1,12 @@
-; Per-user Windows installer for Hex. It installs exactly the managed layout
+; Per-user Windows installer for Voinc. It installs exactly the managed layout
 ; that .github/release/install-windows.ps1 creates and src/windows_updater.rs updates:
 ;
-;   %APPDATA%\hex\versions\<version>\hex.exe
-;   %APPDATA%\hex\versions\<version>\hex.com  (the console entry point)
-;   %APPDATA%\hex\bin\hex.com  (on the user's PATH)
-;   %APPDATA%\hex\current-version
-;   %APPDATA%\hex\install.json  (the direct-install receipt)
-;   Start Menu\Programs\Hex.lnk  (description "Hex managed install")
+;   %APPDATA%\voinc\versions\<version>\voinc.exe
+;   %APPDATA%\voinc\versions\<version>\voinc.com  (the console entry point)
+;   %APPDATA%\voinc\bin\voinc.com  (on the user's PATH)
+;   %APPDATA%\voinc\current-version
+;   %APPDATA%\voinc\install.json  (the direct-install receipt)
+;   Start Menu\Programs\Voinc.lnk  (description "Voinc managed install")
 ;
 ; so the app keeps updating itself from the release service afterwards. The
 ; uninstaller lives outside versions\ because the updater prunes old version
@@ -14,9 +14,9 @@
 ; install-windows.ps1 -Uninstall.
 ;
 ; Compile with scripts/build-windows-installer.ps1, which passes:
-;   /DAppVersion=2.3.0 /DArch=x64|arm64 /DExecutable=<hex.exe> /DConsole=<hex.com>
+;   /DAppVersion=2.3.0 /DArch=x64|arm64 /DExecutable=<voinc.exe> /DConsole=<voinc.com>
 ;   /DOutputDir=<dir>
-; Console is left out only to wrap a release published before hex.com.
+; Console is left out only to wrap a release published before voinc.com.
 
 #ifndef AppVersion
   #error Pass /DAppVersion=<version>
@@ -25,7 +25,7 @@
   #error Pass /DArch=x64 or /DArch=arm64
 #endif
 #ifndef Executable
-  #error Pass /DExecutable=<path to hex.exe>
+  #error Pass /DExecutable=<path to voinc.exe>
 #endif
 #ifndef OutputDir
   #define OutputDir "."
@@ -43,31 +43,31 @@
 ; Keep this AppId forever: it names the Apps & Features entry that
 ; src/windows_updater.rs keeps current after self-updates.
 AppId={{6ED48C92-5177-41F4-B8D6-37B7B02CFDF4}
-AppName=Hex
+AppName=Voinc
 AppVersion={#AppVersion}
-AppVerName=Hex {#AppVersion}
+AppVerName=Voinc {#AppVersion}
 AppPublisher=Anomaly Innovations, Inc.
 AppPublisherURL=https://anoma.ly/
 AppSupportURL=https://github.com/anomalyco/hex/issues
-AppUpdatesURL=https://github.com/anomalyco/hex/releases
+AppUpdatesURL=https://github.com/dishanagalawatta/voinc/releases
 PrivilegesRequired=lowest
 ArchitecturesAllowed={#AllowedArchitectures}
 ArchitecturesInstallIn64BitMode={#AllowedArchitectures}
-DefaultDirName={userappdata}\hex
+DefaultDirName={userappdata}\voinc
 DisableDirPage=yes
 UsePreviousAppDir=no
 DisableProgramGroupPage=yes
 DisableReadyPage=yes
 DisableWelcomePage=yes
 UninstallFilesDir={app}\uninstall
-UninstallDisplayName=Hex
-UninstallDisplayIcon={app}\uninstall\hex.ico
-SetupIconFile=..\..\resources\windows\hex.ico
+UninstallDisplayName=Voinc
+UninstallDisplayIcon={app}\uninstall\voinc.ico
+SetupIconFile=..\..\resources\windows\voinc.ico
 WizardStyle=modern
 Compression=lzma2/max
 SolidCompression=yes
 OutputDir={#OutputDir}
-OutputBaseFilename=hex-setup-{#AppVersion}-windows-{#Arch}
+OutputBaseFilename=voinc-setup-{#AppVersion}-windows-{#Arch}
 CloseApplications=yes
 RestartApplications=no
 ; Adding or removing bin on PATH reaches new terminals without signing out.
@@ -75,18 +75,18 @@ ChangesEnvironment=yes
 MinVersion=10.0
 
 [Files]
-Source: "{#Executable}"; DestDir: "{app}\versions\{#AppVersion}"; DestName: "hex.exe"; Flags: ignoreversion
+Source: "{#Executable}"; DestDir: "{app}\versions\{#AppVersion}"; DestName: "voinc.exe"; Flags: ignoreversion
 #ifdef Console
-Source: "{#Console}"; DestDir: "{app}\versions\{#AppVersion}"; DestName: "hex.com"; Flags: ignoreversion
-Source: "{#Console}"; DestDir: "{app}\bin"; DestName: "hex.com"; Flags: ignoreversion
+Source: "{#Console}"; DestDir: "{app}\versions\{#AppVersion}"; DestName: "voinc.com"; Flags: ignoreversion
+Source: "{#Console}"; DestDir: "{app}\bin"; DestName: "voinc.com"; Flags: ignoreversion
 #endif
-Source: "..\..\resources\windows\hex.ico"; DestDir: "{app}\uninstall"; Flags: ignoreversion
+Source: "..\..\resources\windows\voinc.ico"; DestDir: "{app}\uninstall"; Flags: ignoreversion
 
 [Icons]
-Name: "{userprograms}\Hex"; Filename: "{app}\versions\{#AppVersion}\hex.exe"; Parameters: "app"; WorkingDir: "{app}\versions\{#AppVersion}"; Comment: "Hex managed install"
+Name: "{userprograms}\Voinc"; Filename: "{app}\versions\{#AppVersion}\voinc.exe"; Parameters: "app"; WorkingDir: "{app}\versions\{#AppVersion}"; Comment: "Voinc managed install"
 
 [Run]
-Filename: "{app}\versions\{#AppVersion}\hex.exe"; Parameters: "app"; Description: "Open Hex"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\versions\{#AppVersion}\voinc.exe"; Parameters: "app"; Description: "Open Voinc"; Flags: postinstall nowait skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\versions"
@@ -114,7 +114,7 @@ begin
   Bin := ExpandConstant('{app}\bin\');
   StringChangeEx(Bin, '''', '''''', True);
   Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-    '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Get-Process hex -ErrorAction SilentlyContinue | ' +
+    '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Get-Process voinc -ErrorAction SilentlyContinue | ' +
     'Where-Object { $_.Path -and ($_.Path.StartsWith(''' + Versions + ''', [StringComparison]::OrdinalIgnoreCase) -or ' +
     '$_.Path.StartsWith(''' + Bin + ''', [StringComparison]::OrdinalIgnoreCase)) } | ' +
     'Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500"',
@@ -144,7 +144,7 @@ end;
 
 { The same as UTF-8 without a byte order mark: SaveStringToFile writes the
   ANSI code page, which turns a non-ASCII profile path in install.json into
-  bytes Hex can't read, so the install stopped updating itself (#1352). }
+  bytes Voinc can't read, so the install stopped updating itself (#1352). }
 procedure WriteUtf8Atomically(Path, Contents: String);
 var
   Partial: String;
@@ -173,8 +173,8 @@ begin
   Result := Pos(';' + AnsiLowercase(Folder) + ';', NormalPath(Path)) > 0;
 end;
 
-{ Puts bin, where hex.com lives, on the user's PATH, so a terminal runs `hex`
-  as the console program that waits for hex.exe. }
+{ Puts bin, where voinc.com lives, on the user's PATH, so a terminal runs `voinc`
+  as the console program that waits for voinc.exe. }
 procedure AddBinToPath();
 var
   Path, Bin: String;
@@ -217,7 +217,7 @@ begin
   RegWriteExpandStringValue(HKCU, 'Environment', 'Path', Kept);
 end;
 
-{ Launch at login names a version's hex.exe, as src/windows/login_item.rs
+{ Launch at login names a version's voinc.exe, as src/windows/login_item.rs
   writes it. Point an enabled one at this version, as the app's updater does,
   so signing in doesn't start the version this replaced. A value outside the
   managed versions folder is the user's and stays; a disabled one stays off. }
@@ -225,10 +225,10 @@ procedure FollowLaunchAtLogin();
 var
   Command: String;
 begin
-  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Hex', Command) and
+  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Voinc', Command) and
      (Pos(LowerCase(ExpandConstant('{app}\versions\')), LowerCase(Command)) > 0) then
-    RegWriteStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Hex',
-      '"' + ExpandConstant('{app}\versions\{#AppVersion}\hex.exe') + '" app --hidden');
+    RegWriteStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Voinc',
+      '"' + ExpandConstant('{app}\versions\{#AppVersion}\voinc.exe') + '" app --hidden');
 end;
 
 { Point current-version at this version only once its files are in place,
@@ -244,7 +244,7 @@ begin
     Root := ExpandConstant('{app}');
     StringChangeEx(Root, '\', '\\', True);
     WriteUtf8Atomically(ExpandConstant('{app}\install.json'),
-      '{"app":"hex","artifact":"desktop","channel":"stable","method":"direct","root":"' + Root + '"}');
+      '{"app":"voinc","artifact":"desktop","channel":"stable","method":"direct","root":"' + Root + '"}');
     FollowLaunchAtLogin();
 #ifdef Console
     AddBinToPath();
@@ -259,11 +259,11 @@ begin
   if CurUninstallStep = usUninstall then
   begin
     { Self-updates run from newer version directories this uninstaller did
-      not create, so stop any Hex running from the managed layout. }
+      not create, so stop any Voinc running from the managed layout. }
     StopManagedHex();
-    if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Hex', Command) and
+    if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Voinc', Command) and
        (Pos(LowerCase(ExpandConstant('{app}\versions\')), LowerCase(Command)) > 0) then
-      RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Hex');
+      RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Voinc');
     RemoveBinFromPath();
   end;
 end;

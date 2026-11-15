@@ -592,10 +592,10 @@ mod tests {
     fn a_urls_file_path_is_its_decoded_segments() {
         let path = |url: &str| file_path(url);
         assert_eq!(
-            path("https://h:8444/raw/2026-10-19-hex-shout2/index.html?x=1#y"),
+            path("https://h:8444/raw/2026-10-19-voinc-shout2/index.html?x=1#y"),
             Some(vec![
                 "raw".into(),
-                "2026-10-19-hex-shout2".into(),
+                "2026-10-19-voinc-shout2".into(),
                 "index.html".into()
             ])
         );
@@ -620,21 +620,21 @@ mod tests {
         touch(&gallery.join("index.html"), "");
         let home = base.join("home");
         let artifacts = home.join("artifacts");
-        touch(&artifacts.join("2026-10-19-hex/index.html"), "");
+        touch(&artifacts.join("2026-10-19-voinc/index.html"), "");
         // A session in the folder above `home` lists it before `home`'s own session does.
         let roots = vec![base.clone(), home.clone(), gallery.clone()];
-        let url = "https://gallery.example:8444/raw/2026-10-19-hex/index.html";
+        let url = "https://gallery.example:8444/raw/2026-10-19-voinc/index.html";
         assert_eq!(
             locate(url, &gallery.join("server"), &[], &roots),
             Served::Elsewhere(Page {
-                file: artifacts.join("2026-10-19-hex/index.html"),
+                file: artifacts.join("2026-10-19-voinc/index.html"),
                 root: artifacts.clone(),
             })
         );
         // The trailing slash is its index.html.
         assert!(matches!(
             locate(
-                "https://gallery.example:8444/2026-10-19-hex/",
+                "https://gallery.example:8444/2026-10-19-voinc/",
                 &gallery,
                 &[],
                 &roots
@@ -694,7 +694,7 @@ mod tests {
         );
         let base = temp("marker");
         let page = Page {
-            file: base.join("hex/stills/a.png"),
+            file: base.join("voinc/stills/a.png"),
             root: base.clone(),
         };
         touch(&page.file, "");
@@ -702,10 +702,10 @@ mod tests {
         // A marker in the root itself would claim everything published there.
         touch(&base.join(".opencode-session"), "ses_root\n");
         assert_eq!(marker(&page), None);
-        touch(&base.join("hex/.opencode-session"), "ses_hex\n");
+        touch(&base.join("voinc/.opencode-session"), "ses_hex\n");
         assert_eq!(marker(&page).map(|m| m.0), Some("ses_hex".into()));
         let html = Page {
-            file: base.join("hex/index.html"),
+            file: base.join("voinc/index.html"),
             root: base.clone(),
         };
         touch(

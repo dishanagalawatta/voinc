@@ -5,12 +5,12 @@ for that we built**: they land in Labs, off by default, instead of shipping
 on. Each feature also has an **audience** (`labs::Feature::audience`, one
 `match` beside `on_this_os`, so a new feature must choose): `Everyone` ships
 in every build; `Dev` exists only in dev builds (`dev_build::is_dev_build`:
-debug, local `HEX_LOCAL_BUILD`, test `HEX_TEST_BUILD`, and dev-channel
-`HEX_BUILD_CHANNEL=dev` builds). A stable build never lists, accepts
-(`hex labs on`, `hex settings set`), or runs a Dev feature: `available()`
+debug, local `VOINC_LOCAL_BUILD`, test `VOINC_TEST_BUILD`, and dev-channel
+`VOINC_BUILD_CHANNEL=dev` builds). A stable build never lists, accepts
+(`voinc labs on`, `voinc settings set`), or runs a Dev feature: `available()`
 drops it, its gate reads false even when `settings.json` says on, and the
 saved setting is kept untouched. In dev builds a Dev row carries a quiet
-"Dev" tag, and `hex labs` prints each feature's audience. Every feature
+"Dev" tag, and `voinc labs` prints each feature's audience. Every feature
 below is `Everyone` today unless marked `(Dev)`. Each feature also has a
 **group** (`labs::Feature::group` in `src/labs/group.rs`, one exhaustive
 `match`, so a new feature must choose): Dictation, Output (paste, formatting,
@@ -22,9 +22,9 @@ under its group's collapsible header, each **off by default**, plus Send
 feedback and Run setup again.
 
 ```ts
-Feature             Pane  Toggle (settings.json, hex settings)   On: what it does
+Feature             Pane  Toggle (settings.json, voinc settings)   On: what it does
 ├── Meetings (beta) yes   meetings.enabled             (macOS)   Meetings joins the sidebar: call detection, recording, transcripts
-├── Voice Filter (Dev) yes experimental.hex_microphone (macOS, Linux) Voice Filter joins the sidebar; feeds the Hex Microphone (macOS driver, Linux PipeWire source)
+├── Voice Filter (Dev) yes experimental.hex_microphone (macOS, Linux) Voice Filter joins the sidebar; feeds the Voinc Microphone (macOS driver, Linux PipeWire source)
 │                                        a stable build never feeds it; with the macOS driver installed it keeps the pane with Uninstall alone
 ├── Playground (Dev) yes  labs.playground                        a Playground sidebar item and ⇧⌘D open the story browser
 ├── Live text       no    labs.live_text                         provisional words beside the HUD while dictating
@@ -39,8 +39,8 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 │                                        the input source picks its mapped model (#216); General shows the mappings while on
 ├── Switch model with app no  labs.app_model_switching       (macOS, Windows)
 │                                        each mode, Global included, picks a speech model and language; Modes shows the choice
-│                                        while on, and Hex switches when the app in front changes. Both OSes match by
-│                                        application, never by website, and Hex's own window is ignored; Linux has no
+│                                        while on, and Voinc switches when the app in front changes. Both OSes match by
+│                                        application, never by website, and Voinc's own window is ignored; Linux has no
 │                                        runtime for it; a switch never downloads a model
 ├── Mouse shortcuts no    labs.mouse_shortcuts         (macOS)   mouse buttons record as shortcuts (#209)
 ├── Also pause the browser no pause_browser_media      (macOS)   pause a playing tab too, with Pause media (#301); General shows its permission row
@@ -54,7 +54,7 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 ├── Spoken formatting no labs.spoken_formatting      spoken "new line"/"line break", "new paragraph", "open/close quote", "quote … unquote" become line breaks and quotation marks; Spanish "nuevo párrafo", "nueva línea", "abre/cierra comillas", … too (#630, #1040)
 ├── Spoken symbols  no    labs.spoken_symbols          spoken "hashtag", "underscore", "comma", … become symbols joined to their words: "#release", "my_variable", "done, thanks"; Spanish "arroba", "guion bajo", "coma", … too (#678, #1040)
 ├── Remove filler words no labs.filler_words          English dictations lose um, umm, uh, uhh, erm, er, ah, with no model (#631)
-├── Subtitle export no    labs.subtitle_export         (macOS)   hex meetings show --srt|--vtt writes a meeting as timed subtitles (#633)
+├── Subtitle export no    labs.subtitle_export         (macOS)   voinc meetings show --srt|--vtt writes a meeting as timed subtitles (#633)
 ├── Second dictation shortcut no labs.second_dictation_shortcut + second_dictation_hotkey
 │                                        another shortcut dictates like the main one (#627); General shows its recorder while on
 ├── More dictation shortcuts no labs.more_dictation_shortcuts + extra_dictation_hotkeys (macOS)
@@ -72,20 +72,20 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 ├── Parakeet Ultra  no    labs.parakeet_ultra          the picker offers Moondream's Parakeet Ultra (pinned Q8_0, CC BY 4.0) with a details view; stays on while it dictates (#648)
 ├── Special keys alone no labs.standalone_special_keys (Linux, Windows) Linux: Menu, Pause, Scroll Lock may be a shortcut's key, alone or with modifiers (#767); Windows: Insert, Home, End, Page Up, Page Down may stand alone (#794)
 ├── Section key alone no  labs.section_key_alone       (Linux) the § key, left of 1 on ISO keyboards, may be a shortcut with no modifier (#1050)
-├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; hex history stats prints it (#790)
+├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; voinc history stats prints it (#790)
 ├── Copy recent dictations no labs.recent_dictations (macOS) the menu bar's Copy Recent Dictation submenu copies one of the last five dictations (#877)
 ├── Skip long pauses no    labs.skip_pauses             (Linux, Windows) a whole-clip dictation run hears only the head and tail of each long pause (#899)
-├── Stop when the call ends no labs.stop_when_call_ends (macOS) a recording Hex started on its own stops 30 s after its call app leaves the microphone and goes quiet (#835)
+├── Stop when the call ends no labs.stop_when_call_ends (macOS) a recording Voinc started on its own stops 30 s after its call app leaves the microphone and goes quiet (#835)
 ├── More call apps no    labs.more_call_apps             (every OS with Meetings) Signal, Telegram, WeChat, LINE, Webex, Element, and Phone calls are offered,
 │                                        and calls on Google Voice, Messenger, Teams, FaceTime, GroupMe, and Webex pages are named
 ├── Fix results in Output no labs.output_fixes           Output's Try card offers Vocabulary and Fix this, which copies an agent prompt naming the wrong result (#989)
-├── Process API transcripts no labs.api_processing       (every OS) apps using Hex's local API can add process=global to
+├── Process API transcripts no labs.api_processing       (every OS) apps using Voinc's local API can add process=global to
 │                                        POST /transcriptions and POST /streams/{id}/finish to get the text after Global
 │                                        mode's replacements, corrections, rewrite, and transformations; off, responses
 │                                        stay raw transcripts as before
 │                                        // checks: local_api::processing route tests (409, 403, 400, 429, processed, absent);
 │                                        // not observed on macOS or Windows, and no /transcriptions success without a model
-├── Timestamps in API transcripts no labs.api_timestamps (every OS) apps using Hex's local API can add
+├── Timestamps in API transcripts no labs.api_timestamps (every OS) apps using Voinc's local API can add
 │                                        timestamps=segment|word to POST /transcriptions for the speech model's own
 │                                        segment or word times (startMs, endMs); off, a timed request answers 403
 │                                        timestamps-disabled and responses stay as before
@@ -94,11 +94,11 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 │                                        // gguf_session (chunk offsets); no real-model transcript with times
 ├── Model in use first no labs.picker_active_first     the speech model picker shows the model in use first: Compare's first column, Every model's first row (#1019)
 ├── Use model files where they are no labs.model_in_place the picker adds a model file without copying it, so accounts can share one (#941)
-├── Downloaded models only no labs.picker_downloaded   the picker's All speech models view can show only downloaded models, with the space Hex's copies take (#1018)
-├── Transcribe files no   labs.transcribe_files        (every OS) `hex transcribe <file>` prints a saved WAV recording's transcript
-│                                        from the selected model (or --model); Hex running sends it to POST /transcriptions with that
+├── Downloaded models only no labs.picker_downloaded   the picker's All speech models view can show only downloaded models, with the space Voinc's copies take (#1018)
+├── Transcribe files no   labs.transcribe_files        (every OS) `voinc transcribe <file>` prints a saved WAV recording's transcript
+│                                        from the selected model (or --model); Voinc running sends it to POST /transcriptions with that
 │                                        model named (≤30 s on the dictation engine's loaded copy, longer clips on the service's
-│                                        own), Hex stopped loads the model here on Linux and Windows (macOS answers
+│                                        own), Voinc stopped loads the model here on Linux and Windows (macOS answers
 │                                        not-running); the file is capped at 64 MiB and checked as WAV here; no paste, History, or processing
 │                                        // checks: the_lab_off_refuses_and_names_its_toggle,
 │                                        // a_file_that_is_not_wav_is_refused_before_any_transcription,
@@ -107,9 +107,9 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 │                                        // (control/cli/transcribe.rs); a running service answered model-unavailable for an uninstalled
 │                                        // model, but no transcript answer or offline model load was observed, and nothing ran on macOS or Windows
 ├── Keep recordings no    labs.keep_recordings         History entries keep their dictation audio; Play hears it, and Transcribe again runs it through another installed model (#1032)
-├── Hide menu bar icon no labs.hide_menu_bar_icon      (macOS) the menu-bar icon hides while no meeting is under way; shortcuts keep working, reopening Hex shows Settings (#1064)
-├── Pause from menu bar no labs.pause_menu             (macOS) the menu bar's action block offers Pause Hex; while paused every capture shortcut and the secure-input hotkeys are inert, the event tap passes keys through, and Resume waits for a neutral keyboard (#82)
-├── ⌘Q closes Settings no labs.quit_closes_window      (macOS) the app menu's Quit Hex (⌘Q) closes the Settings window instead of quitting Hex; dictation keeps running, the menu bar icon still quits (#1473)
+├── Hide menu bar icon no labs.hide_menu_bar_icon      (macOS) the menu-bar icon hides while no meeting is under way; shortcuts keep working, reopening Voinc shows Settings (#1064)
+├── Pause from menu bar no labs.pause_menu             (macOS) the menu bar's action block offers Pause Voinc; while paused every capture shortcut and the secure-input hotkeys are inert, the event tap passes keys through, and Resume waits for a neutral keyboard (#82)
+├── ⌘Q closes Settings no labs.quit_closes_window      (macOS) the app menu's Quit Voinc (⌘Q) closes the Settings window instead of quitting Voinc; dictation keeps running, the menu bar icon still quits (#1473)
 ├── Notch indicator no    labs.notch_indicator         (macOS) on a screen with a notch, the HUD widens the notch sideways in the Dynamic Island's compact style at either visible position: an orange mic and level bars, the macOS spinner, a green checkmark; Hidden still hides it, and flat screens keep the Top/Bottom setting
 ├── Movable meeting capsules no labs.movable_meeting_capsules (macOS) panel capsules (Meeting transcript ready, Recording automatically, offers, reminders) drag to another corner and show in the last one, shared with the recording capsule (#1093)
 ├── Vocabulary in meeting notes no labs.meeting_notes_vocabulary (every OS with Meetings)
@@ -139,7 +139,7 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 ├── Restore clipboard on GNOME no labs.gnome_clipboard_restore (Linux) on a Wayland desktop without data-control (GNOME), a paste snapshots and restores
 │                                        the clipboard through XWayland, only while this user's Xwayland already runs; never starts it (#1111)
 ├── Transform typed text no labs.typed_text + typed_text_hotkey (Linux) Settings › Output shows a Typed text section whose shortcut is unbound by
-│                                        default; the shortcut or `hex typed-text` takes the clipboard (adopting a paste's pending restore), clears it,
+│                                        default; the shortcut or `voinc typed-text` takes the clipboard (adopting a paste's pending restore), clears it,
 │                                        sends Ctrl+A then Ctrl+C, runs the focused app's Output steps on the copied text (skipping spoken
 │                                        formatting, spoken symbols, and filler words), clears and re-copies to confirm the selection still holds
 │                                        that text, then pastes the result over it and restores the clipboard 500 ms later unless a newer copy
@@ -175,7 +175,7 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 │                                        the shortcut picks an area (Space: a window); the PNG goes on the clipboard, into the folder (Desktop), and into a corner thumbnail;
 │                                        a saved record shortcut and Annotate's capture shortcuts never share a key, on or off
 ├── Annotate 15 s replay no labs.annotate_replay + capture.replay_hotkey (macOS 27+)
-│                                        keeps a rolling 15 s SCClipBufferingOutput screen buffer for hex capture replay and the replay shortcut;
+│                                        keeps a rolling 15 s SCClipBufferingOutput screen buffer for voinc capture replay and the replay shortcut;
 │                                        macOS keeps its screen-recording dot lit the whole time it is on
 ├── Terminal paste  no    paste_with_shift             (Windows) paste with Ctrl+Shift+V (#477/#478; Linux keeps it in General);
 │                                         Java games (javaw/java, e.g. Minecraft) still get Ctrl+V (#1362)
@@ -200,7 +200,7 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 └── Only on speakers no   labs.speakers_only            (every OS) While dictating (Mute, Lower audio, Pause
                                          media) applies only while the default output is speakers; wired or Bluetooth
                                          headphones leave the output and media alone for that recording or capture, and
-                                         anything Hex can't classify counts as speakers
+                                         anything Voinc can't classify counts as speakers
                                          // checks: bluetooth_outputs_are_headphones,
                                          // a_built_in_output_on_its_headphone_jack_is_headphones,
                                          // apples_wired_headphone_device_is_headphones, everything_else_is_speakers,
@@ -219,7 +219,7 @@ Settings › Labs                          // labs.page, a store (labs/store.rs)
 ├── Discover, no chip or search -> New in Labs: the two newest labs, then every other lab
 │   under its group's header; a lab added on the newest date among those shown carries New
 ├── Group header (key group-<id>) -> name, card count, chevron; a group with no card here hides
-│   ├── Press -> folds or unfolds it, saved at once in labs.groups (settings.json, not a hex settings key)
+│   ├── Press -> folds or unfolds it, saved at once in labs.groups (settings.json, not a voinc settings key)
 │   ├── Never pressed -> open while it holds a lab that's on, folded otherwise
 │   └── Turning off a group's last lab -> the group stays open (it is saved open first)
 ├── A chip, a search (name, description, group), or Turned on -> only the matching cards,
@@ -239,23 +239,23 @@ Settings › Labs                          // labs.page, a store (labs/store.rs)
 │   Annotate 15 s replay's shortcut lives in Annotate's pane
 │   // checks: unload_when_idle_shows_its_minutes_on_its_card_while_on,
 │   // appearance_shows_its_theme_on_its_card_while_on; scenes mac-labs-settings, mac-labs-screenshots
-├── Opened by a link (macOS) -> hex://labs opens this page; ?tab=on, ?category=<group id> and ?search=<text>
-│   set the store; hex://labs/<lab> also selects that lab's group chip (unless ?category names one). It never turns a lab on. An unknown
-│   or absent name -> the page opens and process.log notes it. hex://settings/<pane>
-│   (general, output, history, meetings, voice-filter) opens a main pane; one Hex doesn't show -> General.
-│   Links over 2048 bytes are ignored; a test build's scheme is hex-test://
-├── Annotate is listed as a lab (Annotate group) wherever Hex has the Annotate pane; its switch flips capture.enabled
+├── Opened by a link (macOS) -> voinc://labs opens this page; ?tab=on, ?category=<group id> and ?search=<text>
+│   set the store; voinc://labs/<lab> also selects that lab's group chip (unless ?category names one). It never turns a lab on. An unknown
+│   or absent name -> the page opens and process.log notes it. voinc://settings/<pane>
+│   (general, output, history, meetings, voice-filter) opens a main pane; one Voinc doesn't show -> General.
+│   Links over 2048 bytes are ignored; a test build's scheme is voinc-test://
+├── Annotate is listed as a lab (Annotate group) wherever Voinc has the Annotate pane; its switch flips capture.enabled
 └── Footer -> "Unfinished features. They may change or break.", Run setup again (replays the onboarding,
     below), Send feedback -> https://github.com/anomalyco/hex/issues/new
 
-hex labs                                 // labs.cli; edits settings.json, no running Hex
-├── (list) -> every feature this build has: name, on/off, audience, description, its hex settings key
-├── link <feature> -> macOS: prints hex://labs/<feature> (hex-test:// in a test build), which opens Labs on its group
-├── on <feature> | off <feature> -> a running Hex saves and applies it (hex settings set); otherwise settings.json
+voinc labs                                 // labs.cli; edits settings.json, no running Voinc
+├── (list) -> every feature this build has: name, on/off, audience, description, its voinc settings key
+├── link <feature> -> macOS: prints voinc://labs/<feature> (voinc-test:// in a test build), which opens Labs on its group
+├── on <feature> | off <feature> -> a running Voinc saves and applies it (voinc settings set); otherwise settings.json
 ├── off voice-filter with the driver installed -> refused: uninstall the driver (dev builds; stable has no voice-filter)
-└── hex experiments … -> points at hex labs
+└── voinc experiments … -> points at voinc labs
 
-hex settings set labs.live_text true     // macOS: through the running Hex
+voinc settings set labs.live_text true     // macOS: through the running Voinc
 ```
 
 Checks: `rune_ui::deep_link` tests (parser, query, every feature's link reads
@@ -264,14 +264,14 @@ filters, ⌘F, a lone card's width, group folds and each OS's groups) and the
 `mac-labs`, `mac-labs-link`, `windows-labs`, and `linux-labs` goldens (Linux).
 Scenes: `mac-labs`, `mac-labs-on`, `mac-labs-category`, `mac-labs-search`,
 `mac-labs-settings`, `mac-labs-screenshots`, `mac-labs-link`, `windows-labs`, `linux-labs`. Not yet observed: the store in a running
-Hex.
+Voinc.
 
 Settings saved before this model may carry `labs.enabled`; it is read and
-ignored, and every feature keeps its own toggle. `hex status` lists the
+ignored, and every feature keeps its own toggle. `voinc status` lists the
 features on (`Labs` line on macOS, `labs` array in the macOS and Linux JSON,
 `labs\t…` on Windows).
 
-Every toggle applies at once, from the window or `hex labs on|off` (issue
+Every toggle applies at once, from the window or `voinc labs on|off` (issue
 568, from @maharshi365): Live text is asked as each dictation starts and its
 plate is always installed (prewarmed on macOS whatever the setting, so a
 plate turned on after launch never flashes the last dictation's words,
@@ -282,7 +282,7 @@ the toggle is on. Live typing is read at the hold threshold (or the Toggle
 press). Live chapters are read when a recording starts. Nothing
 starts at launch for a feature that is off. Limit: the macOS window's fixed
 size is chosen when it is created, so it becomes resizable for the
-playground only after Hex restarts.
+playground only after Voinc restarts.
 
 Gate a Labs feature where its work starts (the worker, thread, or capture),
 not only where its UI appears: `labs::live_text()`, `labs::live_chapters()`,
@@ -290,7 +290,7 @@ not only where its UI appears: `labs::live_text()`, `labs::live_chapters()`,
 `labs::more_call_apps()`, `app_settings::meetings_enabled()`, or
 `app_settings::hex_microphone_enabled()`.
 Add a new feature to `labs::Feature` (name, settings key, description, audience), give
-it a row in `rune_ui/labs.rs` and a `hex settings` key, and default it off.
+it a row in `rune_ui/labs.rs` and a `voinc settings` key, and default it off.
 When a feature graduates, remove it from Labs.
 
 Switch model with app (`app-model-switching`, macOS and Windows): while on,
@@ -306,18 +306,18 @@ to a mode by application and, 300 ms after the last change, starts the shared
 picker's installed-only preparation for the mode's choice; a mode without a
 choice switches nothing. Matching is by application on macOS and Windows
 alike: a mode's website rules are ignored, so a mode chosen only by website
-never switches. Hex's own window, and a moment with no application in front,
+never switches. Voinc's own window, and a moment with no application in front,
 are ignored: they neither schedule nor cancel a switch. A manual model
-choice cancels a pending switch, launching Hex records the mode in front
+choice cancels a pending switch, launching Voinc records the mode in front
 without switching it, and a switch due while a dictation records or
 transcribes waits until it is idle (macOS knows a capture from its press;
 Windows sees only the engine's streams and finishes). It never downloads a
 model: a choice whose model is no longer downloaded shows Not installed, its
 preparation refuses it, and the selected model stays. Enabling the lab while
-Hex is in front applies nothing; the choice applies when you next focus an
-app other than Hex, after the same 300 ms. Editing a mode's choice, Global's
+Voinc is in front applies nothing; the choice applies when you next focus an
+app other than Voinc, after the same 300 ms. Editing a mode's choice, Global's
 included, likewise applies when you next focus an app whose mode carries it,
-never while Hex is in front. With keyboard switching also on, the source
+never while Voinc is in front. With keyboard switching also on, the source
 whose switch is due later wins, and an app switch wins a tie in the same
 tick. There is no Linux runtime for it, so Linux does not list the lab. Off,
 the Modes pane is exactly as before and nothing reads the frontmost app for
@@ -340,14 +340,14 @@ scheduling on either host; the `mac-labs` and `windows-labs` goldens were
 regenerated for the new card, the Modes goldens did not change with the lab
 off, and the new `modes-speech` golden shows the on state.
 
-Mouse shortcuts off: the recorder ignores mouse buttons, `hex settings`
+Mouse shortcuts off: the recorder ignores mouse buttons, `voinc settings`
 refuses one, and a saved mouse-button shortcut goes back to its default when
 settings load (macOS), with a one-time note in General
 (`mouse_shortcut_notice`). Check:
 `mouse_shortcuts_go_back_to_their_default_while_their_labs_toggle_is_off` in
 [app_settings.rs](../../src/app_settings.rs).
 
-Clicks and drags reach Hex's filtering (event-consuming) session tap only
+Clicks and drags reach Voinc's filtering (event-consuming) session tap only
 while some shortcut is a mouse button; otherwise they go to the listen-only
 tap, as chord evidence only. A filtering tap on mouse events, even one that
 passes every event through, broke dragging windows between displays and
@@ -356,7 +356,7 @@ shortcut is bound or cleared, so for up to 5 s after that a newly bound button
 still reaches the app. Check:
 `mouse_events_reach_the_filtering_tap_only_while_a_mouse_shortcut_is_bound` in
 [suppression/tests.rs](../../src/suppression/tests.rs) (macOS only). Not yet
-observed: a real two-display Mac dragging windows with Hex running.
+observed: a real two-display Mac dragging windows with Voinc running.
 
 Unload model when idle (`unload-idle`, issue 442 from @theoneand33): while
 on, its card shows "Unload after" (5, 15, 30, or 60 minutes; default 15).
@@ -387,7 +387,7 @@ General › Advanced › Paste last dictation shows a Restore default shortcut
 button (`restore-paste-last`) whenever the shortcut is not its default
 (Option-Shift-V on macOS, Ctrl+Alt+V elsewhere), and a cleared shortcut's
 row reads "Default shortcut: …". Pressing it saves the default through the
-same checks a recorded shortcut meets; if another Hex shortcut already uses
+same checks a recorded shortcut meets; if another Voinc shortcut already uses
 it, nothing changes and the recorder opens with "Already in use". Off, the
 row is exactly as before. The gate is the row itself (the feature does no
 other work). Check:
@@ -418,12 +418,12 @@ light), and Linux (`linux-labs`, light).
 Release notes link (`release-notes-link`, every OS): while on, the sidebar
 footer shows a small Release notes link under the version and update status.
 Only a release build shows it, and that exclusion is by build kind, not
-version string: local and test builds (`HEX_LOCAL_BUILD=1`,
-`HEX_TEST_BUILD=1`) get no link even when their version is plain. Then
+version string: local and test builds (`VOINC_LOCAL_BUILD=1`,
+`VOINC_TEST_BUILD=1`) get no link even when their version is plain. Then
 `updater::notes::release_notes_url` chooses from `crate::VERSION`: a dev
 version (`0.0.0-dev-N`) opens `https://anoma.ly/hex/dev#<version>`, a plain
 `major.minor.patch` opens
-`https://github.com/anomalyco/hex/releases/tag/v<version>`, and an odd
+`https://github.com/dishanagalawatta/voinc/releases/tag/v<version>`, and an odd
 version shows no link. The gate is the footer row
 ([sidebar.rs](../../src/rune_ui/sidebar.rs) reads
 `labs::Feature::ReleaseNotesLink`), so off, the footer is exactly as before
@@ -445,7 +445,7 @@ exactly as before. Only the one main window is resolved; the onboarding HUD
 preview and the Sounds sheet's HUD replay inside the window, and every
 overlay (the HUD, meeting capsules, live text, capture capsule, screenshots,
 and playgrounds), keep following the OS. On Windows the native title bar
-follows the window's background and light/dark mode: Hex sets
+follows the window's background and light/dark mode: Voinc sets
 `DWMWA_CAPTION_COLOR` and `DWMWA_USE_IMMERSIVE_DARK_MODE`, and a window
 subclass re-applies that caption after a `WM_SETTINGCHANGE` while Appearance
 forces a theme different from the OS, because winit repaints the frame from
@@ -473,7 +473,7 @@ reads `labs::keep_on_clipboard()` as each paste commits: it writes the
 transcript without the nspasteboard.org transient markers (so clipboard
 managers may record it), schedules no 500 ms restore, and drops any earlier
 snapshot and pending restore (`ClipboardRestore::keep`), so a later restoring
-paste never brings back an older clipboard. Into Chromium 155/156, where Hex
+paste never brings back an older clipboard. Into Chromium 155/156, where Voinc
 types the text instead of pasting, it also writes the transcript to the
 clipboard after typing. On Windows, `windows::paste::WindowsPaster` reads the
 same gate as each paste commits: it writes an ordinary clipboard entry (not
@@ -492,7 +492,7 @@ on a Mac or Windows PC with the toggle on.
 
 Copy dictation only (`copy-only`, issue 629, macOS and Windows): while on, a
 finished dictation (on macOS the dictation shortcut, Dictate without
-processing, or `hex dictation` without `--print`; on Windows any dictation
+processing, or `voinc dictation` without `--print`; on Windows any dictation
 job) is put on the clipboard and nothing is
 sent to the focused app: no ⌘V or Ctrl+V, no typed text (Chromium 155/156
 included), and no 500 ms restore, so selected text is never replaced. The
@@ -517,10 +517,10 @@ dictation on a Mac or Windows PC with the toggle on.
 
 Return to app (`return-to-app`, macOS): while on, a dictation pastes into the
 app its capture started in. `handle_hotkey_action`'s Start (shared by the
-dictation shortcuts, Caps Lock dictation, and `hex dictation start`) records
+dictation shortcuts, Caps Lock dictation, and `voinc dictation start`) records
 the frontmost application's pid once the capture starts
 (`paste::return_to_app::capture_start`, which reads `labs::return_to_app()`
-and never Hex's own pid), and the job carries it through inference and
+and never Voinc's own pid), and the job carries it through inference and
 processing to `parakeet::finish_output`. Right before a Paste or RawPaste
 dictation commits, `paste::return_to_app::bring_to_front` compares that pid
 with the app in front now: the same app pastes as usual, and a different one
@@ -641,14 +641,14 @@ dictation with the toggle on; the Labs page goldens need regenerating on
 Linux with the new row.
 
 Subtitle export (`subtitle-export`, issue 633, macOS like Meetings; its row
-shows wherever Meetings does): while on, `hex meetings show <id> --srt` or
+shows wherever Meetings does): while on, `voinc meetings show <id> --srt` or
 `--vtt` writes the meeting's transcript as SubRip or WebVTT subtitles, one cue
 per transcript entry (speaker turn) labelled You or Them, timed by the entry's
 offsets from the meeting's start rather than word timings, and limited by
 `--from`/`--to` or `--chapter` as the other outputs are
 ([transcript-cli.md](../transcript-cli.md)). The gate,
 `labs::subtitle_export()`, is read where the command starts: off, `--srt` and
-`--vtt` fail naming `hex labs on subtitle-export` before any meeting is read,
+`--vtt` fail naming `voinc labs on subtitle-export` before any meeting is read,
 and every other output is exactly as before. There is no export button in the
 window yet. Checks:
 `subtitles_render_speaker_turns_as_srt_and_vtt_cues` and
@@ -663,8 +663,8 @@ Second dictation shortcut (`second-dictation-shortcut`, issue 627, macOS, Linux
 and Windows): for a Globe/Fn shortcut on the laptop keyboard and another key on
 an external keyboard. While on, General shows a "Second dictation shortcut"
 recorder under Shortcut, unbound by default and clearable
-(`second_dictation_hotkey`, also `hex settings set second_dictation_hotkey
-f5`). It is refused when it shares a key with another Hex shortcut, and the
+(`second_dictation_hotkey`, also `voinc settings set second_dictation_hotkey
+f5`). It is refused when it shares a key with another Voinc shortcut, and the
 others' checks count it while the toggle is on. The gate is
 `AppSettings::active_second_dictation_hotkey`: with the toggle on, a binding
 saved, no overlap with another active shortcut, and, on Linux and Windows, a
@@ -689,7 +689,7 @@ capture finishes or cancels it, and the other stands down until its keys lift
 while it records. Turning the toggle off or clearing the binding mid-capture
 cancels that capture on macOS; on Linux and Windows a settings change applies
 once the capture ends. Off, nothing is matched, suppressed, registered, or
-checked for it, and Hex is unchanged. Checks:
+checked for it, and Voinc is unchanged. Checks:
 `the_second_dictation_shortcut_needs_its_lab_and_its_own_keys` in
 [app_settings.rs](../../src/app_settings.rs),
 `the_shortcut_that_starts_a_capture_owns_it` in
@@ -714,7 +714,7 @@ exactly as it is for the main shortcut), and
 a Remove button that drops the row. An Add shortcut row appears while fewer
 than four rows exist, and a new row starts unbound. The rows persist as
 `extra_dictation_hotkeys`, an array of `{"binding": ..., "mode": ...}` rows
-in `settings.json` (also `hex settings set extra_dictation_hotkeys …`),
+in `settings.json` (also `voinc settings set extra_dictation_hotkeys …`),
 capped at four: loading keeps the first four and folds each row's mode to
 one its binding can trigger. The gate is
 `AppSettings::active_extra_dictation_hotkey`: only on macOS, with the toggle
@@ -758,7 +758,7 @@ Checks:
 `an_extra_mode_sets_its_trigger_switches` in
 [suppression/tests.rs](../../src/suppression/tests.rs) (macOS only).
 `extra_dictation_hotkeys_takes_up_to_four_checked_rows` covers
-`hex settings set` in
+`voinc settings set` in
 [control/settings.rs](../../src/control/settings.rs). Not yet observed on a
 real Mac: the recorder rows, the mode select, Add shortcut and Remove, each
 row's own mode, and the Labs card (macOS builds only; no golden).
@@ -768,14 +768,14 @@ another dictation shortcut whose paste is always Ctrl+Shift+V, for a terminal
 window that needs it, while the main dictation shortcut keeps following the
 global Terminal paste setting. While on, General shows a "Terminal paste
 shortcut" recorder under Shortcut, unbound by default and clearable
-(`terminal_paste_hotkey`, also `hex settings set terminal_paste_hotkey
-ctrl+shift+t`). It is refused when it shares a key with another Hex shortcut,
+(`terminal_paste_hotkey`, also `voinc settings set terminal_paste_hotkey
+ctrl+shift+t`). It is refused when it shares a key with another Voinc shortcut,
 and the others' checks count it while the toggle is on. The gate is
 `AppSettings::active_terminal_paste_hotkey`: only on Windows and Linux, with
 the toggle on, a binding saved, and no overlap is it handed to the listener,
 so X11 grabs or the shortcuts portal register it (id `terminal-paste`), and
-the Windows hook matches it. Linux has no `hex` command for it, unlike
-Dictate without processing's `hex dictation start|toggle --raw`, so without
+the Windows hook matches it. Linux has no `voinc` command for it, unlike
+Dictate without processing's `voinc dictation start|toggle --raw`, so without
 X11 grabs or the portal it stays unregistered. Off, nothing is registered,
 matched, or checked for it, and the saved binding stays. A capture it starts
 is a normal dictation in every other way: the same Hold/Toggle and double-tap
@@ -809,7 +809,7 @@ mid-capture cancels that capture.
 
 Caps Lock never changes typing: every press also resets the system Caps Lock
 state off through `IOHIDSetModifierLockState`, so the next keys stay
-lowercase. The key's light follows Hex's dictation state through the
+lowercase. The key's light follows Voinc's dictation state through the
 keyboard's HID LED output element (usage page 0x08, usage 0x02). It comes on
 only after the capture's microphone delivers its first audio, so a press whose
 microphone is still opening (with Release microphone while idle, or a device
@@ -821,7 +821,7 @@ meter once and feeds both the HUD (when one exists) and the light, so the light
 never depends on a HUD; an Annotate capture feeds the light alone. The
 recording light is steady by default; its Recording light option, Slow blink,
 blinks at 700 ms on and off while recording, while transcribing keeps its
-350 ms blink. Turning the lab off or quitting Hex clears the light and stops
+350 ms blink. Turning the lab off or quitting Voinc clears the light and stops
 forcing the lock off, so Caps Lock behaves normally again.
 
 ```ts
@@ -836,7 +836,7 @@ Labs › Caps Lock dictation on                        // labs.caps_lock_dictati
 ├── Recording light -> steady (default) solid recording, or slow blink at 700 ms on/off; transcribing always blinks at 350 ms
 ├── light -> off done/cancelled/failed
 ├── Labs off mid-capture -> cancels it, light off, normal Caps Lock returns
-└── Hex quits -> light off, lock released
+└── Voinc quits -> light off, lock released
 ```
 
 The gate is `labs::caps_lock_dictation()` in the listener
@@ -846,7 +846,7 @@ the raw HID tracker records Caps Lock usage 0x39 with its press timestamp
 ([suppression/physical_keys.rs](../../src/suppression/physical_keys.rs)), and
 the event tap confirms it with an AlphaShift change edge within 300 ms
 ([suppression.rs](../../src/suppression.rs)). A key remapped to Control or
-Escape never changes AlphaShift, so it never toggles dictation. Hex's own
+Escape never changes AlphaShift, so it never toggles dictation. Voinc's own
 lock-reset edge is marked and dropped before the press gate. A Caps Lock activation
 delay configured above 300 ms would make those presses invisible; the default
 has no delay. Without Input Monitoring the HID tracker is inactive, so an AlphaShift on edge is the
@@ -858,10 +858,10 @@ every IOKit call, re-enumerates keyboards on a bounded refresh, and runs the
 blink timer. No IOKit work runs on the event-tap or audio threads. The pure
 press gate, press decision, and light model live in
 [caps_lock_dictation.rs](../../src/caps_lock_dictation.rs). The LED needs
-Input Monitoring, which Hex already asks for; without it, dictation still
+Input Monitoring, which Voinc already asks for; without it, dictation still
 works and the light stays under macOS's control. Some keyboards, built-in ones
 included, may not expose a Caps Lock LED output element, and macOS's own light
-update after a reset can race Hex's write; neither changes dictation or the
+update after a reset can race Voinc's write; neither changes dictation or the
 lock reset. Checks:
 `an_older_jobs_stage_event_never_interrupts_a_newer_capture`,
 `a_stage_event_for_an_unknown_job_changes_nothing`,
@@ -916,7 +916,7 @@ whitespace, opening punctuation, straight quotes, or symbols such as `@ $ # /
 -`, and never before text that starts with whitespace or closing punctuation.
 Selected text, a cursor at the start, or an app that doesn't expose its
 cursor leaves the text unchanged, and both the clipboard paste and the
-Chromium 155/156 typing path use the adjusted text. Hex's own window is
+Chromium 155/156 typing path use the adjusted text. Voinc's own window is
 never asked: its tree belongs to the main thread that updates it (#1402).
 Lowercasing the first letter is not done. Off, pasting is exactly as before.
 Checks:
@@ -935,7 +935,7 @@ pressed on, so Right ⌘ + Right ⌥ saves as `right-option+right-command` and
 the tray shows R⌥ R⌘; only those keys press it, and the left keys don't.
 The gate is the recorder: `labs::sided_modifier_chords()` is read once when
 a recording starts. Matching, the conflict checks, and saved shortcuts are
-unchanged (chords already store and match sides; `hex settings set` could
+unchanged (chords already store and match sides; `voinc settings set` could
 always save one), a chord with a non-modifier key still records its
 modifiers from either side, and the side picker stays for one-modifier
 shortcuts only. Off, a chord such as ⌥⌘ records from either side exactly as
@@ -968,7 +968,7 @@ finishes its capture, with the usual release tail; a sooner release locks as
 Toggle does. The desktop's key repeats of a held press don't move its start,
 and a release the desktop drops leaves the capture recording until the next
 press finishes it, as before. It applies to the dictation shortcut and
-Dictate without processing, each for the capture it started; `hex dictation`
+Dictate without processing, each for the capture it started; `voinc dictation`
 commands are unchanged. X11 counts a release after its 50 ms auto-repeat
 grace. Windows doesn't have it.
 
@@ -1011,8 +1011,8 @@ mode (the primary shortcut, Dictate without processing, the second dictation
 shortcut, and each Labs › More dictation shortcuts row). Off, the persisted
 normalization clears `double_tap_only` for a shortcut without a key exactly
 as a fresh load does, Double-tap is dimmed in the Shortcut mode modal, and
-`hex settings set double_tap_only on` refuses it. Windows and Linux have no
-such path for this lab: their runtime gates and `hex settings` validation are
+`voinc settings set double_tap_only on` refuses it. Windows and Linux have no
+such path for this lab: their runtime gates and `voinc settings` validation are
 exactly as before, and both keep the key requirement.
 
 Checks: `double_tap_only_with_the_lab_starts_from_a_lone_modifier` (Option
@@ -1073,11 +1073,11 @@ test records (945 utterances, batch 8, no timestamps, source revision
 7045d1c; run IDs and scoring or artifact revisions unknown); the catalog's
 7.64 and 10.11 stay as the alternate legacy figures the picker shows with the
 toggle off. QwenCleo-ASR 1.7B names its author's 3,699-utterance Egyptian
-Arabic test. ivrit.ai Whisper large-v3-turbo carries Hex's own run of
+Arabic test. ivrit.ai Whisper large-v3-turbo carries Voinc's own run of
 transcribe.cpp's WER harness on the FLEURS Hebrew test (18.45% WER, 792
 utterances, batch 1, no timestamps, Radeon 8060S over Vulkan, source revision
-7045d1c), NB-Whisper Medium Hex's run on the FLEURS Norwegian test (6.68%
-WER, 357 utterances, same conditions), and Granite Speech 5.0 Hex's run on
+7045d1c), NB-Whisper Medium Voinc's run on the FLEURS Norwegian test (6.68%
+WER, 357 utterances, same conditions), and Granite Speech 5.0 Voinc's run on
 the FLEURS English test (4.77% WER, 647 utterances, same conditions); every other figure is English WER with dataset and source
 unrecorded. A "Most accurate" badge stays only when its record is comparable
 (`BenchmarkRecord::comparable`: same metric, language, and a known, equal
@@ -1095,7 +1095,7 @@ page goldens need regenerating on Linux with the new row.
 
 Use your own speech model (`custom-models`) graduated: adding a model file
 and models found on this computer are always on now
-([own-models.md](own-models.md)). `hex labs on|off custom-models` still
+([own-models.md](own-models.md)). `voinc labs on|off custom-models` still
 answers with that and exits 0 (`labs::GRADUATED`); the saved
 `labs.custom_models` key is ignored.
 
@@ -1109,24 +1109,24 @@ Picker row -> "Parakeet Ultra" + Labs tag; 25 languages, offline, Token     // l
 ├── Download -> handy-computer/parakeet-ultra-gguf@a1539be1, parakeet-ultra-Q8_0.gguf,
 │   740,363,168 bytes, SHA-256 007a5976…0a59 (430 F32, 225 Q8_0, 48 F16 tensors)
 ├── Details -> languages; peak memory measured on apollo (~0.7 GB GPU, ~0.2 GB
-│   RAM, Radeon 8060S over Vulkan; not measured elsewhere); "Experimental: Hex
+│   RAM, Radeon 8060S over Vulkan; not measured elsewhere); "Experimental: Voinc
 │   has run it only on Linux (Vulkan) so far."; the credit word for word ("Parakeet
 │   Ultra by Moondream, based on NVIDIA Parakeet TDT 0.6B v3. GGUF conversion and
 │   quantization by handy-computer. Creative Commons Attribution 4.0 International
 │   (CC BY 4.0)."); the publisher's NOTICE; Source and License links
-├── "Published conversion benchmarks; not measured in Hex" (folded) -> conditions
+├── "Published conversion benchmarks; not measured in Voinc" (folded) -> conditions
 │   (FLEURS test, Q8_0, CUDA, batch 8, each language's hint, no timestamps,
 │   transcribe.cpp 021aa17d; file digest, dataset revision, scorer unknown), then
 │   25 FLEURS WERs from transcribe.cpp 7045d1c's catalog/parakeet-ultra.json
 ├── Accuracy 98.2% / Labs › Benchmark details: LibriSpeech test-clean 1.80%
 │   WER, the same published source (2,620 utterances, batch 8, CUDA)
 └── Toggle off while Ultra is the dictation model -> refused (row locked,
-    `hex labs off`, `hex settings set`); a saved Ultra with the toggle off some
+    `voinc labs off`, `voinc settings set`); a saved Ultra with the toggle off some
     other way stays saved and the listener runs a downloaded fallback
 ```
 
 Observed on apollo (Linux, Radeon 8060S over Vulkan, 2026-11-01): the file
-matched its pinned size and SHA-256 (`hex model install` verified it); `hex
+matched its pinned size and SHA-256 (`voinc model install` verified it); `voinc
 model transcribe` with Ultra, passed and saved, transcribed FLEURS German and
 English and JFK correctly; Ultra ran a FLEURS English clip at 191x against
 Parakeet v3's 211x in transcribe-cli; turning the toggle off while Ultra was
@@ -1143,12 +1143,12 @@ to dictate on GNOME Wayland by remapping it to Menu (GNOME's "Caps Lock is
 also a Menu" keyboard option), or using Pause or Scroll Lock.
 
 ```ts
-hex settings set dictation_hotkey menu        // labs.special-keys
+voinc settings set dictation_hotkey menu        // labs.special-keys
 ├── Toggle on (Linux) -> saved; any shortcut may use menu, pause, scrolllock,
 │   alone like a function key or with modifiers (ctrl+pause)
 │   ├── X11 -> grabs keysym Menu 0xff67, Pause 0xff13, Scroll_Lock 0xff14
 │   └── Wayland portal -> preferred trigger Menu, Pause, Scroll_Lock
-├── Toggle off -> "menu needs Labs › Special keys alone: hex labs on special-keys"
+├── Toggle off -> "menu needs Labs › Special keys alone: voinc labs on special-keys"
 ├── Windows -> Menu, Pause, Scroll Lock always allowed, alone too; the toggle
 │   instead lets Insert, Home, End, Page Up, Page Down stand alone ("home alone
 │   needs Labs › Special keys alone" while off), and off puts a saved one back
@@ -1156,7 +1156,7 @@ hex settings set dictation_hotkey menu        // labs.special-keys
 ├── Window recorder (Linux) -> records them, alone too, while on (#1187);
 │   refuses them while off ("Add a modifier")
 │   Check: `recorder_takes_special_keys_alone` in `rune_ui/settings.rs`
-└── Toggle turned off (row, hex labs off, hex settings), or settings load with
+└── Toggle turned off (row, voinc labs off, voinc settings), or settings load with
     it off -> a Linux shortcut on one goes back to its default (Dictate without
     processing unbound), so the listener never registers it
 ```
@@ -1164,7 +1164,7 @@ hex settings set dictation_hotkey menu        // labs.special-keys
 The gates are `AppSettings::special_keys_allowed` in `control/settings.rs`'s
 `apply` and the window's `settings::validate`, and
 `AppSettings::repair_special_keys` (`app_settings/shortcut_repair.rs`) where
-settings load and where the toggle turns off. Off, Hex is unchanged: the
+settings load and where the toggle turns off. Off, Voinc is unchanged: the
 added keysym names are reached only by a saved shortcut on one of these keys.
 Checks: `menu_alone_needs_its_labs_toggle` in
 [control/settings.rs](../../src/control/settings.rs) and
@@ -1183,24 +1183,24 @@ the ISO § key, left of 1 above Tab, without a modifier.
 ```ts
 Settings › General › Shortcut, press § alone      // labs.section-key
 ├── Toggle off -> "Add a modifier", as before; § with a modifier records as before
-├── Toggle on  -> saved as § (hex settings also takes `section`); Settings shows §
+├── Toggle on  -> saved as § (voinc settings also takes `section`); Settings shows §
 │   ├── X11 -> grabs the keycode that types XK_section 0xa7
 │   └── Wayland portal -> preferred trigger `section`
-├── hex settings set dictation_hotkey §, off -> "section needs Labs › Section key
-│   alone: hex labs on section-key"
-└── Toggle turned off (row, hex labs off, hex settings), or settings load with
+├── voinc settings set dictation_hotkey §, off -> "section needs Labs › Section key
+│   alone: voinc labs on section-key"
+└── Toggle turned off (row, voinc labs off, voinc settings), or settings load with
     it off -> a Linux shortcut on § alone goes back to its default (Dictate
     without processing unbound), so the listener never registers it
 ```
 
-While bound, Hex takes § from every app (an X11 grab or a portal shortcut
+While bound, Voinc takes § from every app (an X11 grab or a portal shortcut
 holds its key), so typing § needs another key. The window's
 `settings::recorded_binding` and `control/settings.rs`'s `parse_hotkey` let a
 lone § through on Linux; the gates are `AppSettings::section_key_allowed` in
 the window's `settings::validate` and in `control/settings.rs`'s `apply`
 (`special_key_refusal`), and `AppSettings::repair_section_key`
 (`app_settings/shortcut_repair.rs`) where settings load and where the toggle
-turns off. Off, Hex is unchanged: a lone § is refused everywhere, and the
+turns off. Off, Voinc is unchanged: a lone § is refused everywhere, and the
 added `section` keysym names are reached only by a saved § shortcut (§ with a
 modifier now also resolves on X11 and the portal, where it was refused as an
 unsupported key). macOS and Windows don't have it. Checks:
@@ -1220,7 +1220,7 @@ header shows a Secondary "Stats" button beside its retention select once
 anything is retained. It opens a centered "Dictation stats" dialog (Escape, a
 scrim press, or Close dismisses it, and focus returns to Stats) with dictations,
 words, words per minute, how often Output changed the text, the daily streak,
-and the top five apps; `hex history stats [--since] [--until] [--json]` prints
+and the top five apps; `voinc history stats [--since] [--until] [--json]` prints
 the same ([transcript-cli.md](../transcript-cli.md)). It sums every entry within
 retention (`History::stats`, `history/stats.rs`), not the pane's 200-entry
 search, so it ends with what retention removes; the rollup that outlives
@@ -1228,10 +1228,10 @@ retention, streak notifications, and per-replacement counts are not built. The
 gates are `labs::history_stats()`, read when the pane reloads (off, it reads
 nothing for stats, and sums again when the entries or the toggle change, or
 once when the dialog closes because the stats emptied) and where
-`hex history stats` starts (off, it fails naming `hex labs on
+`voinc history stats` starts (off, it fails naming `voinc labs on
 history-stats` before History is read), and the window's own setting for the
 button and dialog. Closing the window, opening History again from the menu bar
-or `hex window show history`, turning the switch off, emptying retained
+or `voinc window show history`, turning the switch off, emptying retained
 history, or leaving History closes the dialog, and Command-1…9 pane shortcuts
 wait while it is open. Off, History is exactly as before. Checks:
 the tests in [history/stats.rs](../../src/history/stats.rs) (words, speed,
@@ -1249,7 +1249,7 @@ page goldens need regenerating on Linux with the new row.
 Copy recent dictations (`recent-dictations`, issue 877, macOS): while on,
 the menu-bar menu shows a Copy Recent Dictation submenu right under Paste
 Last Dictation. It lists the five newest History entries within retention,
-newest first, skipping printed (`hex dictation stop --print`) and empty ones
+newest first, skipping printed (`voinc dictation stop --print`) and empty ones
 as Paste Last does, each on one line (whitespace and line breaks collapsed,
 cut to 48 characters with "…"). Clicking one puts its full final text on the
 clipboard as an ordinary entry; nothing is pasted. The gate is the menu's
@@ -1292,7 +1292,7 @@ pause cut leaves the clip untouched. Checks:
 `with_skip_pauses_off_the_whole_clip_is_untouched` in
 [transcription/engine.rs](../../src/transcription/engine.rs);
 `skip_pauses_is_its_own_bit_and_off_by_default` in [labs.rs](../../src/labs.rs).
-Not yet observed: a real dictation with the toggle on in Hex (the reporter
+Not yet observed: a real dictation with the toggle on in Voinc (the reporter
 measured their own branch on an i5-8259U); the Labs page goldens need
 regenerating on Linux with the new row.
 
@@ -1302,11 +1302,11 @@ Always record call that keeps recording after hang-up. The gate,
 `labs::stop_when_call_ends()`, is read on each pass of the meeting
 controller (`poll_recording` in
 [meeting/watcher.rs](../../src/meeting/watcher.rs)), and only for a recording
-Hex started on its own. While on, the call app counts as present while it
+Voinc started on its own. While on, the call app counts as present while it
 holds the microphone or any of its Core Audio processes has output running
 (`microphone_activity::application_running_output`), since WhatsApp keeps
 the microphone while muted and closes both on hang-up. Once both are off for
-about 3 s, the "left the call" capsule says "Hex stops recording in 30 s
+about 3 s, the "left the call" capsule says "Voinc stops recording in 30 s
 unless you keep recording."; Keep recording sends
 `ControllerCommand::KeepRecording`, which drops the stop for this absence, and
 the call app coming back drops it too. After 30 s (`AUTO_STOP_GRACE`,
@@ -1346,7 +1346,7 @@ count after 2 s. A browser on Google Voice (`voice.google.com`), Messenger
 (`messenger.com`), Teams (`teams.live.com`), FaceTime
 (`facetime.apple.com`), GroupMe (`web.groupme.com`), or any `webex.com`
 subdomain is named after the service; these names need the browser's page,
-which Hex reads on macOS ([meetings.md](meetings.md#detect-and-offer)).
+which Voinc reads on macOS ([meetings.md](meetings.md#detect-and-offer)).
 Detected calls lists the seven apps, Google Voice, Messenger, and GroupMe
 while the lab is on. A Teams page gets its own `teams.live.com` choice from
 an offer's "…", shown as "Teams (web)", and a FaceTime page its own
@@ -1373,7 +1373,7 @@ result in Settings › Output that comes out wrong. While on, the Try card
 adds a row under the sentence with a Vocabulary button, which opens the same
 Vocabulary sheet as General's Vocabulary row, and, once a sentence is typed,
 Fix this, which copies Edit with agent's prompt ending `What I want: When I
-say "<sentence>", Hex pastes "<result>". It should paste: ` for the person to
+say "<sentence>", Voinc pastes "<result>". It should paste: ` for the person to
 finish in their agent; it reads Copied until the sentence changes or the pane
 is left. The result is what the Try card shows (corrections and built-in
 steps; scripts and rewriting run only when dictating). Nothing is saved:
@@ -1435,7 +1435,7 @@ seeing which speech models take disk space and deleting unused ones. While
 on, the speech model picker's All speech models view shows one row under its
 header (below Sort and filter models' row when that Lab is on too): "Downloaded
 models take <size>", the sum of the pinned sizes of every downloaded catalog
-model and import whose file is in Hex's own models folder (files another app
+model and import whose file is in Voinc's own models folder (files another app
 downloaded, and imports added where they are, aren't counted), and a switch,
 "Only downloaded models". The switch keeps only the rows the picker reads as
 downloaded (catalog models, imports, and found catalog models in use) and
@@ -1497,9 +1497,9 @@ Labs › Keep recordings on                     // labs.keep-recordings
     audio stays until it expires or History is cleared
 ```
 
-`hex history --json` names each kept recording's absolute path in `recording`
+`voinc history --json` names each kept recording's absolute path in `recording`
 while the lab is on and the file is still there; every other row omits the
-field. `hex history` reads the saved `labs.keep_recordings` switch with
+field. `voinc history` reads the saved `labs.keep_recordings` switch with
 `AppSettings::read` instead of the process's runtime switches, which that
 read-only command never sets; a managed lock and the build's audience keep it
 off as `labs::encode` does. Turning the lab off, leaving the entry or History,
@@ -1539,8 +1539,8 @@ turning it on or off applies at once. A meeting starting, recording, or
 transcribing brings the icon back, so a recording stays visible and
 stoppable from the menu bar, and it hides again once the meeting ends; an
 Annotate capture keeps its own capsule and doesn't bring it back. With the
-Dock icon off too, a launch stays quiet, and opening Hex again from Finder
-or Spotlight (the reopen Apple event) opens Settings, which has Quit Hex.
+Dock icon off too, a launch stays quiet, and opening Voinc again from Finder
+or Spotlight (the reopen Apple event) opens Settings, which has Quit Voinc.
 Off, the icon is exactly as before. Checks:
 `a_hidden_icon_comes_back_while_a_meeting_is_under_way` in
 [macos_rune/status_item.rs](../../src/macos_rune/status_item.rs) (macOS
@@ -1550,9 +1550,9 @@ Mac, or macOS restoring an item's remembered visibility; the row renders
 only in macOS builds, so no golden changes.
 
 Pause from menu bar (`pause-menu`, issue 82, macOS): for people whose game or
-another app collides with Hex's shortcuts and who don't want to quit. With the
-lab on, the menu bar's action block starts with Pause Hex; pressing it pauses
-Hex and the row reads Resume Hex. A pause is runtime-only and never saved, so a
+another app collides with Voinc's shortcuts and who don't want to quit. With the
+lab on, the menu bar's action block starts with Pause Voinc; pressing it pauses
+Voinc and the row reads Resume Voinc. A pause is runtime-only and never saved, so a
 restart starts unpaused. While paused every capture shortcut is inert:
 dictation (main, second, extra, Caps Lock, and raw), Paste Last Dictation and
 meeting paste, Annotate and Screenshots, and the Carbon hotkeys registered under
@@ -1568,19 +1568,19 @@ Screenshots recording already under way is not cancelled by a pause: it keeps
 recording and stops from its own capsule, while only its shortcuts go inert. A
 Caps Lock dictation ignores the key while shortcuts are suspended, so a pause
 neither starts a dictation nor forces Caps Lock off. Hiding the menu bar icon
-(Labs › Hide menu bar icon) leaves no Resume Hex row at all, so with the icon
+(Labs › Hide menu bar icon) leaves no Resume Voinc row at all, so with the icon
 hidden turning the lab off is what resumes.
 
 ```ts
 Paused     -> every capture shortcut inert; tap passes keys through
            -> the listener cancels only the dictation capture it is recording
            -> Caps Lock starts nothing and the lock stays as it is
-Resume     -> the row still reads Resume Hex: shortcuts stay suspended until
+Resume     -> the row still reads Resume Voinc: shortcuts stay suspended until
               no key or modifier reads as held for 100 ms -> live again
 Lab off    -> resumes at once and the row hides; a restart starts unpaused
 ```
 
-Choosing Resume Hex again while a resume already waits leaves it waiting; it is
+Choosing Resume Voinc again while a resume already waits leaves it waiting; it is
 never re-paused or restarted.
 
 Resuming does not re-arm shortcuts on a held keyboard: the listener's
@@ -1596,15 +1596,15 @@ masked out because arrow-key metadata can leave SecondaryFn set after release
 (the pause has no modifier history to tell that apart from a held Fn, so it
 always ignores the bit), the same way `recover_stale_keys_with` drops it once
 its own history says Fn is up. Only a pending resume reads the keyboard and
-takes the pause machine's lock (once); a running or paused Hex reads a lock-free
+takes the pause machine's lock (once); a running or paused Voinc reads a lock-free
 atomic mirror instead. A pending resume logs one warning naming the held key
 code after five seconds, and the pause, resume request, and live-again
 transitions log at info. The gate, `labs::pause_menu()`, is read when the status
 item refreshes (about twice a second) and as the menu opens; `labs::apply`
-resumes at once when the lab turns off. Explicit CLI commands (`hex dictation
+resumes at once when the lab turns off. Explicit CLI commands (`voinc dictation
 start`) and the menu's own actions are not keyboard shortcuts and keep working,
-though a capture `hex dictation start` begins during a pause can only be
-finished with `hex dictation stop`: its reply still offers the shortcut, which
+though a capture `voinc dictation start` begins during a pause can only be
+finished with `voinc dictation stop`: its reply still offers the shortcut, which
 is inert until Resume.
 Checks: `pause_suspends_and_resume_only_follows_a_neutral_keyboard`,
 `a_neutral_keyboard_past_the_window_resumes`,
@@ -1633,13 +1633,13 @@ builds, so no golden changes.
 
 ⌘Q closes Settings (`quit-closes-window`, issue 1473, macOS): for people who
 press ⌘Q to put the Settings window away and expect dictation to keep running.
-Only the app menu's Quit Hex item (⌘Q, `quitHex:` in the main menu) changes:
+Only the app menu's Quit Voinc item (⌘Q, `quitHex:` in the main menu) changes:
 while the lab is on it closes the window, exactly as Close Window (⌘W) does, so
-Hex hides the window, restores the Dock policy for a closed window, and keeps
+Voinc hides the window, restores the Dock policy for a closed window, and keeps
 listening. The gate, `labs::quit_closes_window()`, is read each time
 `macos_rune::MenuTarget::quit_hex` runs, so turning it on or off applies at
-once. The status item's Quit Hex (⌘Q in its own menu), AppKit's terminate (the
-quit Apple event, logout, the Dock's Quit), `hex quit`, and `hex restart` still
+once. The status item's Quit Voinc (⌘Q in its own menu), AppKit's terminate (the
+quit Apple event, logout, the Dock's Quit), `voinc quit`, and `voinc restart` still
 quit and drain as before, and with the lab off ⌘Q quits exactly as it did.
 Checks: `quit_closes_window_is_its_own_bit_and_off_by_default` in
 [labs.rs](../../src/labs.rs); the existing menu, close, and drain tests are
@@ -1673,7 +1673,7 @@ screen whose `NSScreen` reports a notch, at either visible Settings position:
 Top and Bottom both grow the island, while Hidden still hides the HUD. A flat
 external display keeps honoring Top and Bottom, and with the lab off HUD
 Lab's placement stands. Linux and Windows have no row,
-`hex labs on notch-indicator` doesn't know it there, and `hex settings set
+`voinc labs on notch-indicator` doesn't know it there, and `voinc settings set
 labs.notch_indicator` answers `unsupported` (as any `labs.` switch for
 another OS now does). Checks: `ears_widen_the_notch_sideways_at_its_own_height`
 and `the_notch_indicator_wins_at_top_or_bottom_but_still_needs_a_notch`
@@ -1684,14 +1684,14 @@ in [rune_hud/hud_placement.rs](../../src/rune_hud/hud_placement.rs);
 [control/settings.rs](../../src/control/settings.rs);
 `notch_indicator_is_its_own_bit_and_off_by_default` in
 [labs.rs](../../src/labs.rs); its frames render through the real shaders
-with `HEX_HUD_EARS=1` and `rune_hud_frames`. Not yet observed: a real
-dictation through the ears on a Mac with the lab on (`hex dev hud` drives
+with `VOINC_HUD_EARS=1` and `rune_hud_frames`. Not yet observed: a real
+dictation through the ears on a Mac with the lab on (`voinc dev hud` drives
 them in a debug build), and the failure glyph, which no render covers yet; the
 row renders only in macOS builds, so no golden changes.
 
 Screenshots (`screenshots`, macOS only, group Annotate): for people who
 miss CleanShot's ⌘⇧4. While on, the shortcut (`screenshots.hotkey`,
-default ⌘⇧4; the card's recorder changes it and refuses one another Hex
+default ⌘⇧4; the card's recorder changes it and refuses one another Voinc
 shortcut uses) opens a second copy of Annotate's capture picker
 (`PickerOverlay::install_as` in
 [capture_capsule/picker.rs](../../src/rune_ui/capture_capsule/picker.rs)):
@@ -1702,10 +1702,10 @@ shortcut uses) opens a second copy of Annotate's capture picker
 ├── Space      -> window mode: a camera replaces the pointer and the window under it highlights;
 │                 Space again -> area
 ├── Click      -> the whole display ("Full screen · Click to capture")
-├── Escape     -> closes it, nothing shot; Escape reaches no other app or Hex shortcut
-└── Release    -> shot at the display's own pixels (ScreenCaptureKit), Hex's overlays,
+├── Escape     -> closes it, nothing shot; Escape reaches no other app or Voinc shortcut
+└── Release    -> shot at the display's own pixels (ScreenCaptureKit), Voinc's overlays,
                   the picker, and the pointer left out
-                  ├── PNG (pHYs at the display's scale) -> "Hex Screenshot 2026-11-04 at 14.03.22.png"
+                  ├── PNG (pHYs at the display's scale) -> "Voinc Screenshot 2026-11-04 at 14.03.22.png"
                   │   in screenshots.folder (the Desktop when unset); a second shot that second gets " (2)"
                   ├── clipboard -> the PNG and the file's URL, one pasteboard item
                   └── a card bottom right, 16 pt in, its corner concentric with the display's
@@ -1716,7 +1716,7 @@ shortcut uses) opens a second copy of Annotate's capture picker
                       the right edge on the HUD's spring; any card leaves past the right edge
                       (Reduce Motion: a fade either way); ✕ shows inside its top-left corner on hover
                       a dictation while cards show -> pastes as usual, being no shot's talk-over
-                      a failure -> the error tone; there is no success sound (Hex has no shutter cue)
+                      a failure -> the error tone; there is no success sound (Voinc has no shutter cue)
 Another app holds Secure Event Input -> ⌘⇧4 and the record shortcut still open the picker
                   (Carbon hotkeys while it lasts; see dictation.md's Shortcuts Under Secure Input);
                   Space and Escape don't arrive, so window mode and Escape don't work then
@@ -1743,7 +1743,7 @@ cards
     └── Return     -> keeps it (it's saved) and closes the card
 ```
 
-CleanShot's ⌘S saves the capture; every Hex capture is already saved,
+CleanShot's ⌘S saves the capture; every Voinc capture is already saved,
 so ⌘S shows it in Finder instead.
 
 Every shot and recording the Lab saves is also listed in the Captures
@@ -1780,7 +1780,7 @@ the stack reaching the top) are kept in memory. The menu bar's Restore
 Last Capture, shown while the Lab is on and dimmed until a card was
 closed, brings back the newest of them, sliding in from the right edge
 into the corner; one whose file is gone is skipped, and Move to Trash
-keeps none. They don't outlast Hex.
+keeps none. They don't outlast Voinc.
 
 The card's overlay is the whole display under the pointer, click-through
 outside the card, so the card can start anywhere a shot was taken from.
@@ -1791,7 +1791,7 @@ centred on the display under the pointer, the capsule's corners and
 shadow, growing in on the HUD's spring (Reduce Motion: a fade). Its tools,
 ✕ and microphone are the kit's icon buttons (a picked tool filled, as a
 capsule's expanded one is) and Copy, Save and Send to… are the kit's
-buttons, so it reads as the rest of Hex. The shot
+buttons, so it reads as the rest of Voinc. The shot
 shows at no more than its own points. It stays until Escape or ✕:
 
 ```ts
@@ -1807,7 +1807,7 @@ editor
 │                    with the words said over it as its text ("Screenshot" without any);
 │                    picked while a dictation goes, it waits for the words
 ├── dictation (the shortcut, or the microphone under the shot, which starts and finishes
-│   one like `hex dictation toggle`)
+│   one like `voinc dictation toggle`)
 │                 -> talks over the shot: the words show under it (3 lines, then "…"),
 │                    each dictation's added; never pasted; ✕ beside them clears them
 ├── a drag on the panel's edge or the toolbar's gap -> moves it, kept on the display
@@ -1822,7 +1822,7 @@ shortcut's own dictation, on the loaded model and through the mode's
 processing; only where its text lands changes. The listener asks at a
 dictation's start whether the shot's editor is open, and at its finish hands
 the transcript to that shot instead of pasting it, as
-`hex dictation stop --print` does. The corner card never takes words: while
+`voinc dictation stop --print` does. The corner card never takes words: while
 only it shows, a dictation pastes as usual. A short, silent, cancelled, or
 failed clip lands nothing. Dictation never takes Escape, so the editor's
 Escape cancels it through the listener.
@@ -1863,7 +1863,7 @@ record shortcut  -> the same picker, "Full screen · Click to record"; area, win
 │                   while an Annotate capture records -> nothing
 ├── recording    -> Annotate's capsule shows it recording, as any capture; talk to narrate
 ├── record shortcut again (or the capsule's stop) -> stops; the capsule folds unless it failed
-│                   ├── the movie saves itself: "Hex Recording 2026-11-04 at 14.03.22.mp4" in
+│                   ├── the movie saves itself: "Voinc Recording 2026-11-04 at 14.03.22.mp4" in
 │                   │   screenshots.folder (the Desktop when unset), " (2)" on a clash, as a shot's
 │                   │   PNG does; a clone of Annotate's copy, so instant on one volume. A failed save
 │                   │   plays the error tone and the card shows Annotate's copy
@@ -1873,7 +1873,7 @@ record shortcut  -> the same picker, "Full screen · Click to record"; area, win
 └── editor       -> the saved movie's frame above a filmstrip of 12 frames; a drag on the strip
                     moves the nearer end of the span kept (never under 0.5 s) and shows the frame
                     there; the words said inside the span under it, read-only; no marks, no Copy
-                    ├── Save     -> another "Hex Recording … .mp4" in screenshots.folder,
+                    ├── Save     -> another "Voinc Recording … .mp4" in screenshots.folder,
                     │               copied whole or cut without re-encoding (`scrawl-helper trim`)
                     └── Send to… -> a contact sheet of up to 4 frames in the span as the image,
                                     the span's words and "Screen recording (m:ss): <movie>" as text,
@@ -1932,40 +1932,40 @@ on a Mac, its card, trimming and saving a movie, and a session receiving
 a sent recording. Left to do: no playback in the editor, no audio-only or
 GIF export, and the recording shows no countdown.
 
-The shortcut is taken in Hex's session tap (`screenshots::key`, called
+The shortcut is taken in Voinc's session tap (`screenshots::key`, called
 from [suppression.rs](../../src/suppression.rs) before the listener's
 own handling), never by the listener, and its press and release stay with
 it. With the lab off the tap returns at once and nothing is made: no
 picker window, no thumbnail, no work. Screen Recording is Annotate's: a
 press without it shows the same permission helper instead of the picker.
-Restart relaunches Hex; when the grant arrives without a relaunch, the
+Restart relaunches Voinc; when the grant arrives without a relaunch, the
 helper's Ready button reopens the Screenshots picker in the mode the
 shortcut asked for — a shot, or a recording — never Annotate's whole-screen
 recording. A record pick that starts a clip (`CaptureCommand::Clip`) reports
 the same way, and a clip that fails after starting keeps that picker origin
 for its helper. Annotate's own helper still records once it's ready.
 
-The picker is a non-key overlay, so Hex is usually not the frontmost app
-while it shows, and macOS ignores a background app's cursor. Hex builds
+The picker is a non-key overlay, so Voinc is usually not the frontmost app
+while it shows, and macOS ignores a background app's cursor. Voinc builds
 Rune with `macos-background-cursor`, which sets WindowServer's private
 `SetsCursorInBackground` property so the picker's crosshair (and Window
 mode's hidden arrow under the drawn camera) shows over any app. It is a
-private API, acceptable because Hex isn't sold through the App Store; if a
+private API, acceptable because Voinc isn't sold through the App Store; if a
 macOS release drops the property, Rune skips it and the cursor shows only
-while Hex is frontmost. Checks: `the_badge_stays_on_the_display` in
+while Voinc is frontmost. Checks: `the_badge_stays_on_the_display` in
 [capture_capsule/picker.rs](../../src/rune_ui/capture_capsule/picker.rs).
 Not yet observed: the cursor over another frontmost app on a real Mac.
 
 macOS matches its own screenshot shortcuts (Keyboard Shortcuts ›
 Screenshots, ⌘⇧4 among them) in the window server before any app's event
-tap, so while that system shortcut is on, Hex never sees the press. Hex
+tap, so while that system shortcut is on, Voinc never sees the press. Voinc
 reads `com.apple.symbolichotkeys` (`screenshots::system_shortcut`) and,
-when the system takes Hex's chord, the card says so with Open Keyboard
+when the system takes Voinc's chord, the card says so with Open Keyboard
 Settings, which opens that pane; turning macOS's shortcut off, or
-choosing another chord, hands it to Hex.
+choosing another chord, hands it to Voinc.
 
-`hex screenshot` shoots the whole display under the pointer and prints the
-file's path; `hex screenshot --pick` opens the picker instead
+`voinc screenshot` shoots the whole display under the pointer and prints the
+file's path; `voinc screenshot --pick` opens the picker instead
 ([cli.md](../cli.md)). With the lab off it answers `disabled`; Linux and
 Windows answer `unsupported`.
 
@@ -1999,7 +1999,7 @@ words, and a malformed file in [history/captures.rs](../../src/history/captures.
 the Captures pane as the `captures` golden (light and dark) and
 `--scene captures-empty`;
 its card renders as `--scene mac-labs-screenshots`; the card's entrance
-and the stack's motion are `thumbnail_frames` (`HEX_SCREENSHOT_FRAMES`
+and the stack's motion are `thumbnail_frames` (`VOINC_SCREENSHOT_FRAMES`
 writes them at 60 fps).
 Not yet observed: the card keys and right-click menu on a real Mac, the
 Captures pane over a real index (its thumbnails decoding, a drag out, Copy,
@@ -2019,7 +2019,7 @@ at run time through Objective-C, so macOS 26 and earlier neither link nor
 list it) while both `labs.annotate_replay` and `capture.enabled` are on and
 Screen Recording is granted. Because an active `SCStream` feeds `replayd`,
 macOS shows its purple screen-recording indicator the whole time the lab is
-on, which the Labs store card states plainly. `hex capture replay` (or a tap
+on, which the Labs store card states plainly. `voinc capture replay` (or a tap
 on `capture.replay_hotkey`, unbound by default and recordable in
 Settings › Annotate) exports the last 15 seconds into a normal
 `.scrawl` bundle; holding `capture.replay_hotkey` (≥ 300 ms) freezes the clip
@@ -2094,7 +2094,7 @@ best-effort: a failed stage keeps its input and the call still succeeds.
 
 An absent parameter leaves the response byte-for-byte as before. Any other
 value, or a repeated parameter, is `400 invalid-request`. A process with no
-installed processor, such as `hex service` or `--embedded`, answers `409
+installed processor, such as `voinc service` or `--embedded`, answers `409
 processing-unavailable` even while the lab is off; with a processor installed
 and the lab off, `process` answers `403 processing-disabled`. These are decided
 before `/transcriptions` reads the audio body and before `/finish` finishes
@@ -2104,9 +2104,9 @@ the slot answers `429 queue-full`; the slot is released when the run ends,
 fails, or is interrupted. `GET /capabilities` always includes `outputProcessing`,
 true only with the lab on and a processor installed. `API_VERSION` stays `2`.
 
-Processing stops at its next stage boundary when Hex quits: the API's shutdown
+Processing stops at its next stage boundary when Voinc quits: the API's shutdown
 flag is passed through as the pipeline's cancellation flag. On macOS, custom
-transformations are skipped until Hex finishes setup and its listener starts,
+transformations are skipped until Voinc finishes setup and its listener starts,
 because they use the recognition loop's transformation client; this is
 best-effort like every other processing stage, so the response still succeeds
 with the text the stages before them produced.
@@ -2120,7 +2120,7 @@ already update, so edits and the personal-commands approval gate apply
 without a restart, and processing keeps its existing deadlines. The seam is
 `Processing` in [local_api/processing.rs](../../src/local_api/processing.rs),
 passed through `LocalApiOptions` like `control` and `dictation_control`.
-`hex service` installs none. Checks: `local_api::processing` route tests cover
+`voinc service` installs none. Checks: `local_api::processing` route tests cover
 the 409 for a missing processor and the 403 before the body, invalid and
 repeated values, the aliases, `429 queue-full` while one run holds the slot,
 `processed` present with the existing fields unchanged, absent responses, and
@@ -2154,7 +2154,7 @@ speech as `500 transcription-failed`, with or without timings.
 An unknown value, or a repeated parameter, is `400 invalid-request`. With the
 lab off, `segment` and `word` answer `403 timestamps-disabled` before the
 audio body is read, and `none` is unaffected. The running app reads the switch
-live; a `hex service` process without the app reads the saved
+live; a `voinc service` process without the app reads the saved
 `labs.api_timestamps` once (the embedded helper on its first request), so a
 change reaches a running helper after it restarts.
 
@@ -2181,15 +2181,15 @@ answering with times, on any OS, and the macOS `/transcriptions` path.
 Meeting finished event (`meeting-finished-event`, issue 964; every OS with
 Meetings; its row shows wherever Meetings does): for a companion app that
 processes a meeting once its transcript is ready, without watching the
-meetings folder or polling `hex meetings list`. While on, the local API's
+meetings folder or polling `voinc meetings list`. While on, the local API's
 authenticated `GET /meetings/events` is a server-sent event stream that
 sends `{"type":"meeting.finished","id":"<id>"}` once per meeting, after
 its final transcript and Markdown are written and the manifest says
-`complete` (`record` after Stop, or `finish_pending` for a meeting Hex quit
+`complete` (`record` after Stop, or `finish_pending` for a meeting Voinc quit
 while recording), with a `: keep-alive` comment every 15 s
 ([streams.md](../streams.md#meeting-finished-events-get-meetingsevents-labs)).
 Only the id is sent, never a title, path, transcript, or audio, and nothing
-leaves the computer; the client reads the meeting with `hex meetings show
+leaves the computer; the client reads the meeting with `voinc meetings show
 <id>`. One subscriber at a time (a second answers `409 subscriber-busy`), so
 it holds at most one of the four HTTP workers. The gates are
 `labs::meeting_finished_event()`, read where the route starts (off: `404
@@ -2234,8 +2234,8 @@ keep their audio for a later pass; Forever, an unchosen window, or the lab off
 moves nothing. The row shows while the lab is on, and the pass reads
 `app_settings::meeting_audio_retention()`, which returns the saved value only
 while `labs::expire_meeting_audio()` is on. A meeting whose audio is gone still
-lists, opens, searches, exports, and copies its text; `hex meeting transcribe`
-and `hex meeting echo` (debug) fail saying its audio was deleted without
+lists, opens, searches, exports, and copies its text; `voinc meeting transcribe`
+and `voinc meeting echo` (debug) fail saying its audio was deleted without
 changing its status. Checks:
 `separate_audio_expiry_covers_only_finished_meetings_older_than_it`,
 `audio_expiry_moves_only_the_wavs_and_records_it`, and
@@ -2256,7 +2256,7 @@ with Meetings; its row shows wherever Meetings does): an exported meeting
 Markdown is named `<YYYY-MM-DD HHMM> <title>.md` in the user's meeting folder.
 By default that name is written once at export and kept. While on, after the
 notes are applied to the file (final title and summary), after chapter
-refinement changes the title, and after a user rename, Hex renames it in place
+refinement changes the title, and after a user rename, Voinc renames it in place
 to the same date and time prefix and the new display title, sanitized exactly
 as export does. The date and time prefix is kept from the file's own name
 while it starts with `YYYY-MM-DD HHMM`, so a timezone change does not shift
@@ -2268,9 +2268,9 @@ overwrite. `std::fs::rename`
 in the same folder is atomic, then the manifest is written as usual, so
 Reveal, Delete to Trash, and retention follow the new path.
 `export_sha256` stays as it was: a rename does not change the bytes, so
-retention still recognizes Hex's copy and still protects one the user edited.
+retention still recognizes Voinc's copy and still protects one the user edited.
 A missing file, an unchanged name, or a failed rename logs and keeps the old
-path; notes and rename never fail because of it. If Hex stops between the file
+path; notes and rename never fail because of it. If Voinc stops between the file
 rename and the manifest write, the manifest keeps the old path: Reveal falls
 back to the recording folder and the Markdown stays in the folder untouched.
 A user rename while notes are being written leaves the file name to the notes
@@ -2300,13 +2300,13 @@ shows wherever Meetings does): a finished meeting's Markdown is exported as
 as `<YYYY-MM-DD HHMM> <title>.notes.md` with a relative link back to the
 transcript. Export picks the first stem whose transcript and notes names are
 both free, adding `" (2)"` to both together, so a later meeting never lands on
-half a pair. While applying the notes (final title and summary), Hex writes the
+half a pair. While applying the notes (final title and summary), Voinc writes the
 notes file with the title, date, duration, app, the percent-encoded transcript
 link (its text escaping Markdown punctuation), the summary, each chapter as
 `### mm:ss · title` with its summary, and its own footer naming the writer and
 saying the transcript has the details. The transcript keeps its own
-`<!-- hex:notes -->` summary block and its "transcript below" footer as before.
-If the plain notes name is taken by a file Hex doesn't track, only the notes
+`<!-- voinc:notes -->` summary block and its "transcript below" footer as before.
+If the plain notes name is taken by a file Voinc doesn't track, only the notes
 file gets the next number (`<stem> (2).notes.md`) and it logs that; the
 manifest's `notes_export_path` and `notes_export_sha256` track it, so one
 meeting never gets a second notes file. A later notes regeneration rewrites the
@@ -2354,7 +2354,7 @@ end-to-end run writing, renaming, and trashing a separate notes file.
 
 Meeting platform icons (`meeting-platform-icons`, issue 1290) graduated:
 each recording in the Meetings list always shows its call service's icon, or
-a neutral one ([meetings.md](meetings.md)). `hex labs on|off
+a neutral one ([meetings.md](meetings.md)). `voinc labs on|off
 meeting-platform-icons` still answers with that and exits 0
 (`labs::GRADUATED`); the saved `labs.meeting_platform_icons` key is ignored.
 
@@ -2371,10 +2371,10 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   `labs.live_chapters` (off by default). The gate,
   `labs::live_chapters()`, is where the work starts: the recorder's chapter worker, recording
   chapters in the manifest, and the boundary pass after Stop.
-- Run setup again (not a feature toggle; every build): replays Hex's one
+- Run setup again (not a feature toggle; every build): replays Voinc's one
   onboarding, the first-run story every new install gets
   ([setup.tour](README.md)). Labs' **Run setup again** and
-  `hex onboarding reset` (macOS control socket, the Linux service socket,
+  `voinc onboarding reset` (macOS control socket, the Linux service socket,
   and a named event on Windows) forget that onboarding finished
   (`desktop::onboarding::reset_at`) and open it from the start without
   touching settings, history, models, or permissions; ready pages pass at
@@ -2393,7 +2393,7 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   live stream no partial slot and never reads the model's text between
   feeds, and no host adds the line's overlay. Each dictation's `finished
   live stream` line in process.log counts its text changes (`partials`);
-  `RUST_LOG=hex=debug` adds a `live text` line per change with the audio
+  `RUST_LOG=voinc=debug` adds a `live text` line per change with the audio
   fed and the word counts, never the words. Checks:
   `a_dictation_stream_publishes_its_text_after_each_feed_with_live_text`,
   `without_live_text_a_dictation_stream_publishes_nothing`,
@@ -2445,13 +2445,13 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   threshold, or at the Toggle press, never for a Local API
   dictation, `/streams`, or Voice Action; the final text still goes through
   Output's processing, and History and Paste Last update as they do for a
-  paste. Hex creates the input method when the capture becomes intentional
+  paste. Voinc creates the input method when the capture becomes intentional
   (the hold threshold, or at once in Toggle) and destroys it at Finish or
   Cancel, including post-release processing, so short taps and chords create
-  none and another input method keeps the seat while Hex is idle. A newer
+  none and another input method keeps the seat while Voinc is idle. A newer
   capture's Begin takes over from an older job, which then pastes. A CPU
   engine or a model that cannot stream shows no provisional words while
-  speaking; the final text still commits through the input method. Hex's own
+  speaking; the final text still commits through the input method. Voinc's own
   first-run practice field on Linux is an ordinary focused field, so it
   receives the preedit and commit too while Live typing is on. It falls back
   to today's paste when the compositor has no
@@ -2463,7 +2463,7 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   pastes even if the compositor never answered, while a commit the owner
   already claimed is given up to 750 ms and is never pasted over. After an
   abandoned Finish, Live typing starts no new captures and pastes instead
-  until Hex restarts; a session that had already begun still finishes and
+  until Voinc restarts; a session that had already begun still finishes and
   cancels. The claim is one atomic Pending → Committing or
   Pending → Abandoned change, so only one side wins. A residual Wayland race
   can still let a `done` event arrive after the serial is read; that
@@ -2514,7 +2514,7 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   ```
 
   Every group starts folded; opening a story, from the list or a link,
-  unfolds the groups above it, and folds hold until Hex quits. The list
+  unfolds the groups above it, and folds hold until Voinc quits. The list
   keeps only its own keys (arrows, Return, J/K, a story's trigger letters,
   Tab, Esc, `/` to filter) and ⇧⌘D; every other key, ⌘-chords and digits
   included, reaches the open story. Each
@@ -2523,7 +2523,7 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   beside the playground's columns has room. Off, no shortcut, menu item,
   sidebar item, or link opens it.
   Headless renders take `--playground [story]` while it is on, e.g.
-  `hex app -- --snap out.png --playground "Window/General/Settings"`. Checks: `every_scene_but_live_has_a_path_under_a_group`,
+  `voinc app -- --snap out.png --playground "Window/General/Settings"`. Checks: `every_scene_but_live_has_a_path_under_a_group`,
   `the_playgrounds_keys_work_with_a_story_open`, and
   `a_scene_opened_from_the_list_hears_command_digits` in
   [playground.rs](../../src/rune_ui/playground.rs).
@@ -2547,9 +2547,9 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   On macOS a story opens from a link or the CLI:
 
   ```ts
-  open 'hex://story/prototypes/hud/notch?variant=pulse-fail&play=1'   // hex-test:// in Hex Test.app
-  open 'hex://story/prototypes/capture-capsule/suggestions?variant=toast'
-  hex window story Prototypes/HUD/Processing [--variant 2] [--play]
+  open 'voinc://story/prototypes/hud/notch?variant=pulse-fail&play=1'   // voinc-test:// in Voinc Test.app
+  open 'voinc://story/prototypes/capture-capsule/suggestions?variant=toast'
+  voinc window story Prototypes/HUD/Processing [--variant 2] [--play]
   ├── the window opens on the story: its path, name, or slug, `/` or `-` between groups and name
   ├── a link from before the groups nested (`hud/processing`, `General/mac-settings`, `mac-settings`) → that story now
   ├── variant=<n|name> → that variant
@@ -2566,14 +2566,14 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   playground.rs open every HUD and capsule link headlessly. The URL
   handler and the replay have no automated end-to-end check.
 - Voice Filter: the Voice Filter pane (macOS and Linux), the only home of
-  the Hex Microphone (macOS's driver, Linux's PipeWire virtual source), its
+  the Voinc Microphone (macOS's driver, Linux's PipeWire virtual source), its
   filter modes, and Try it
-  ([Hex Microphone](README.md#experimental-hex-microphone-and-voice-filter)).
+  ([Voinc Microphone](README.md#experimental-voinc-microphone-and-voice-filter)).
   Its toggle is `experimental.hex_microphone` (off by default). Off, the pane
-  is hidden and Hex neither reads the driver's status nor starts its sink
+  is hidden and Voinc neither reads the driver's status nor starts its sink
   supervisor. While the driver is installed the Voice Filter runs (apps using
-  the Hex Microphone keep their audio), its pane shows, and its Labs row is
-  on and disabled: "On while the Hex Microphone driver is installed.
+  the Voinc Microphone keep their audio), its pane shows, and its Labs row is
+  on and disabled: "On while the Voinc Microphone driver is installed.
   Uninstall the driver in Voice Filter to turn it off." Checks:
   `voice_filter_shows_only_while_its_labs_toggle_is_on` and
   `an_installed_driver_keeps_the_voice_filter_on` in
@@ -2633,7 +2633,7 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
 - OpenCode in WSL (Windows): Modes rewriting, the Modes model picker, and
   Annotate's capture sends use an OpenCode service running inside the default
   WSL distribution. WSL2 forwards
-  loopback, so Hex dials the registered URL as usual; what it cannot see
+  loopback, so Voinc dials the registered URL as usual; what it cannot see
   without this lab is the registration, which lives in the distribution's
   home.
 
@@ -2646,8 +2646,8 @@ Settings › Labs › OpenCode in WSL on            // labs.opencode_in_wsl
 │   │   on older Windows 10 (at most 1 MiB) -> the line whose uid is DefaultUid -> its (one trailing / trimmed) home
 │   ├── only the default distribution is opened; opening it can start the WSL VM too
 │   ├── state dir -> <home>/.local/state/opencode; same service.json order, cap, loopback, /api/info, password
-│   ├── found -> Hex's workspace is created at <home>/.local/share/hex/opencode once, and every
-│   │   x-opencode-directory names the Linux path <home>/.local/share/hex/opencode
+│   ├── found -> Voinc's workspace is created at <home>/.local/share/voinc/opencode once, and every
+│   │   x-opencode-directory names the Linux path <home>/.local/share/voinc/opencode
 │   └── the cache is dropped when its state dir can't be read, when the default distribution or
 │       uid changes, and on the next search that runs with the lab off
 ├── one lookup runs at a time on a shared helper thread, with its own WSL_LOOKUP_CAP (3 s) budget.
@@ -2664,7 +2664,7 @@ Settings › Labs › OpenCode in WSL on            // labs.opencode_in_wsl
 │       X:\a\b -> /mnt/x/a/b, following [automount] root = (one trailing /, else /mnt/);
 │       enabled = false, a UNC share, or a relative path leaves the Windows text. The
 │       summary header keeps the Windows path
-└── Labs off -> nothing reads the registry or any WSL path; Hex is exactly as before
+└── Labs off -> nothing reads the registry or any WSL path; Voinc is exactly as before
 ```
 
 The pure parts (the passwd line for a uid, a Linux home to its UNC path, the
@@ -2678,7 +2678,7 @@ budget is refused before any registry or UNC read. A scoped request to a WSL
 service that fails (a transport error or 404) forgets the workspace, so the
 next request retries `create_dir_all`.
 
-Limits: `XDG_STATE_HOME` set inside WSL is ignored (Hex always reads
+Limits: `XDG_STATE_HOME` set inside WSL is ignored (Voinc always reads
 `<home>/.local/state/opencode`); a home that isn't in `/etc/passwd`, such as
 one from LDAP or SSSD, isn't found; Annotate's recorded-at line maps only
 Windows drive paths, so a UNC or relative capture folder keeps its Windows

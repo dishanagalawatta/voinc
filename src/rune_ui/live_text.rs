@@ -205,7 +205,7 @@ pub(crate) type Place = fn() -> Spot;
 /// when either is on at launch.
 pub(crate) fn install<S: 'static>(app: &mut rune::App<S>, place: Place) {
     let spec = OverlaySpec {
-        name: "Hex live text",
+        name: "Voinc live text",
         size: SIZE,
         // Placed for real each time it appears.
         edge: ScreenEdge::Top,
@@ -331,12 +331,12 @@ fn dismiss_notice() {
 }
 
 /// Queues `deadline` to the timer thread, starting it on the first notice so
-/// a Hex with the lab off runs no notice thread.
+/// a Voinc with the lab off runs no notice thread.
 fn schedule(deadline: Instant) {
     let sender = TIMER.get_or_init(|| {
         let (sender, receiver) = mpsc::channel();
         let _ = std::thread::Builder::new()
-            .name("hex-failure-notice".into())
+            .name("voinc-failure-notice".into())
             .spawn(move || run_timer(receiver));
         sender
     });
@@ -705,12 +705,12 @@ mod tests {
         assert!(!blank("so", ""));
     }
 
-    /// Renders the plate to `HEX_LIVE_TEXT_SNAPS/live-text-*.png` in both
+    /// Renders the plate to `VOINC_LIVE_TEXT_SNAPS/live-text-*.png` in both
     /// appearances, to look at.
     #[test]
-    #[ignore = "set HEX_LIVE_TEXT_SNAPS to a folder; needs a GPU"]
+    #[ignore = "set VOINC_LIVE_TEXT_SNAPS to a folder; needs a GPU"]
     fn snapshots() {
-        let folder = std::path::PathBuf::from(std::env::var("HEX_LIVE_TEXT_SNAPS").unwrap());
+        let folder = std::path::PathBuf::from(std::env::var("VOINC_LIVE_TEXT_SNAPS").unwrap());
         let gpu = rune::render::Gpu::try_new(rune::render::Gpu::instance(), None).unwrap();
         for (name, stable, tentative) in [
             ("short", SHORT, ""),

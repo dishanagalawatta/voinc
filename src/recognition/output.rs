@@ -43,7 +43,7 @@ pub(super) fn interrupted_dictation(
     )
 }
 
-/// A shortcut dictation or `hex dictation start` control capture whose
+/// A shortcut dictation or `voinc dictation start` control capture whose
 /// microphone failed keeps the audio delivered before the loss. A normal one
 /// is transcribed and processed like an ordinary dictation; a raw one is
 /// transcribed as heard. Either way it is copied instead of pasted: the app

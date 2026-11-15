@@ -1,11 +1,11 @@
 {
-  "name": "Hex",
+  "name": "Voinc",
   "project": "HEXMobile.xcodeproj",
   "scheme": "HEXMobile",
   "teamId": "QC99C9JE59",
   "appId": "6792547327",
   "bundleId": "com.kitlangton.hex.mobile",
-  "internalGroup": "HEX Internal",
+  "internalGroup": "VOINC Internal",
   "configuration": "Release",
   "destination": "generic/platform=iOS",
   "buildDirectory": "build/testflight",

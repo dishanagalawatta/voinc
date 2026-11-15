@@ -1,44 +1,49 @@
-# Hex
+# Voinc
 
-Hex is local voice dictation for Mac, Windows and Linux. Hold a key, speak, and
-it pastes.
+Local voice dictation and transcription for macOS, Windows and Linux. Hold a key, speak, and it pastes — or transcribe an existing recording from the command line:
 
-## How it works
+```
+voinc transcribe meeting.m4a
+```
 
-- hold the shortcut, speak, then let go
-- Hex transcribes on your device and pastes into whatever app you're in
-- the first run downloads a speech model; after that nothing leaves your machine
-- experimental features live in Labs, at the bottom of the sidebar
+Everything runs on your device: the first run downloads a speech model, and after that nothing leaves your machine.
 
 ## Downloads
 
-Stable is the current release. Dev is the newest build of `dev` and updates
-itself from the dev channel.
+Stable builds are published on the [GitHub releases page](https://github.com/dishanagalawatta/voinc/releases) for macOS (Apple silicon), Windows (x64 and ARM64) and Linux (x64 and ARM64, as executables, `.deb` and `.rpm`).
 
-| Platform | Stable | Dev |
-| --- | --- | --- |
-| macOS (Apple silicon) | [DMG](https://anoma.ly/hex/download/macos-arm64-dmg) | [DMG](https://anoma.ly/hex/download/dev/macos-arm64-dmg) |
-| Windows x64 | [Installer](https://anoma.ly/hex/download/windows-x64-setup) | [Installer](https://anoma.ly/hex/download/dev/windows-x64-setup) |
-| Windows ARM64 | [Installer](https://anoma.ly/hex/download/windows-arm64-setup) | [Installer](https://anoma.ly/hex/download/dev/windows-arm64-setup) |
-| Linux x86_64 | [Executable](https://anoma.ly/hex/download/linux-x64) | [Executable](https://anoma.ly/hex/download/dev/linux-x64) |
-| Linux x86_64 (Debian, Ubuntu) | [.deb](https://anoma.ly/hex/download/linux-x64-deb) | [.deb](https://anoma.ly/hex/download/dev/linux-x64-deb) |
-| Linux x86_64 (Fedora, openSUSE) | [.rpm](https://anoma.ly/hex/download/linux-x64-rpm) | [.rpm](https://anoma.ly/hex/download/dev/linux-x64-rpm) |
-| Linux ARM64 | [Executable](https://anoma.ly/hex/download/linux-arm64) | [Executable](https://anoma.ly/hex/download/dev/linux-arm64) |
-| Linux ARM64 (Debian, Ubuntu) | [.deb](https://anoma.ly/hex/download/linux-arm64-deb) | [.deb](https://anoma.ly/hex/download/dev/linux-arm64-deb) |
-| Linux ARM64 (Fedora, openSUSE) | [.rpm](https://anoma.ly/hex/download/linux-arm64-rpm) | [.rpm](https://anoma.ly/hex/download/dev/linux-arm64-rpm) |
+## Command line
 
-Or install with:
+`voinc transcribe` prints a recording's transcript and reads WAV, AIFF, CAF, FLAC, MP3, Ogg, WebM and MP4/M4A/MOV, including a video's soundtrack. The same `voinc` binary controls the running app (`voinc status`, `voinc dictation`, `voinc settings`); see `docs/cli.md`.
 
-- Homebrew: `brew install --cask anomalyco/tap/hex`
-- AUR: `yay -S hex-bin`
-- install script (Linux): `curl -fsSL https://anoma.ly/hex/install-linux.sh | sh`
-- Nix (Linux): `nix profile add github:anomalyco/hex`
+## What voinc is
 
-More docs are in [`docs/`](docs/README.md).
+Voinc is a community fork of [Hex](https://github.com/anomalyco/hex) by Anomaly — local voice dictation, MIT licensed. The fork tracks Hex's stable releases automatically:
 
-## Contributing
+- `main` is a pristine mirror of the upstream release tags (fast-forward only).
+- the `voinc` branch is regenerated from each new upstream tag by applying `.voinc/rebrand.sh` plus the small patch set in `.voinc/patches/` — a monthly GitHub Action opens a pull request with the update.
+- speech models are downloaded from the same sources upstream uses; updates are handled through GitHub releases rather than an in-app updater.
 
-We don't take pull requests. [Open an issue](https://github.com/anomalyco/hex/issues)
-describing the bug or idea, and our agents usually turn it around fast.
+See `.voinc/rebrand.sh` and `NOTICE.md` for details of the fork mechanics and attribution.
 
-MIT licensed.
+## Building from source (Linux)
+
+```sh
+sudo pacman -S --needed base-devel git rustup python alsa-lib curl jq openssl xxd \
+  util-linux libxkbcommon libxkbcommon-x11 libx11 libxcb openblas \
+  vulkan-headers vulkan-icd-loader shaderc spirv-headers clang cmake pkgconf \
+  wl-clipboard wtype
+rustup default stable
+
+git clone https://github.com/dishanagalawatta/voinc.git
+cd voinc
+./scripts/install-linux.sh
+voinc model install
+voinc
+```
+
+On other platforms see `docs/windows.md` and the macOS build scripts (`scripts/build-app.sh`). A Nix flake is available for Linux (`nix develop`).
+
+## License
+
+MIT — see `LICENSE` (inherited from upstream) and `NOTICE.md`.

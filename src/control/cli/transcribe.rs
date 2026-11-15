@@ -1,6 +1,6 @@
-//! `hex transcribe <file>` (Labs › Transcribe files): a saved WAV through
-//! the running Hex's local API, or in this process on Linux and Windows when
-//! Hex is stopped. Nothing is pasted, saved to History, or processed.
+//! `voinc transcribe <file>` (Labs › Transcribe files): a saved WAV through
+//! the running Voinc's local API, or in this process on Linux and Windows when
+//! Voinc is stopped. Nothing is pasted, saved to History, or processed.
 
 use std::io::{Cursor, Read};
 use std::path::Path;
@@ -23,7 +23,7 @@ struct Transcript {
     transcript: String,
 }
 
-/// What `hex transcribe` sends once its file and model are settled.
+/// What `voinc transcribe` sends once its file and model are settled.
 #[derive(Debug)]
 struct Job {
     wav: Vec<u8>,
@@ -40,7 +40,7 @@ pub(super) fn run(
         Ok(settings) => settings,
         Err(error) => {
             return print(
-                ControlReply::error("failed", format!("couldn't read Hex's settings: {error:#}")),
+                ControlReply::error("failed", format!("couldn't read Voinc's settings: {error:#}")),
                 output,
             );
         }
@@ -52,7 +52,7 @@ pub(super) fn run(
     print(reply, output)
 }
 
-/// The lab's gate, the file, and the model, all checked before Hex is asked.
+/// The lab's gate, the file, and the model, all checked before Voinc is asked.
 fn prepare(
     settings: &crate::app_settings::AppSettings,
     file: &Path,
@@ -63,7 +63,7 @@ fn prepare(
         let message = match Feature::TranscribeFiles.managed() {
             Some(lock) => lock.refusal().to_owned(),
             None => {
-                "Labs › Transcribe files is off; turn it on with `hex labs on transcribe-files`"
+                "Labs › Transcribe files is off; turn it on with `voinc labs on transcribe-files`"
                     .to_owned()
             }
         };
@@ -99,12 +99,12 @@ fn read_wav(path: &Path) -> std::result::Result<Vec<u8>, ControlReply> {
         Ok(_) => Ok(wav),
         Err(AudioError::ResourceExhausted) => Err(ControlReply::error(
             "resource-exhausted",
-            format!("{name} is too long for Hex to transcribe at once"),
+            format!("{name} is too long for Voinc to transcribe at once"),
         )),
         Err(_) => Err(ControlReply::error(
             "unsupported",
             format!(
-                "{name} isn't a WAV file Hex can read; convert it to WAV first, \
+                "{name} isn't a WAV file Voinc can read; convert it to WAV first, \
                  for example with ffmpeg: ffmpeg -i <file> <file>.wav"
             ),
         )),
@@ -126,7 +126,7 @@ fn transcribe(job: &Job) -> ControlReply {
     offline(&job.wav, &job.selection)
 }
 
-/// The running Hex transcribes with the model the request names: a clip up to
+/// The running Voinc transcribes with the model the request names: a clip up to
 /// 30 s runs on its dictation engine's loaded copy, and a longer one makes
 /// its transcription service load its own.
 fn in_running_hex(job: &Job) -> ControlReply {
@@ -149,7 +149,7 @@ fn transcript(body: &[u8]) -> ControlReply {
     match serde_json::from_slice::<Transcript>(body) {
         Ok(Transcript { transcript }) if transcript.trim().is_empty() => no_speech(),
         Ok(Transcript { transcript }) => ControlReply::Transcript { text: transcript },
-        Err(_) => ControlReply::error("failed", "Hex sent an unreadable transcript"),
+        Err(_) => ControlReply::error("failed", "Voinc sent an unreadable transcript"),
     }
 }
 
@@ -157,69 +157,69 @@ fn refusal(status: u16, code: &str, model: &str) -> ControlReply {
     match code {
         "unknown-model" => ControlReply::error(
             "unknown-model",
-            format!("the running Hex doesn't know `{model}`; run `hex model list`"),
+            format!("the running Voinc doesn't know `{model}`; run `voinc model list`"),
         ),
         "unsupported-model" => ControlReply::error(
             "model-unavailable",
-            format!("the running Hex can't use `{model}`; run `hex model list` to see what it has"),
+            format!("the running Voinc can't use `{model}`; run `voinc model list` to see what it has"),
         ),
-        "invalid-request" => ControlReply::error("failed", "Hex refused the request; update Hex"),
+        "invalid-request" => ControlReply::error("failed", "Voinc refused the request; update Voinc"),
         "unsupported-audio" | "invalid-audio" => ControlReply::error(
             "unsupported",
-            "Hex couldn't read the file as WAV; convert it to WAV first",
+            "Voinc couldn't read the file as WAV; convert it to WAV first",
         ),
-        "length-required" => ControlReply::error("failed", "Hex refused the upload; update Hex"),
+        "length-required" => ControlReply::error("failed", "Voinc refused the upload; update Voinc"),
         "resource-exhausted" => ControlReply::error(
             "resource-exhausted",
-            "Hex says the file is too large or too long to transcribe",
+            "Voinc says the file is too large or too long to transcribe",
         ),
         "model-not-ready" => ControlReply::error("model-unavailable", not_ready(model)),
         "queue-full" => {
-            ControlReply::error("busy", "Hex is busy with another transcription; try again")
+            ControlReply::error("busy", "Voinc is busy with another transcription; try again")
         }
         "upload-timeout" => {
-            ControlReply::error("failed", "Hex timed out reading the file; try again")
+            ControlReply::error("failed", "Voinc timed out reading the file; try again")
         }
-        "cancelled" => ControlReply::error("failed", "Hex cancelled the transcription; try again"),
+        "cancelled" => ControlReply::error("failed", "Voinc cancelled the transcription; try again"),
         "service-gone" => ControlReply::error(
             "unavailable",
-            "Hex's transcription service stopped; restart Hex",
+            "Voinc's transcription service stopped; restart Voinc",
         ),
         "model-load-failed" => ControlReply::error(
             "failed",
-            format!("Hex couldn't load `{model}`; try again or pick another model"),
+            format!("Voinc couldn't load `{model}`; try again or pick another model"),
         ),
         "transcription-failed" => {
-            ControlReply::error("failed", "Hex couldn't transcribe it; try again")
+            ControlReply::error("failed", "Voinc couldn't transcribe it; try again")
         }
         _ => match status {
-            401 => ControlReply::error("failed", "Hex rejected the request; restart Hex"),
-            408 => ControlReply::error("failed", "Hex timed out reading the file; try again"),
+            401 => ControlReply::error("failed", "Voinc rejected the request; restart Voinc"),
+            408 => ControlReply::error("failed", "Voinc timed out reading the file; try again"),
             409 => ControlReply::error("model-unavailable", not_ready(model)),
             413 => ControlReply::error(
                 "resource-exhausted",
-                "Hex says the file is too large to transcribe",
+                "Voinc says the file is too large to transcribe",
             ),
             415 => ControlReply::error(
                 "unsupported",
-                "Hex couldn't read the file as WAV; convert it to WAV first",
+                "Voinc couldn't read the file as WAV; convert it to WAV first",
             ),
-            429 => ControlReply::error("busy", "Hex is busy with another transcription; try again"),
+            429 => ControlReply::error("busy", "Voinc is busy with another transcription; try again"),
             _ if code.is_empty() || code.starts_with("http-") => {
-                ControlReply::error("failed", format!("Hex answered HTTP {status}"))
+                ControlReply::error("failed", format!("Voinc answered HTTP {status}"))
             }
-            _ => ControlReply::error("failed", format!("Hex answered HTTP {status} ({code})")),
+            _ => ControlReply::error("failed", format!("Voinc answered HTTP {status} ({code})")),
         },
     }
 }
 
-/// An imported model has no `hex model install` id, so it is checked where it
+/// An imported model has no `voinc model install` id, so it is checked where it
 /// was imported instead.
 fn not_ready(model: &str) -> String {
     if model.starts_with("custom-") {
-        format!("`{model}` isn't ready in the running Hex; check it in Hex's model picker")
+        format!("`{model}` isn't ready in the running Voinc; check it in Voinc's model picker")
     } else {
-        format!("`{model}` isn't ready in the running Hex; run `hex model install {model}`")
+        format!("`{model}` isn't ready in the running Voinc; run `voinc model install {model}`")
     }
 }
 
@@ -230,8 +230,8 @@ fn no_speech() -> ControlReply {
     )
 }
 
-/// Without a running Hex, Linux and Windows load the model here as
-/// `hex model transcribe` does; macOS runs models only inside the app.
+/// Without a running Voinc, Linux and Windows load the model here as
+/// `voinc model transcribe` does; macOS runs models only inside the app.
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 fn offline(wav: &[u8], selection: &TranscriptionSelection) -> ControlReply {
     match crate::transcription::local_transcriber::transcribe_wav_bytes(wav, selection) {
@@ -253,7 +253,7 @@ mod tests {
 
     fn not_a_wav() -> std::path::PathBuf {
         let path = std::env::temp_dir().join(format!(
-            "hex-transcribe-not-a-wav-{}.wav",
+            "voinc-transcribe-not-a-wav-{}.wav",
             std::process::id()
         ));
         std::fs::write(&path, b"this is not a wav").unwrap();
@@ -292,7 +292,7 @@ mod tests {
         .unwrap_err();
         assert!(
             matches!(reply, ControlReply::Error { ref code, ref message }
-                if code == "disabled" && message.contains("hex labs on transcribe-files")),
+                if code == "disabled" && message.contains("voinc labs on transcribe-files")),
             "{reply:?}"
         );
     }
@@ -315,7 +315,7 @@ mod tests {
         let mut settings = AppSettings::default();
         settings.labs.transcribe_files = true;
         let path =
-            std::env::temp_dir().join(format!("hex-transcribe-wav-{}.wav", std::process::id()));
+            std::env::temp_dir().join(format!("voinc-transcribe-wav-{}.wav", std::process::id()));
         std::fs::write(&path, wav()).unwrap();
         let job = prepare(&settings, &path, None, None).unwrap();
         let _ = std::fs::remove_file(&path);
@@ -356,18 +356,18 @@ mod tests {
 
         let (code, message) = error(refusal(400, "unknown-model", "parakeet_v2"));
         assert_eq!(code, "unknown-model");
-        assert!(message.contains("hex model list"), "{message}");
+        assert!(message.contains("voinc model list"), "{message}");
 
         let (code, message) = error(refusal(409, "model-not-ready", "parakeet_v2"));
         assert_eq!(code, "model-unavailable");
         assert!(
-            message.contains("hex model install parakeet_v2"),
+            message.contains("voinc model install parakeet_v2"),
             "{message}"
         );
 
         let (code, message) = error(refusal(409, "model-not-ready", "custom-ab12ab12ab12ab12"));
         assert_eq!(code, "model-unavailable");
-        assert!(!message.contains("hex model install"), "{message}");
+        assert!(!message.contains("voinc model install"), "{message}");
 
         let (code, message) = error(refusal(429, "queue-full", "parakeet_v2"));
         assert_eq!(code, "busy");

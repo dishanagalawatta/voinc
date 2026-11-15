@@ -1,6 +1,6 @@
 //! Launch at login on Linux: the XDG autostart entry
-//! `~/.config/autostart/anomaly.hex.desktop`, named for Hex's app id, the
-//! same managed file the installer writes. Hex only replaces or removes an entry that carries its
+//! `~/.config/autostart/io.voinc.voinc.desktop`, named for Voinc's app id, the
+//! same managed file the installer writes. Voinc only replaces or removes an entry that carries its
 //! `X-Hex-Managed=true` mark; the file on disk is the only state.
 
 use std::fs;
@@ -20,9 +20,9 @@ fn entry_path() -> Result<PathBuf> {
     Ok(autostart_dir()?.join(format!("{}.desktop", crate::linux::portal::APP_ID)))
 }
 
-/// Renames Hex's managed `hex.desktop` autostart entry, the name before
+/// Renames Voinc's managed `voinc.desktop` autostart entry, the name before
 /// #579, to the app id's, unless an entry already has the new name, then
-/// keeps Hex's managed entry current: its icon (#652), and its command when
+/// keeps Voinc's managed entry current: its icon (#652), and its command when
 /// the program it starts is gone, as after a downloaded binary moved or a
 /// package replaced it (#736). A symlink is the user's, whatever it points to.
 pub fn tidy() -> Result<()> {
@@ -50,7 +50,7 @@ fn refresh_in(directory: &Path, launcher: &Path) -> Result<()> {
         && program(&current).is_none_or(|program| superseded(&program, launcher))
         && launcher.is_file()
     {
-        tracing::info!(entry = %entry.display(), "pointed Launch at login at this Hex");
+        tracing::info!(entry = %entry.display(), "pointed Launch at login at this Voinc");
         self::entry(launcher)
     } else {
         crate::linux::portal::with_icon(&current)
@@ -104,7 +104,7 @@ pub(crate) fn program(entry: &str) -> Option<PathBuf> {
 }
 
 fn move_legacy_entry_in(directory: &Path) -> Result<()> {
-    let legacy = directory.join("hex.desktop");
+    let legacy = directory.join("voinc.desktop");
     match fs::symlink_metadata(&legacy) {
         Ok(metadata) if metadata.is_file() => {}
         Ok(_) => return Ok(()),
@@ -127,9 +127,9 @@ fn move_legacy_entry_in(directory: &Path) -> Result<()> {
     .wrap_err_with(|| format!("could not move {}", legacy.display()))
 }
 
-/// Whether the desktop starts Hex at login: its autostart entry, or a user
-/// target that wants `hex.service`, as the Home Manager module's `autostart`
-/// or `systemctl --user enable hex.service` sets up (#1164).
+/// Whether the desktop starts Voinc at login: its autostart entry, or a user
+/// target that wants `voinc.service`, as the Home Manager module's `autostart`
+/// or `systemctl --user enable voinc.service` sets up (#1164).
 pub fn is_enabled() -> Result<bool> {
     if service_enabled() {
         return Ok(true);
@@ -142,24 +142,24 @@ pub fn is_enabled() -> Result<bool> {
     }
 }
 
-/// Writes or removes Hex's autostart entry: through the desktop's Background
-/// portal where it has one (#812), else Hex's own managed file.
+/// Writes or removes Voinc's autostart entry: through the desktop's Background
+/// portal where it has one (#812), else Voinc's own managed file.
 pub fn set_enabled(enabled: bool) -> Result<()> {
     let mut changed = CHANGES
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     *changed = true;
-    // systemd starts Hex at login; that unit is the user's (or Home
+    // systemd starts Voinc at login; that unit is the user's (or Home
     // Manager's) to enable, and an autostart entry beside it would only
-    // start Hex twice.
+    // start Voinc twice.
     if service_enabled() {
         if enabled {
             return Ok(());
         }
         bail!(
-            "Hex starts at login through its systemd user service (hex.service); \
-             turn it off where it was enabled, such as programs.hex.autostart in \
-             Home Manager or `systemctl --user disable hex.service`"
+            "Voinc starts at login through its systemd user service (voinc.service); \
+             turn it off where it was enabled, such as programs.voinc.autostart in \
+             Home Manager or `systemctl --user disable voinc.service`"
         );
     }
     let path = entry_path()?;
@@ -168,7 +168,7 @@ pub fn set_enabled(enabled: bool) -> Result<()> {
         && !ours(entry)
     {
         bail!(
-            "{} is not Hex's; edit or remove it yourself",
+            "{} is not Voinc's; edit or remove it yourself",
             path.display()
         );
     }
@@ -190,9 +190,9 @@ pub fn set_enabled(enabled: bool) -> Result<()> {
     }
 }
 
-/// Tells the desktop's Background portal, once at startup, that Hex runs in
+/// Tells the desktop's Background portal, once at startup, that Voinc runs in
 /// the background, keeping Launch at login as it is. Asked only while the
-/// autostart entry is absent or Hex's: any request rewrites or removes it.
+/// autostart entry is absent or Voinc's: any request rewrites or removes it.
 pub fn announce_background() {
     let changed = CHANGES
         .lock()
@@ -216,7 +216,7 @@ pub fn announce_background() {
     }
 }
 
-/// Whether a user target in `~/.config/systemd/user` wants `hex.service`:
+/// Whether a user target in `~/.config/systemd/user` wants `voinc.service`:
 /// the link `systemctl --user enable` and Home Manager's `WantedBy` leave.
 fn service_enabled() -> bool {
     dirs::config_dir()
@@ -232,7 +232,7 @@ fn service_enabled_in(units: &Path) -> bool {
             .file_name()
             .to_str()
             .is_some_and(|name| name.ends_with(".wants"))
-            && fs::symlink_metadata(entry.path().join("hex.service")).is_ok()
+            && fs::symlink_metadata(entry.path().join("voinc.service")).is_ok()
     })
 }
 
@@ -241,7 +241,7 @@ fn service_enabled_in(units: &Path) -> bool {
 static CHANGES: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 
 /// The autostart entry's contents; a symlink or anything but a regular file
-/// reads as empty, which is never Hex's, so Hex leaves it alone.
+/// reads as empty, which is never Voinc's, so Voinc leaves it alone.
 fn read(path: &Path) -> Result<Option<String>> {
     match fs::symlink_metadata(path) {
         Ok(metadata) if !metadata.file_type().is_file() => return Ok(Some(String::new())),
@@ -258,18 +258,18 @@ fn read(path: &Path) -> Result<Option<String>> {
     }
 }
 
-/// Hex's own entry: its managed mark, or the Background portal's, which
-/// writes the entry under Hex's app id when Hex asks (#812).
+/// Voinc's own entry: its managed mark, or the Background portal's, which
+/// writes the entry under Voinc's app id when Voinc asks (#812).
 fn ours(entry: &str) -> bool {
     entry.lines().map(str::trim).any(|line| {
         line == MANAGED_MARK || line == format!("X-XDP-Autostart={}", crate::linux::portal::APP_ID)
     })
 }
 
-/// The executable the entry starts: a managed install's `current/hex`,
+/// The executable the entry starts: a managed install's `current/voinc`,
 /// which outlives the version directory this process runs from.
 pub(crate) fn launcher() -> Result<PathBuf> {
-    let executable = std::env::current_exe().wrap_err("could not locate the Hex executable")?;
+    let executable = std::env::current_exe().wrap_err("could not locate the Voinc executable")?;
     // Linux names a running binary that was removed or replaced "… (deleted)".
     let executable = match executable
         .to_str()
@@ -278,7 +278,7 @@ pub(crate) fn launcher() -> Result<PathBuf> {
         Some(path) if !executable.is_file() => PathBuf::from(path),
         _ => executable,
     };
-    let current = crate::app_paths::support_dir()?.join("current").join("hex");
+    let current = crate::app_paths::support_dir()?.join("current").join("voinc");
     let managed = executable
         .parent()
         .and_then(Path::parent)
@@ -290,10 +290,10 @@ pub(crate) fn launcher() -> Result<PathBuf> {
     Ok(shim(&executable).unwrap_or(executable))
 }
 
-/// A version manager's shim for `executable` (mise, asdf: `<root>/shims/hex`
-/// beside `<root>/installs/…/hex`), which outlives the version it runs: only
+/// A version manager's shim for `executable` (mise, asdf: `<root>/shims/voinc`
+/// beside `<root>/installs/…/voinc`), which outlives the version it runs: only
 /// one inside the home directory, the user's own and writable by no one else,
-/// that runs Hex from the home directory (a shim whose tool has no version set
+/// that runs Voinc from the home directory (a shim whose tool has no version set
 /// there fails).
 fn shim(executable: &Path) -> Option<PathBuf> {
     let home = dirs::home_dir()?;
@@ -347,8 +347,8 @@ fn trusted(shim: &Path) -> bool {
         })
 }
 
-/// Whether `shim --help`, run from `home`, says it's Hex (other tools are
-/// called `hex` too).
+/// Whether `shim --help`, run from `home`, says it's Voinc (other tools are
+/// called `voinc` too).
 fn runs_hex(shim: &Path, home: &Path) -> bool {
     use std::process::{Command, Stdio};
     let Ok(mut child) = Command::new(shim)
@@ -404,7 +404,7 @@ fn entry(executable: &Path) -> String {
     format!(
         "[Desktop Entry]\n\
          Type=Application\n\
-         Name=Hex\n\
+         Name=Voinc\n\
          Comment=Local voice dictation\n\
          Exec={} start\n\
          Icon={}\n\
@@ -437,42 +437,42 @@ mod tests {
 
     #[test]
     fn the_entry_starts_hex_with_a_quoted_path() {
-        let entry = entry(Path::new("/home/a b/100%/hex$"));
-        assert!(entry.contains("Exec=\"/home/a b/100%%/hex\\\\$\" start\n"));
+        let entry = entry(Path::new("/home/a b/100%/voinc$"));
+        assert!(entry.contains("Exec=\"/home/a b/100%%/voinc\\\\$\" start\n"));
         assert!(entry.contains("X-Hex-Managed=true\n"));
         assert!(starts(&entry));
     }
 
     #[test]
     fn a_version_managers_shim_outlives_the_version() {
-        let root = std::env::temp_dir().join(format!("hex-login-shim-{}", std::process::id()));
-        let executable = root.join("mise/installs/hex/3.1.1/hex");
+        let root = std::env::temp_dir().join(format!("voinc-login-shim-{}", std::process::id()));
+        let executable = root.join("mise/installs/voinc/3.1.1/voinc");
         fs::create_dir_all(executable.parent().unwrap()).unwrap();
         fs::write(&executable, "").unwrap();
         assert_eq!(shim_path(&executable, &root), None);
         fs::create_dir_all(root.join("mise/shims")).unwrap();
-        fs::write(root.join("mise/shims/hex"), "").unwrap();
+        fs::write(root.join("mise/shims/voinc"), "").unwrap();
         assert_eq!(
             shim_path(&executable, &root),
-            Some(root.join("mise/shims/hex"))
+            Some(root.join("mise/shims/voinc"))
         );
-        assert_eq!(shim_path(Path::new("/usr/bin/hex"), &root), None);
+        assert_eq!(shim_path(Path::new("/usr/bin/voinc"), &root), None);
         // Outside the home directory a shim is nobody's to trust.
         assert_eq!(shim_path(&executable, Path::new("/home/nobody")), None);
         // The entry's program reads back through both levels of escaping.
-        let odd = Path::new("/tmp/my $dir/100%/a\"b\\c/hex");
+        let odd = Path::new("/tmp/my $dir/100%/a\"b\\c/voinc");
         assert_eq!(program(&entry(odd)).as_deref(), Some(odd));
         fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
     fn a_symlinked_entry_is_never_hexs() {
-        let root = std::env::temp_dir().join(format!("hex-login-link-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("voinc-login-link-{}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         let target = root.join("target.desktop");
-        fs::write(&target, "[Desktop Entry]\nX-XDP-Autostart=anomaly.hex\n").unwrap();
+        fs::write(&target, "[Desktop Entry]\nX-XDP-Autostart=io.voinc.voinc\n").unwrap();
         assert!(ours(&read(&target).unwrap().unwrap()));
-        let link = root.join("anomaly.hex.desktop");
+        let link = root.join("io.voinc.voinc.desktop");
         std::os::unix::fs::symlink(&target, &link).unwrap();
         assert!(!ours(&read(&link).unwrap().unwrap()));
         assert_eq!(read(&root.join("missing.desktop")).unwrap(), None);
@@ -485,13 +485,13 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let directory = std::env::temp_dir().join(format!("hex-autostart-{unique}"));
+        let directory = std::env::temp_dir().join(format!("voinc-autostart-{unique}"));
         fs::create_dir_all(&directory).unwrap();
-        let legacy = directory.join("hex.desktop");
-        let entry = directory.join("anomaly.hex.desktop");
+        let legacy = directory.join("voinc.desktop");
+        let entry = directory.join("io.voinc.voinc.desktop");
         fs::write(
             &legacy,
-            "[Desktop Entry]\nExec=hex start\nX-Hex-Managed=true\n",
+            "[Desktop Entry]\nExec=voinc start\nX-Hex-Managed=true\n",
         )
         .unwrap();
         move_legacy_entry_in(&directory).unwrap();
@@ -514,7 +514,7 @@ mod tests {
         assert!(
             fs::read_to_string(&entry)
                 .unwrap()
-                .contains("\nIcon=anomaly.hex\n")
+                .contains("\nIcon=io.voinc.voinc\n")
         );
         fs::remove_dir_all(directory).unwrap();
     }
@@ -522,20 +522,20 @@ mod tests {
     #[test]
     fn an_entry_whose_program_is_gone_starts_this_hex() {
         assert_eq!(
-            program(&entry(Path::new("/home/a b/100%/hex$"))),
-            Some(PathBuf::from("/home/a b/100%/hex$"))
+            program(&entry(Path::new("/home/a b/100%/voinc$"))),
+            Some(PathBuf::from("/home/a b/100%/voinc$"))
         );
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let directory = std::env::temp_dir().join(format!("hex-autostart-refresh-{unique}"));
+        let directory = std::env::temp_dir().join(format!("voinc-autostart-refresh-{unique}"));
         fs::create_dir_all(&directory).unwrap();
-        let launcher = directory.join("hex");
+        let launcher = directory.join("voinc");
         fs::write(&launcher, "").unwrap();
-        let path = directory.join("anomaly.hex.desktop");
+        let path = directory.join("io.voinc.voinc.desktop");
         // A downloaded binary that has since moved.
-        fs::write(&path, entry(&directory.join("Downloads/hex"))).unwrap();
+        fs::write(&path, entry(&directory.join("Downloads/voinc"))).unwrap();
         refresh_in(&directory, &launcher).unwrap();
         assert_eq!(fs::read_to_string(&path).unwrap(), entry(&launcher));
         // Turned off in the desktop's settings: left off.
@@ -552,15 +552,15 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let units = std::env::temp_dir().join(format!("hex-login-units-{unique}"));
+        let units = std::env::temp_dir().join(format!("voinc-login-units-{unique}"));
         assert!(!service_enabled_in(&units));
         fs::create_dir_all(&units).unwrap();
-        fs::write(units.join("hex.service"), "[Unit]\n").unwrap();
+        fs::write(units.join("voinc.service"), "[Unit]\n").unwrap();
         assert!(!service_enabled_in(&units));
         let wants = units.join("graphical-session.target.wants");
         fs::create_dir_all(&wants).unwrap();
         assert!(!service_enabled_in(&units));
-        std::os::unix::fs::symlink(units.join("hex.service"), wants.join("hex.service")).unwrap();
+        std::os::unix::fs::symlink(units.join("voinc.service"), wants.join("voinc.service")).unwrap();
         assert!(service_enabled_in(&units));
         fs::remove_dir_all(units).unwrap();
     }

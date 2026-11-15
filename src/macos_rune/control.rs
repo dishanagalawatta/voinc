@@ -1,8 +1,8 @@
-//! The macOS host of `hex` control commands ([`crate::control`]). The main
+//! The macOS host of `voinc` control commands ([`crate::control`]). The main
 //! thread answers what it owns (the window, the menu bar's meeting state,
 //! settings saves) and hands commands that wait on the listener or the
 //! window to a short-lived thread, so a slow answer never stalls the run loop.
-//! Commands only the listener answers (`hex dictation`, `hex paste-last`)
+//! Commands only the listener answers (`voinc dictation`, `voinc paste-last`)
 //! skip the main thread: the control thread hands them over at once
 //! ([`answer_off_main`]).
 
@@ -32,7 +32,7 @@ const WINDOW_TIMEOUT: Duration = Duration::from_secs(1);
 /// How long `meetings record|stop` and `model use` wait to confirm, inside
 /// the local API's own control deadline.
 const CONFIRM_WAIT: Duration = Duration::from_secs(8);
-/// Lets the local API write the reply before Hex quits.
+/// Lets the local API write the reply before Voinc quits.
 const QUIT_GRACE: Duration = Duration::from_millis(250);
 
 /// A `meetings record|stop` waiting for the controller to confirm.
@@ -82,7 +82,7 @@ impl Pump {
                         if restart && !crate::desktop::onboarding::spawn_relaunch() {
                             return Err(ControlError::new(
                                 "unsupported",
-                                "only an installed Hex.app can restart itself; quit it and open \
+                                "only an installed Voinc.app can restart itself; quit it and open \
                                  it again",
                             ));
                         }
@@ -91,8 +91,8 @@ impl Pump {
                     let quitting = answer.is_ok();
                     let _ = reply.send(
                         match answer {
-                            Ok(()) if restart => ControlReply::done("Restarting Hex"),
-                            Ok(()) => ControlReply::done("Quitting Hex"),
+                            Ok(()) if restart => ControlReply::done("Restarting Voinc"),
+                            Ok(()) => ControlReply::done("Quitting Voinc"),
                             Err(error) => error.into(),
                         }
                         .into(),
@@ -218,7 +218,7 @@ impl Pump {
                     return Some(ControlReply::error(
                         "not-installed",
                         format!(
-                            "{} isn't installed; `hex model install {}` downloads it ({})",
+                            "{} isn't installed; `voinc model install {}` downloads it ({})",
                             definition.name,
                             selection.model.as_str(),
                             definition.size_label()
@@ -247,8 +247,8 @@ impl Pump {
                         .map_err(|error| ControlError::new("unavailable", error.to_string()))
                         .map(|()| {
                             ControlReply::done(format!(
-                                "Downloading {} ({}); Hex switches to it once it's ready. \
-                                 `hex status` shows progress, `hex model cancel` stops it",
+                                "Downloading {} ({}); Voinc switches to it once it's ready. \
+                                 `voinc status` shows progress, `voinc model cancel` stops it",
                                 definition.name,
                                 definition.size_label()
                             ))
@@ -298,10 +298,10 @@ impl Pump {
                     ControlReply::error("unsupported", "updates are managed by your organization")
                 }
                 DesktopUpdateStatus::Unavailable | DesktopUpdateStatus::SourceBuild => {
-                    ControlReply::error("unavailable", "this Hex build doesn't update itself")
+                    ControlReply::error("unavailable", "this Voinc build doesn't update itself")
                 }
                 _ => match crate::macos_rune::update_action(&DesktopAction::CheckForUpdates) {
-                    Ok(()) => ControlReply::done("Checking for updates; Hex shows what it finds"),
+                    Ok(()) => ControlReply::done("Checking for updates; Voinc shows what it finds"),
                     Err(error) => ControlReply::error("unavailable", format!("{error:#}")),
                 },
             }),
@@ -393,7 +393,7 @@ impl Pump {
             let answer = match (event, waiter.stop) {
                 (Some(ControllerEvent::RecordingStarted { title, .. }), false) => {
                     ControlReply::done(format!(
-                        "Recording “{title}”; `hex meetings stop` stops and transcribes it"
+                        "Recording “{title}”; `voinc meetings stop` stops and transcribes it"
                     ))
                 }
                 (Some(ControllerEvent::Transcribing | ControllerEvent::Finished(_)), true) => {
@@ -403,9 +403,9 @@ impl Pump {
                     ControlReply::error("failed", format!("{title}: {error}"))
                 }
                 _ if now >= waiter.deadline => ControlReply::done(if waiter.stop {
-                    "Asked the meeting to stop; `hex status` shows when it's transcribing"
+                    "Asked the meeting to stop; `voinc status` shows when it's transcribing"
                 } else {
-                    "Hex is starting the recording; `hex status` shows when it's recording"
+                    "Voinc is starting the recording; `voinc status` shows when it's recording"
                 }),
                 _ => return true,
             };
@@ -491,7 +491,7 @@ impl Pump {
         Ok(ControlReply::done("Opened the window"))
     }
 
-    /// `hex window story`: what a `hex://story/…` link does.
+    /// `voinc window story`: what a `voinc://story/…` link does.
     fn show_story(&mut self, link: StoryLink) -> ControlReply {
         let enabled = crate::rune_ui::playground::enabled();
         let mut message = format!("Opened the playground at {}", link.story);
@@ -503,7 +503,7 @@ impl Pump {
         }
         self.window.update(move |_, tx| {
             if let Err(why) = story_link::open(&link, tx) {
-                tracing::warn!(story = %link.story, %why, "hex window story opened only the window");
+                tracing::warn!(story = %link.story, %why, "voinc window story opened only the window");
             }
         });
         bring_window_forward();
@@ -524,14 +524,14 @@ fn reply_with(result: Result<ControlReply, ControlError>) -> ControlReply {
 
 fn spawn(work: impl FnOnce() + Send + 'static) {
     if let Err(error) = thread::Builder::new()
-        .name("hex-control".into())
+        .name("voinc-control".into())
         .spawn(work)
     {
         tracing::error!(%error, "could not start a control thread");
     }
 }
 
-/// Answers a call that needs only the listener (`hex dictation`, `hex
+/// Answers a call that needs only the listener (`voinc dictation`, `voinc
 /// paste-last`) from a thread of its own, or returns it for the main thread,
 /// whose pump drains its channels on a timer.
 pub(super) fn answer_off_main(runtime: &RuntimeHandle, call: ControlCall) -> Option<ControlCall> {
@@ -601,7 +601,7 @@ fn listener_command(
 }
 
 /// Answers `reply` from a thread; a dropped reply reads as `control-unavailable`.
-/// `hex screenshot`: the display under the pointer, saved and copied as
+/// `voinc screenshot`: the display under the pointer, saved and copied as
 /// the shortcut's shots are, or with `pick` the picker.
 fn screenshot(pick: bool, reply: &SyncSender<ControlResponse>) -> Option<ControlReply> {
     #[cfg(hex_capture)]
@@ -609,7 +609,7 @@ fn screenshot(pick: bool, reply: &SyncSender<ControlResponse>) -> Option<Control
         if !crate::labs::screenshots() {
             return Some(ControlReply::error(
                 "disabled",
-                "Labs › Screenshots is off; turn it on with `hex settings set labs.screenshots on`",
+                "Labs › Screenshots is off; turn it on with `voinc settings set labs.screenshots on`",
             ));
         }
         if pick {
@@ -661,12 +661,12 @@ fn listener_ready(runtime: &RuntimeHandle) -> Result<(), ControlError> {
     if let Some(failure) = listener.and_then(|listener| listener.warning.as_ref()) {
         return Err(ControlError::new(
             "listener-stopped",
-            format!("the listener stopped ({failure}); restart Hex"),
+            format!("the listener stopped ({failure}); restart Voinc"),
         ));
     }
     Err(ControlError::new(
         "not-ready",
-        "Hex is waiting for setup (permissions or the dictation model); run `hex status`",
+        "Voinc is waiting for setup (permissions or the dictation model); run `voinc status`",
     ))
 }
 
@@ -682,7 +682,7 @@ fn ask<T: Send + 'static>(
     receiver.recv_timeout(LISTENER_TIMEOUT).map_err(|_| {
         ControlError::new(
             "unavailable",
-            "the listener didn't answer in time; check `hex status`",
+            "the listener didn't answer in time; check `voinc status`",
         )
     })
 }
@@ -747,7 +747,7 @@ fn launch_at_login(enabled: Option<bool>) -> Result<ControlReply, ControlError> 
     if !bundled {
         return Err(ControlError::new(
             "unsupported",
-            "only an installed Hex.app can launch at login",
+            "only an installed Voinc.app can launch at login",
         ));
     }
     let after = crate::desktop::login_item::set_now(Some(enabled)).map_err(|error| {
@@ -762,7 +762,7 @@ fn launch_at_login(enabled: Option<bool>) -> Result<ControlReply, ControlError> 
     )))
 }
 
-/// What `hex model use` asks the runtime: the installed-only path, which
+/// What `voinc model use` asks the runtime: the installed-only path, which
 /// verifies the model on disk and never downloads or repairs it.
 fn use_request(selection: crate::transcription::models::TranscriptionSelection) -> Request {
     Request::UseInstalledSelection(selection)
@@ -825,7 +825,7 @@ fn wait_for_model(
         }
     }
     Ok(ControlReply::done(format!(
-        "Loading {name}; `hex status` shows when it's ready"
+        "Loading {name}; `voinc status` shows when it's ready"
     )))
 }
 
@@ -892,7 +892,7 @@ fn status(
 ) -> Result<ControlReply, ControlError> {
     let published = runtime
         .published()
-        .ok_or_else(|| ControlError::new("not-ready", "Hex is still starting; try again"))?;
+        .ok_or_else(|| ControlError::new("not-ready", "Voinc is still starting; try again"))?;
     // A stopped listener cannot say what it was doing.
     let snapshot = match &published.listener.warning {
         Some(failure) => Err(ControlError::new("listener-stopped", failure.clone())),

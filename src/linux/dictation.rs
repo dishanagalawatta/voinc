@@ -41,7 +41,7 @@ struct Job {
     language: String,
     /// The clip, kept for History while Labs › Keep recordings is on.
     recording: Option<crate::history::Recording>,
-    /// `hex dictation stop --print`: the text goes here, never pasted.
+    /// `voinc dictation stop --print`: the text goes here, never pasted.
     print: Option<PrintReply>,
     /// The shortcut that started this capture: dictation, Dictate without
     /// processing, or Labs › Terminal paste.
@@ -71,7 +71,7 @@ enum OutputJob {
 #[derive(Clone, Copy, PartialEq)]
 enum OutputKind {
     Dictation,
-    /// A dictation printed by `hex dictation stop --print`.
+    /// A dictation printed by `voinc dictation stop --print`.
     Printed,
     PasteLast,
     TypedText,
@@ -271,7 +271,7 @@ impl DictationOutput {
 }
 
 /// The line a listener prints once its shortcuts are settled: what actually
-/// starts dictation from here. `commands` is whether `hex` commands reach
+/// starts dictation from here. `commands` is whether `voinc` commands reach
 /// this listener.
 fn readiness_message(
     device: &str,
@@ -279,7 +279,7 @@ fn readiness_message(
     shortcuts: &DesktopShortcuts,
     commands: bool,
 ) -> String {
-    let ready = format!("Hex dictation is ready on {device}.");
+    let ready = format!("Voinc dictation is ready on {device}.");
     match shortcuts {
         DesktopShortcuts::Registered | DesktopShortcuts::Portal(_) => {
             format!("{ready} Hold {hotkey} to dictate; Ctrl-C stops.")
@@ -288,12 +288,12 @@ fn readiness_message(
         // listener prints this.
         DesktopShortcuts::Unregistered => format!("{ready} Ctrl-C stops."),
         DesktopShortcuts::Commands if commands => format!(
-            "{ready} No shortcut is bound: bind `hex dictation start` and `hex dictation stop` \
-             (or `hex dictation toggle`) in your desktop's keybindings; Ctrl-C stops."
+            "{ready} No shortcut is bound: bind `voinc dictation start` and `voinc dictation stop` \
+             (or `voinc dictation toggle`) in your desktop's keybindings; Ctrl-C stops."
         ),
         DesktopShortcuts::Commands => format!(
-            "{ready} No shortcut is bound and this foreground listener can't receive `hex` \
-             commands: run `hex start` and bind `hex dictation toggle` in your desktop's \
+            "{ready} No shortcut is bound and this foreground listener can't receive `voinc` \
+             commands: run `voinc start` and bind `voinc dictation toggle` in your desktop's \
              keybindings; Ctrl-C stops."
         ),
     }
@@ -678,7 +678,7 @@ pub(crate) fn run(
                         Some(host) => host.control(action, &timeline),
                         None => crate::control::ControlReply::error(
                             "feature-off",
-                            "Annotate is off; turn it on with `hex settings set capture.enabled on`",
+                            "Annotate is off; turn it on with `voinc settings set capture.enabled on`",
                         ),
                     };
                     let _ = answer.send(report);
@@ -845,7 +845,7 @@ pub(crate) fn run(
                 action => (action, None),
             };
             match action {
-                // A client's dictation records: the shortcut and `hex
+                // A client's dictation records: the shortcut and `voinc
                 // dictation` neither start nor end anything.
                 HotkeyEvent::Start { .. } | HotkeyEvent::Finish | HotkeyEvent::Cancel
                     if service.is_active() =>
@@ -1505,7 +1505,7 @@ mod tests {
 
     fn event_log() -> (EventLog, std::path::PathBuf) {
         let path = std::env::temp_dir().join(format!(
-            "hex-linux-dictation-{}-{}.ndjson",
+            "voinc-linux-dictation-{}-{}.ndjson",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -1519,7 +1519,7 @@ mod tests {
     fn the_ready_line_names_what_starts_dictation() {
         assert_eq!(
             readiness_message("System default", "Alt", &DesktopShortcuts::Registered, true),
-            "Hex dictation is ready on System default. Hold Alt to dictate; Ctrl-C stops."
+            "Voinc dictation is ready on System default. Hold Alt to dictate; Ctrl-C stops."
         );
         assert_eq!(
             readiness_message(
@@ -1528,7 +1528,7 @@ mod tests {
                 &DesktopShortcuts::Portal(Vec::new()),
                 false
             ),
-            "Hex dictation is ready on Yeti. Hold Alt+Space to dictate; Ctrl-C stops."
+            "Voinc dictation is ready on Yeti. Hold Alt+Space to dictate; Ctrl-C stops."
         );
         let unregistered =
             readiness_message("Yeti", "Alt+Space", &DesktopShortcuts::Unregistered, true);
@@ -1536,17 +1536,17 @@ mod tests {
 
         let service = readiness_message("Yeti", "Alt+Space", &DesktopShortcuts::Commands, true);
         assert!(service.contains("No shortcut is bound"));
-        assert!(service.contains("`hex dictation start`"));
-        assert!(service.contains("`hex dictation stop`"));
-        assert!(service.contains("`hex dictation toggle`"));
+        assert!(service.contains("`voinc dictation start`"));
+        assert!(service.contains("`voinc dictation stop`"));
+        assert!(service.contains("`voinc dictation toggle`"));
         assert!(service.contains("desktop's keybindings"));
         assert!(!service.contains("Hold"));
 
         let foreground = readiness_message("Yeti", "Alt+Space", &DesktopShortcuts::Commands, false);
         assert!(foreground.contains("No shortcut is bound"));
-        assert!(foreground.contains("can't receive `hex` commands"));
-        assert!(foreground.contains("run `hex start`"));
-        assert!(foreground.contains("`hex dictation toggle`"));
+        assert!(foreground.contains("can't receive `voinc` commands"));
+        assert!(foreground.contains("run `voinc start`"));
+        assert!(foreground.contains("`voinc dictation toggle`"));
         assert!(!foreground.contains("Hold"));
     }
 

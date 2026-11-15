@@ -1,9 +1,9 @@
 //! The plain-text scene files in `scenes/` (syntax in `scenes/README.md`):
-//! one `"Without Hex"` disaster and its `"With Hex"` triumph each, parsed
+//! one `"Without Voinc"` disaster and its `"With Voinc"` triumph each, parsed
 //! into a [`Script`] that [`typing::Scene`](super::typing::Scene) plays.
 //!
 //! [`parse`] reports every mistake with its line number. Renders pick a
-//! scene with `HEX_ONBOARDING_SCENE` (a path) or `HEX_ONBOARDING_VARIANT`
+//! scene with `VOINC_ONBOARDING_SCENE` (a path) or `VOINC_ONBOARDING_VARIANT`
 //! (`A`, `B`, `C`, `C+`); everyone else gets `default.scene`. Test and
 //! debug builds (`hex_dev_onboarding`) also switch scenes as they run, from
 //! the first run's replay strip.
@@ -53,7 +53,7 @@ const DEFAULT_COLOURS: [&str; 4] = ["cobalt", "lilac", "amber", "mint"];
 /// How many side characters a scene can have.
 const SIDES: usize = 3;
 
-/// The most lines `"Without Hex"`'s thread holds, and `"With Hex"`'s
+/// The most lines `"Without Voinc"`'s thread holds, and `"With Voinc"`'s
 /// payoff.
 pub(crate) const MAX_LINES: usize = 18;
 pub(crate) const MAX_CHEERS: usize = 8;
@@ -121,7 +121,7 @@ impl Ending {
     }
 }
 
-/// A celebration over the stage in `"With Hex"`.
+/// A celebration over the stage in `"With Voinc"`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Effect {
     Confetti,
@@ -131,7 +131,7 @@ pub(crate) enum Effect {
 /// Tapbacks, each at a time from now if the scene gives one.
 pub(crate) type Taps = Vec<(Glyph, Option<f64>)>;
 
-/// One step of `"Without Hex"`.
+/// One step of `"Without Voinc"`.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Op<'a> {
     /// Someone's line. `hold`: how long the scene holds after it, else its
@@ -197,7 +197,7 @@ pub(crate) enum Op<'a> {
     },
 }
 
-/// One step of `"With Hex"`, after your spoken line.
+/// One step of `"With Voinc"`, after your spoken line.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Cheer<'a> {
     /// Tapbacks on your spoken line.
@@ -222,7 +222,7 @@ pub(crate) struct Triumph<'a> {
     /// What you say, holding the shortcut.
     pub(crate) hex: &'a str,
     pub(crate) cheers: Vec<Cheer<'a>>,
-    /// The score's title; `{hex}` is how long you spoke.
+    /// The score's title; `{voinc}` is how long you spoke.
     pub(crate) score: &'a str,
     /// The line under it; `{secs}` and `{typos}` come from the run.
     pub(crate) typed: &'a str,
@@ -237,7 +237,7 @@ pub(crate) struct Script<'a> {
     pub(crate) people: Vec<Person<'a>>,
     /// The red status pill under the header.
     pub(crate) pill: Option<&'a str>,
-    /// The line under `"Without Hex"`.
+    /// The line under `"Without Voinc"`.
     pub(crate) lead: &'a str,
     pub(crate) ops: Vec<Op<'a>>,
     pub(crate) with: Triumph<'a>,
@@ -289,7 +289,7 @@ impl Script<'static> {
         }
         static CHOSEN: OnceLock<Script<'static>> = OnceLock::new();
         CHOSEN.get_or_init(|| {
-            if let Ok(path) = std::env::var("HEX_ONBOARDING_SCENE")
+            if let Ok(path) = std::env::var("VOINC_ONBOARDING_SCENE")
                 && !path.is_empty()
             {
                 match std::fs::read_to_string(&path) {
@@ -300,7 +300,7 @@ impl Script<'static> {
                     Err(error) => tracing::warn!(path, %error, "onboarding scene"),
                 }
             }
-            let name = match std::env::var("HEX_ONBOARDING_VARIANT").as_deref() {
+            let name = match std::env::var("VOINC_ONBOARDING_VARIANT").as_deref() {
                 Ok("A" | "a" | "incontinence") => "A-incontinence.scene",
                 Ok("B" | "b" | "dirty") => "B-dirty.scene",
                 Ok("C" | "c" | "v3") => "C-v3.scene",
@@ -364,10 +364,10 @@ impl Script<'_> {
     /// that sentence, else even word timings at an easy speaking pace.
     pub(crate) fn take(&self) -> &'static Take {
         self.take.get_or_init(|| {
-            if self.with.hex == ANSWER_JAY.text() {
+            if self.with.voinc == ANSWER_JAY.text() {
                 return &ANSWER_JAY;
             }
-            let words: Vec<&str> = self.with.hex.split_whitespace().collect();
+            let words: Vec<&str> = self.with.voinc.split_whitespace().collect();
             let release = (0.1 + 0.2 * words.len() as f64).max(1.0);
             let step = (release - 0.26) / words.len().max(1) as f64;
             let updates: Vec<(f64, &'static str)> = (1..=words.len())
@@ -400,10 +400,10 @@ pub(crate) fn counted(n: usize, one: &str, many: &str) -> String {
     }
 }
 
-/// Fills `{hex}`, `{secs}` and `{typos}` in a score line.
+/// Fills `{voinc}`, `{secs}` and `{typos}` in a score line.
 pub(crate) fn fill(template: &str, hex: f64, secs: f64, typos: usize) -> String {
     template
-        .replace("{hex}", &format!("{hex:.1} seconds"))
+        .replace("{voinc}", &format!("{hex:.1} seconds"))
         .replace("{secs}", &format!("{} seconds", secs.round()))
         .replace("{typos}", &counted(typos, "typo", "typos"))
 }
@@ -435,7 +435,7 @@ struct Parser<'a> {
     /// What's in the field, to check deletes, sends and autocorrect.
     draft: String,
     labels: Vec<&'a str>,
-    /// A sketch: `"Without Hex"` alone, which ends at `end`.
+    /// A sketch: `"Without Voinc"` alone, which ends at `end`.
     sketch: bool,
 }
 
@@ -514,7 +514,7 @@ impl Parser<'_> {
             };
             if line(op) && self.ops.iter().filter(|op| line(op)).count() == MAX_LINES + 1 {
                 return Err(format!(
-                    "too many lines: \"Without Hex\" holds {MAX_LINES}, counting yours and the ending"
+                    "too many lines: \"Without Voinc\" holds {MAX_LINES}, counting yours and the ending"
                 ));
             }
         }
@@ -526,7 +526,7 @@ impl Parser<'_> {
                 .count();
             if lines == MAX_CHEERS + 1 {
                 return Err(format!(
-                    "too many cheers: \"With Hex\" holds {MAX_CHEERS} lines"
+                    "too many cheers: \"With Voinc\" holds {MAX_CHEERS} lines"
                 ));
             }
         }
@@ -632,7 +632,7 @@ const COMMANDS: [&str; 26] = [
     "rename",
     "end",
     "with",
-    "hex",
+    "voinc",
     "effect",
     "score",
 ];
@@ -1020,19 +1020,19 @@ impl<'a> Parser<'a> {
                 }
                 self.part = Part::With;
             }
-            "hex" | "effect" | "score" | "typed" => {
+            "voinc" | "effect" | "score" | "typed" => {
                 if self.part != Part::With {
                     return Err(format!("`{word}` belongs after `with`"));
                 }
                 needs("something after it")?;
                 match word {
-                    "hex" if self.hex.is_some() => {
-                        return Err("you speak once: one `hex` line".into());
+                    "voinc" if self.voinc.is_some() => {
+                        return Err("you speak once: one `voinc` line".into());
                     }
-                    "hex" if !self.cheers.is_empty() => {
-                        return Err("`hex` comes first after `with`".into());
+                    "voinc" if !self.cheers.is_empty() => {
+                        return Err("`voinc` comes first after `with`".into());
                     }
-                    "hex" => self.hex = Some(rest),
+                    "voinc" => self.voinc = Some(rest),
                     "effect" => self.cheers.push(Cheer::Effect(match rest {
                         "confetti" => Effect::Confetti,
                         "fireworks" => Effect::Fireworks,
@@ -1043,7 +1043,7 @@ impl<'a> Parser<'a> {
                         }
                     })),
                     "score" => {
-                        placeholders(rest, &["hex"])?;
+                        placeholders(rest, &["voinc"])?;
                         self.score = Some(rest);
                     }
                     _ => {
@@ -1142,8 +1142,8 @@ impl<'a> Parser<'a> {
             if self.part < Part::With {
                 missing("`with`");
             }
-            if self.hex.is_none() {
-                missing("`hex` line");
+            if self.voinc.is_none() {
+                missing("`voinc` line");
             }
             if self.score.is_none() {
                 missing("`score`");
@@ -1165,7 +1165,7 @@ impl<'a> Parser<'a> {
             lead: self.lead.unwrap_or("One quick reply by hand."),
             ops: self.ops,
             with: Triumph {
-                hex: self.hex.unwrap_or_default(),
+                hex: self.voinc.unwrap_or_default(),
                 cheers: self.cheers,
                 score: self.score.unwrap_or_default(),
                 typed: self.typed.unwrap_or_default(),
@@ -1200,7 +1200,7 @@ mod tests {
         }
     }
 
-    const TINY: &str = "title Dinner\nboss Sam coral\nSam: so?\nstart\nSam: well [0.4 #well]\ntype ys omw [panic 0.3-0.6]\nsend slip meant yes omw\ntap @well ?\nend blocked\nwith\nhex Yes, on my way.\ntap ❤ ❤ 0.5\nSam: wow\nstatus Sam pinned your message\neffect confetti\nscore {hex}, no typos\ntyped Typing: {secs}, {typos}\n";
+    const TINY: &str = "title Dinner\nboss Sam coral\nSam: so?\nstart\nSam: well [0.4 #well]\ntype ys omw [panic 0.3-0.6]\nsend slip meant yes omw\ntap @well ?\nend blocked\nwith\nhex Yes, on my way.\ntap ❤ ❤ 0.5\nSam: wow\nstatus Sam pinned your message\neffect confetti\nscore {voinc}, no typos\ntyped Typing: {secs}, {typos}\n";
 
     #[test]
     fn every_bundled_scene_parses() {
@@ -1272,7 +1272,7 @@ mod tests {
     fn a_scene_has_to_be_whole() {
         let found = errors("title X\nboss Jo\nstart\n");
         assert!(found.iter().any(|e| e.contains("no `end`")), "{found:?}");
-        assert!(found.iter().any(|e| e.contains("no `hex` line")));
+        assert!(found.iter().any(|e| e.contains("no `voinc` line")));
         assert!(
             errors("title X\nstart\n")
                 .iter()
@@ -1299,7 +1299,7 @@ mod tests {
             fill("Typing: {secs}, {typos}.", 1.5, 26.6, 1),
             "Typing: 27 seconds, 1 typo."
         );
-        assert_eq!(fill("{hex}, {typos}", 1.5, 0.0, 0), "1.5 seconds, no typos");
+        assert_eq!(fill("{voinc}, {typos}", 1.5, 0.0, 0), "1.5 seconds, no typos");
     }
 
     #[test]

@@ -914,7 +914,7 @@ mod tests {
             delivery_id: "abc1".into(),
             time: SENT_AT,
             session: "ses_hex".into(),
-            title: Some("HEX".into()),
+            title: Some("VOINC".into()),
             message_id: Some("msg_mine".into()),
             delivery: "steer".into(),
             was_idle: Some(was_idle),
@@ -1553,7 +1553,7 @@ mod tests {
         assert_eq!(line["decision_id"], "d1");
         assert_eq!(line["item_id"], "A1B2");
         assert_eq!(line["undone"], "reverted");
-        assert_eq!(line["from"], json!({"id": "ses_hex", "title": "HEX"}));
+        assert_eq!(line["from"], json!({"id": "ses_hex", "title": "VOINC"}));
         assert_eq!(line["to"], Value::Null);
         let _ = std::fs::remove_dir_all(dir);
     }

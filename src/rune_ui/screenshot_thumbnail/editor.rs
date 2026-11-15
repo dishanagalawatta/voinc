@@ -446,7 +446,7 @@ impl Editor {
         let words = self.words.trim().to_owned();
         let overlay = self.overlay.clone();
         let spawned = std::thread::Builder::new()
-            .name("hex-screenshot-export".into())
+            .name("voinc-screenshot-export".into())
             .spawn(move || {
                 let note = match job.png().and_then(|png| deliver(&out, &png, &words)) {
                     Ok(()) => match &out {
@@ -496,7 +496,7 @@ impl Editor {
         }
         let overlay = self.overlay.clone();
         let spawned = std::thread::Builder::new()
-            .name("hex-recording-export".into())
+            .name("voinc-recording-export".into())
             .spawn(move || {
                 let note = match job.deliver(&out) {
                     Ok(()) => match &out {
@@ -704,7 +704,7 @@ pub(crate) fn install<S: 'static>(app: &mut rune::App<S>) {
     use rune::{
         DisplayTarget, KeyPolicy, OverlayInput, OverlayOptions, OverlayPlacement, OverlaySpec,
     };
-    let spec = OverlaySpec::new("Hex screenshot editor", (1440.0, 900.0), view::view)
+    let spec = OverlaySpec::new("Voinc screenshot editor", (1440.0, 900.0), view::view)
         .options(OverlayOptions {
             placement: Some(OverlayPlacement::FullScreen),
             display: DisplayTarget::UnderPointer,
@@ -738,7 +738,7 @@ pub(crate) fn open_recording(movie: PathBuf, words: Vec<clip::Word>) {
         return;
     };
     let spawned = std::thread::Builder::new()
-        .name("hex-recording-editor".into())
+        .name("voinc-recording-editor".into())
         .spawn(move || {
             let clip = match clip::load(movie.clone(), words) {
                 Ok(clip) => clip,
@@ -770,7 +770,7 @@ pub(crate) fn open_with(path: PathBuf, words: String) {
         return;
     };
     let spawned = std::thread::Builder::new()
-        .name("hex-screenshot-editor".into())
+        .name("voinc-screenshot-editor".into())
         .spawn(move || {
             let shot = match export::decode(&path) {
                 Ok(shot) => shot,

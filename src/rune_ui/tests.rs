@@ -164,7 +164,7 @@ fn a_mouse_shortcut_on_wayland_explains_the_desktop_command_route() {
     assert!(
         shown
             .iter()
-            .any(|text| text.contains("Wayland desktop using the hex commands"))
+            .any(|text| text.contains("Wayland desktop using the voinc commands"))
     );
     assert!(!shown.iter().any(|text| text.contains("config.kdl")));
 }
@@ -195,7 +195,7 @@ fn a_refused_portal_shortcut_says_how_to_free_it() {
 }
 
 /// #635: Hyprland's portal names no trigger, since its config binds the
-/// keys, so the row says Hex can't confirm it and shows no refusal.
+/// keys, so the row says Voinc can't confirm it and shows no refusal.
 #[test]
 fn an_unconfirmed_portal_shortcut_is_not_called_refused() {
     let mut rt = runtime("portal", true, GOLDEN_SIZE);
@@ -212,7 +212,7 @@ fn an_unconfirmed_portal_shortcut_is_not_called_refused() {
     assert!(
         shown
             .iter()
-            .any(|text| text == "Your desktop assigns this key itself, so Hex can't confirm it")
+            .any(|text| text == "Your desktop assigns this key itself, so Voinc can't confirm it")
     );
     assert!(
         !shown
@@ -251,7 +251,7 @@ fn an_asked_update_check_says_how_it_went() {
             .any(|text| text == "Checking for updates…")
     );
     status(&mut rt, DesktopUpdateStatus::Current);
-    assert!(texts(&rt).iter().any(|text| text == "Hex is up to date"));
+    assert!(texts(&rt).iter().any(|text| text == "Voinc is up to date"));
     status(&mut rt, DesktopUpdateStatus::Failed);
     assert!(
         texts(&rt)
@@ -302,7 +302,7 @@ fn each_panes_advanced_fold_starts_closed_and_stays_its_own() {
 #[test]
 fn desktops_without_a_portal_list_commands_instead_of_recording_rows() {
     let rt = runtime("commands", true, GOLDEN_SIZE);
-    assert!(texts(&rt).iter().any(|text| text == "hex dictation toggle"));
+    assert!(texts(&rt).iter().any(|text| text == "voinc dictation toggle"));
     assert!(rt.find("dictation-hotkey").is_none());
     assert!(rt.find("paste-last-hotkey").is_none());
 }
@@ -790,7 +790,7 @@ fn a_draft_saves_over_what_another_writer_changed_meanwhile() {
         .push(TextEdit::new("OpenCode"), TextEdit::default());
     let start = std::time::Instant::now();
     assert!(!ui.save_drafts(start), "waits for a pause");
-    // `hex settings set` (or a capture's saved rule) saves while it waits.
+    // `voinc settings set` (or a capture's saved rule) saves while it waits.
     let mut elsewhere = service;
     elsewhere.enable_on_launch = !elsewhere.enable_on_launch;
     ui.adopt(elsewhere.clone());
@@ -1524,7 +1524,7 @@ fn history_copy_writes_the_clipboard() {
 #[test]
 fn history_search_without_matches_says_so() {
     use crate::history::{History, HistoryDraft, HistoryKind, HistoryRetention, HistoryStore};
-    let directory = std::env::temp_dir().join(format!("hex-rune-history-{}", std::process::id()));
+    let directory = std::env::temp_dir().join(format!("voinc-rune-history-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&directory);
     std::fs::create_dir_all(&directory).unwrap();
     let store = HistoryStore::open(
@@ -1615,7 +1615,7 @@ fn transcribe_again_shows_only_with_its_lab_and_replace_updates_the_entry() {
     use crate::history::{
         History, HistoryDraft, HistoryKind, HistoryRetention, HistoryStore, Recording,
     };
-    let directory = std::env::temp_dir().join(format!("hex-rune-again-{}", std::process::id()));
+    let directory = std::env::temp_dir().join(format!("voinc-rune-again-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&directory);
     std::fs::create_dir_all(&directory).unwrap();
     let history = History::new(HistoryStore::open(
@@ -1845,7 +1845,7 @@ fn mode_corrections_and_names_save_from_their_fields() {
         .iter()
         .map(|r| r.matched_phrase.clone())
         .collect();
-    assert_eq!(phrases, ["hex app", "dax"]);
+    assert_eq!(phrases, ["voinc app", "dax"]);
 }
 
 #[test]
@@ -2500,7 +2500,7 @@ fn onboarding_downloads_the_model_through_the_service() {
             ..
         }]
     ));
-    assert!(texts(&rt).contains(&"Setting up Hex".to_owned()));
+    assert!(texts(&rt).contains(&"Setting up Voinc".to_owned()));
     // The service finishes: the model is installed and the practice opens.
     rt.state.picker.installed = Some(vec![TranscriptionModelId::ParakeetUnifiedEnglish]);
     settle(&mut rt);
@@ -2508,10 +2508,10 @@ fn onboarding_downloads_the_model_through_the_service() {
     settle(&mut rt);
     let step = |rt: &Runtime<Ui>| rt.state.tour.as_ref().unwrap().flow.step();
     assert_eq!(step(&rt), crate::desktop::onboarding::Step::TryIt);
-    // The practice can be left with Done; Start using Hex closes onboarding.
+    // The practice can be left with Done; Start using Voinc closes onboarding.
     tap(&mut rt, "done");
-    tap(&mut rt, "start-using-hex");
-    assert!(rt.state.tour.is_none(), "Start using Hex closes setup");
+    tap(&mut rt, "start-using-voinc");
+    assert!(rt.state.tour.is_none(), "Start using Voinc closes setup");
     assert!(rt.state.first_run.is_none());
 }
 
@@ -2521,7 +2521,7 @@ fn a_found_model_moves_on_without_a_download_and_back_returns_to_it() {
     assert!(rt.find("model-list").is_some());
     tap(&mut rt, "model1");
     // The service saves the pick and has the found file ready: the list
-    // stays, with no "Setting up Hex" download page.
+    // stays, with no "Setting up Voinc" download page.
     rt.state.settings.transcription = TranscriptionSelection {
         model: TranscriptionModelId::ParakeetV3,
         language: "en".into(),
@@ -2533,7 +2533,7 @@ fn a_found_model_moves_on_without_a_download_and_back_returns_to_it() {
         shown.contains(&"Choose a speech model".to_owned()),
         "{shown:?}"
     );
-    assert!(!shown.contains(&"Setting up Hex".to_owned()), "{shown:?}");
+    assert!(!shown.contains(&"Setting up Voinc".to_owned()), "{shown:?}");
     assert!(
         shown.contains(&"Parakeet Unified English".to_owned()),
         "the rows stay"
@@ -2543,7 +2543,7 @@ fn a_found_model_moves_on_without_a_download_and_back_returns_to_it() {
     settle(&mut rt);
     let s = rt.state.first_run.as_ref().unwrap();
     assert!(s.had_model, "a model here needs no download pill");
-    assert!(!texts(&rt).contains(&"Setting up Hex".to_owned()));
+    assert!(!texts(&rt).contains(&"Setting up Voinc".to_owned()));
     // Back returns to the list to change the pick.
     tap(&mut rt, "back");
     assert!(rt.find("model-list").is_some());
@@ -2593,7 +2593,7 @@ fn with_no_model_found_onboarding_downloads_the_recommended_model_with_no_list()
         let shown = texts(&rt);
         assert!(rt.find("model-list").is_none(), "{scene}: no model list");
         assert!(
-            shown.contains(&"Setting up Hex".to_owned()),
+            shown.contains(&"Setting up Voinc".to_owned()),
             "{scene}: {shown:?}"
         );
         assert!(
@@ -2657,7 +2657,7 @@ fn the_microphone_field_names_the_input_in_use() {
 
 #[test]
 fn a_closed_lid_names_the_input_standing_in_for_the_built_in_microphone() {
-    let note = "MacBook Pro Microphone is off while the lid is closed, so Hex listens to Studio Display Microphone";
+    let note = "MacBook Pro Microphone is off while the lid is closed, so Voinc listens to Studio Display Microphone";
     let field = microphone_value;
     let mut rt = runtime("mac-microphone-lid-closed", true, TALL_SIZE);
     assert_eq!(
@@ -2684,7 +2684,7 @@ fn a_closed_lid_names_the_input_standing_in_for_the_built_in_microphone() {
 
 #[test]
 fn a_passed_over_bluetooth_default_names_the_input_in_use() {
-    let note = "Kit Pods is Bluetooth, so Hex listens to MacBook Pro Microphone";
+    let note = "Kit Pods is Bluetooth, so Voinc listens to MacBook Pro Microphone";
     let mut rt = runtime("mac-microphone-bluetooth", true, TALL_SIZE);
     assert_eq!(
         a11y_value(&rt, "microphone-control").as_deref(),
@@ -2702,12 +2702,12 @@ fn a_passed_over_bluetooth_default_names_the_input_in_use() {
     assert!(!texts(&rt).contains(&note.to_owned()));
 }
 
-/// `HEX_ANNOTATE_SNAPS=<folder>` writes the Annotate pane, light and dark,
+/// `VOINC_ANNOTATE_SNAPS=<folder>` writes the Annotate pane, light and dark,
 /// tall enough to show How it works.
 #[cfg(hex_capture)]
 #[test]
 fn annotate_pane_snapshots() {
-    let Some(folder) = std::env::var_os("HEX_ANNOTATE_SNAPS") else {
+    let Some(folder) = std::env::var_os("VOINC_ANNOTATE_SNAPS") else {
         return;
     };
     let folder = std::path::PathBuf::from(folder);
@@ -2726,9 +2726,9 @@ fn annotate_pane_snapshots() {
 
 // ---------------------------------------------------------------------------
 // Goldens: offscreen GPU renders compared with checked-in PNGs. Set
-// HEX_UPDATE_GOLDENS=1 to rewrite them. Without a GPU adapter they skip,
-// unless HEX_REQUIRE_GPU is set (scripts/check-onboarding.sh).
-// HEX_GOLDEN_RENDERS=<folder> also writes every render there.
+// VOINC_UPDATE_GOLDENS=1 to rewrite them. Without a GPU adapter they skip,
+// unless VOINC_REQUIRE_GPU is set (scripts/check-onboarding.sh).
+// VOINC_GOLDEN_RENDERS=<folder> also writes every render there.
 
 /// One device for every golden, used one render at a time: creating Vulkan
 /// devices from parallel test threads crashed Mesa's RADV on Linux.
@@ -2805,20 +2805,20 @@ fn check_golden(scene: &str, dark: bool, size: (f32, f32)) {
     let name = format!("{scene}-{}", if dark { "dark" } else { "light" });
     let Some((width, height, pixels)) = render(scene, dark, size) else {
         assert!(
-            std::env::var_os("HEX_REQUIRE_GPU").is_none(),
-            "golden {name}: no GPU adapter, and HEX_REQUIRE_GPU is set"
+            std::env::var_os("VOINC_REQUIRE_GPU").is_none(),
+            "golden {name}: no GPU adapter, and VOINC_REQUIRE_GPU is set"
         );
         eprintln!("skipping golden {name}: no GPU adapter");
         return;
     };
-    if let Some(folder) = std::env::var_os("HEX_GOLDEN_RENDERS") {
+    if let Some(folder) = std::env::var_os("VOINC_GOLDEN_RENDERS") {
         let folder = std::path::PathBuf::from(folder);
         std::fs::create_dir_all(&folder).unwrap();
         rune::render::write_png(&folder.join(format!("{name}.png")), width, height, &pixels)
             .unwrap();
     }
     let path = golden_path(&name);
-    if std::env::var_os("HEX_UPDATE_GOLDENS").is_some() {
+    if std::env::var_os("VOINC_UPDATE_GOLDENS").is_some() {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         rune::render::write_png(&path, width, height, &pixels).unwrap();
         return;
@@ -2827,7 +2827,7 @@ fn check_golden(scene: &str, dark: bool, size: (f32, f32)) {
         let actual = std::env::temp_dir().join(format!("rune-settings-{name}-actual.png"));
         rune::render::write_png(&actual, width, height, &pixels).unwrap();
         let miss = format!(
-            "{} is missing; run with HEX_UPDATE_GOLDENS=1 (render at {})",
+            "{} is missing; run with VOINC_UPDATE_GOLDENS=1 (render at {})",
             path.display(),
             actual.display()
         );
@@ -3034,7 +3034,7 @@ fn output_fixes_show_only_with_their_lab_and_fix_this_copies_for_the_sentence() 
     assert!(on.state.output.prompt_copied);
     assert_eq!(
         on.state.output.fix_copied.as_deref(),
-        Some("Um, open code shipped the hex app today.")
+        Some("Um, open code shipped the voinc app today.")
     );
     tap(&mut on, "output-vocabulary");
     assert!(on.state.vocabulary.open);

@@ -32,7 +32,7 @@ targets:
     info:
       path: HEXMobile/Info.plist
       properties:
-        CFBundleDisplayName: Hex
+        CFBundleDisplayName: Voinc
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CADisableMinimumFrameDurationOnPhone: true
@@ -40,9 +40,9 @@ targets:
           - CFBundleTypeRole: Editor
             CFBundleURLName: com.kitlangton.hex.mobile.keyboard-session
             CFBundleURLSchemes:
-              - hex-dictation
-        NSMicrophoneUsageDescription: Hex records only while you dictate and transcribes locally on this iPhone.
-        NSSpeechRecognitionUsageDescription: Hex uses Apple's on-device SpeechTranscriber to turn your recording into text.
+              - voinc-dictation
+        NSMicrophoneUsageDescription: Voinc records only while you dictate and transcribes locally on this iPhone.
+        NSSpeechRecognitionUsageDescription: Voinc uses Apple's on-device SpeechTranscriber to turn your recording into text.
         NSSupportsLiveActivities: true
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
@@ -70,7 +70,7 @@ targets:
         OTHER_LDFLAGS: $(inherited) -weak_framework FoundationModels
         OTHER_SWIFT_FLAGS: $(inherited) -Xfrontend -disable-autolink-framework -Xfrontend FoundationModels
         PRODUCT_BUNDLE_IDENTIFIER: com.kitlangton.hex.mobile
-        PRODUCT_NAME: HEX
+        PRODUCT_NAME: VOINC
     scheme:
       gatherCoverageData: false
       testTargets:
@@ -84,7 +84,7 @@ targets:
     info:
       path: HEXKeyboard/Info.plist
       properties:
-        CFBundleDisplayName: Hex Keyboard
+        CFBundleDisplayName: Voinc Keyboard
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
@@ -116,7 +116,7 @@ targets:
     info:
       path: HEXWidgets/Info.plist
       properties:
-        CFBundleDisplayName: Hex
+        CFBundleDisplayName: Voinc
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
@@ -136,7 +136,7 @@ targets:
     platform: iOS
     sources:
       - HEXMobileTests
-      - path: ../tests/fixtures/vocabulary/audio/term-hex-1.wav
+      - path: ../tests/fixtures/vocabulary/audio/term-voinc-1.wav
         buildPhase: resources
     dependencies:
       - target: HEXMobile
@@ -146,4 +146,4 @@ targets:
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.kitlangton.hex.mobile.tests
-        TEST_HOST: $(BUILT_PRODUCTS_DIR)/HEX.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HEX
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/VOINC.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VOINC

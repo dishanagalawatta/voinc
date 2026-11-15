@@ -64,7 +64,7 @@ fn settings_rows_follow_each_os() {
         "enable-on-launch",
         "meetings-enabled",
         "detected-calls",
-        "hex-mic-driver",
+        "voinc-mic-driver",
         "command-model-notice",
     ] {
         assert!(!present(&mac, key), "macOS General has no {key}");
@@ -587,7 +587,7 @@ fn the_meeting_summary_model_is_picked_from_opencode_s_models() {
     rt.state.models.open_picker();
     rt.invalidate();
     settle(&mut rt);
-    // Hex's automatic choice, then the catalog in order.
+    // Voinc's automatic choice, then the catalog in order.
     tap(&mut rt, "model-picker-option-3");
     assert_eq!(
         rt.state.settings.meetings.opencode_model.as_deref(),
@@ -601,7 +601,7 @@ fn the_meeting_summary_model_is_picked_from_opencode_s_models() {
     assert!(
         texts(&rt)
             .iter()
-            .any(|text| text == "Hex picks a fast model")
+            .any(|text| text == "Voinc picks a fast model")
     );
 
     let rt = runtime("meetings-summary-model-not-running", true, size);
@@ -638,7 +638,7 @@ fn the_cancel_shortcut_shows_in_toggle_and_restores_escape() {
     );
 
     // On Wayland the portal would hold the key for good: the row points
-    // to `hex dictation cancel` instead of recording one.
+    // to `voinc dictation cancel` instead of recording one.
     let portal = runtime("portal-toggle-cancel", true, PANE_SIZE);
     assert!(portal.find("cancel-shortcut").is_some());
     assert!(portal.find("cancel-hotkey").is_none());
@@ -982,18 +982,18 @@ fn the_practice_game_follows_hex_s_own_dictation_on_every_os() {
         assert!(!holding(&rt));
         onboarding::input(&mut rt.state, Input::Dictation(Observation::Started));
         refresh(&mut rt);
-        assert!(holding(&rt), "{scene}: the shortcut held, as Hex records");
+        assert!(holding(&rt), "{scene}: the shortcut held, as Voinc records");
         onboarding::input(&mut rt.state, Input::Dictation(Observation::Transcribing));
         refresh(&mut rt);
         assert!(!holding(&rt), "{scene}: released");
     }
 }
 
-/// The practice waits for the listener: while it warms up, the page says Hex
+/// The practice waits for the listener: while it warms up, the page says Voinc
 /// is getting ready instead of inviting a hold that does nothing.
 #[test]
 fn the_practice_page_waits_for_the_listener() {
-    let warming = "Getting Hex ready to listen…";
+    let warming = "Getting Voinc ready to listen…";
     let warming_state = |rt: &mut Runtime<Ui>, warming: bool| {
         if let Some(view) = &mut rt.state.view {
             view.listener.warming = warming;
@@ -1566,7 +1566,7 @@ fn reveal_markdown_asks_for_the_exported_file_and_reveal_files_for_the_recording
         asked(&rt),
         [PlatformRequest::Meeting(MeetingRequest::Reveal(
             crate::meeting::RevealTarget::Markdown(
-                "/Users/kit/Documents/Hex Meetings/Arcade launch plan.md".into()
+                "/Users/kit/Documents/Voinc Meetings/Arcade launch plan.md".into()
             )
         ))]
     );
@@ -1579,7 +1579,7 @@ fn reveal_markdown_asks_for_the_exported_file_and_reveal_files_for_the_recording
         asked(&rt),
         [PlatformRequest::Meeting(MeetingRequest::Reveal(
             crate::meeting::RevealTarget::Folder(
-                "/Users/kit/Library/Application Support/hex/meetings/preview-notes".into()
+                "/Users/kit/Library/Application Support/voinc/meetings/preview-notes".into()
             )
         ))]
     );
@@ -1601,7 +1601,7 @@ fn reveal_markdown_asks_for_the_exported_file_and_reveal_files_for_the_recording
         asked(&rt),
         [PlatformRequest::Meeting(MeetingRequest::Reveal(
             crate::meeting::RevealTarget::Folder(
-                "/Users/kit/Library/Application Support/hex/meetings/preview-design".into()
+                "/Users/kit/Library/Application Support/voinc/meetings/preview-design".into()
             )
         ))]
     );
@@ -1671,9 +1671,9 @@ fn the_mac_first_run_asks_each_permission_then_practices() {
         rt.state.tour.as_ref().unwrap().flow.view().practice,
         Practice::Landed
     );
-    // Done leaves the game at any point; Start using Hex closes onboarding.
+    // Done leaves the game at any point; Start using Voinc closes onboarding.
     tap(&mut rt, "done");
-    tap(&mut rt, "start-using-hex");
+    tap(&mut rt, "start-using-voinc");
     assert!(rt.state.tour.is_none());
     assert!(rt.state.first_run.is_none());
 }
@@ -1689,7 +1689,7 @@ fn a_listener_that_will_not_start_relaunches_once_then_asks_to_reopen() {
     );
     assert_eq!(asked(&rt), [PlatformRequest::Relaunch]);
     let mut rt = runtime("mac-onboarding-reopen", true, PANE_SIZE);
-    tap(&mut rt, "reopen-hex");
+    tap(&mut rt, "reopen-voinc");
     assert_eq!(asked(&rt), [PlatformRequest::Relaunch]);
 }
 
@@ -1708,7 +1708,7 @@ fn a_refused_microphone_points_to_system_settings() {
     assert!(
         shown
             .iter()
-            .any(|text| text == "Switch on Hex in System Settings")
+            .any(|text| text == "Switch on Voinc in System Settings")
     );
     tap(&mut rt, "mic-pill-allow");
     assert_eq!(
@@ -1724,7 +1724,7 @@ fn windows_onboarding_asks_only_for_the_microphone_switch() {
     let mut rt = runtime("windows-onboarding-microphone", true, PANE_SIZE);
     let shown = texts(&rt);
     assert!(
-        shown.iter().any(|text| text == "Let Hex hear you"),
+        shown.iter().any(|text| text == "Let Voinc hear you"),
         "{shown:?}"
     );
     assert!(rt.find("ax-row").is_none(), "no Accessibility on Windows");
@@ -1753,7 +1753,7 @@ fn stale_permissions_offer_fix_it_and_reset_entries_across_panes() {
     assert!(
         shown
             .iter()
-            .any(|text| text == "An older Hex entry can keep this off")
+            .any(|text| text == "An older Voinc entry can keep this off")
     );
     tap(&mut rt, "ax-pill-allow");
     assert_eq!(
@@ -1771,7 +1771,7 @@ fn stale_permissions_offer_fix_it_and_reset_entries_across_panes() {
     assert!(
         shown
             .iter()
-            .any(|text| text == "An older Hex entry can keep this off")
+            .any(|text| text == "An older Voinc entry can keep this off")
     );
     tap(&mut rt, "permission-accessibility-allow");
     assert_eq!(
@@ -1792,7 +1792,7 @@ fn stale_permissions_offer_fix_it_and_reset_entries_across_panes() {
     assert!(
         shown
             .iter()
-            .any(|text| text == "An older Hex entry can keep this off")
+            .any(|text| text == "An older Voinc entry can keep this off")
     );
     tap(&mut rt, "meeting-system-audio-allow");
     assert_eq!(
@@ -1958,7 +1958,7 @@ fn hud_lab_and_activity_stay_out_of_the_window_sidebar() {
     assert!(rt.find("nav-activity").is_none());
     assert!(
         rt.find("nav-voice-filter").is_some(),
-        "Hex Microphone is on"
+        "Voinc Microphone is on"
     );
     let rt = runtime("mac-hud-lab", true, PANE_SIZE);
     assert!(rt.find("nav-hud-lab").is_none());
@@ -2651,7 +2651,7 @@ fn an_installed_driver_keeps_the_voice_filter_on() {
         rt.find("nav-voice-filter").is_some(),
         "the driver keeps it in the sidebar"
     );
-    assert!(rt.find("fun-hex-microphone").is_some());
+    assert!(rt.find("fun-voinc-microphone").is_some());
     tap(&mut rt, "uninstall");
     assert!(matches!(
         asked(&rt).last(),
@@ -2666,7 +2666,7 @@ fn an_installed_driver_keeps_the_voice_filter_on() {
     assert!(
         texts(&rt)
             .iter()
-            .any(|t| t.starts_with("On while the Hex Microphone driver is installed")),
+            .any(|t| t.starts_with("On while the Voinc Microphone driver is installed")),
         "its card says why"
     );
     assert!(rt.find("nav-voice-filter").is_some());
@@ -2696,7 +2696,7 @@ fn a_stable_build_offers_only_uninstall_for_an_installed_driver() {
         rt.find("nav-voice-filter").is_some(),
         "the driver keeps its pane"
     );
-    assert!(rt.find("hex-mic-driver").is_some());
+    assert!(rt.find("voinc-mic-driver").is_some());
     assert!(rt.find("fun-mode").is_none(), "but no filter to tune");
     assert!(rt.find("fun-try-it").is_none());
     tap(&mut rt, "uninstall");

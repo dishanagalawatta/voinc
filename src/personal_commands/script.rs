@@ -1,7 +1,7 @@
 //! One loaded config in an embedded QuickJS runtime: the module graph from
-//! `hex.config.ts` (types stripped by [`super::typescript`]), compiled once,
-//! and the transformation calls Hex makes into it. Scripts get plain
-//! JavaScript, the `@hex/commands` module, and two host APIs behind the trust
+//! `voinc.config.ts` (types stripped by [`super::typescript`]), compiled once,
+//! and the transformation calls Voinc makes into it. Scripts get plain
+//! JavaScript, the `@voinc/commands` module, and two host APIs behind the trust
 //! prompt: `fetch` and `node:child_process` (with `node:util`'s `promisify`
 //! and timers to wait on them, [`super::io`]). No filesystem or environment
 //! API. Every load and call runs under a time limit and the runtime under a
@@ -27,14 +27,14 @@ use super::trust::Permissions;
 const MEMORY_LIMIT: usize = 64 << 20;
 const STACK_LIMIT: usize = 1 << 20;
 /// The stack of the thread that owns a script: QuickJS's own limit plus room
-/// for Hex's frames.
+/// for Voinc's frames.
 pub const THREAD_STACK_SIZE: usize = 4 << 20;
 const LOAD_TIME_LIMIT: Duration = Duration::from_secs(2);
 const MAX_SOURCE_BYTES: u64 = 1 << 20;
 const MAX_LOG_BYTES: usize = 4096;
 const ENTRY: &str = "hex:entry";
 const HOST: &str = "hex:host";
-const COMMANDS: &str = "@hex/commands";
+const COMMANDS: &str = "@voinc/commands";
 const IO: &str = "hex:io";
 const WEB: &str = "hex:web";
 const CHILD_PROCESS: &str = "node:child_process";
@@ -158,7 +158,7 @@ impl Script {
     }
 
     /// Runs the transformation `id` over `text` within `limit`, with the host
-    /// APIs in `allowed`. Hex stopping (`stop`) ends it early. When it
+    /// APIs in `allowed`. Voinc stopping (`stop`) ends it early. When it
     /// returns, every request, timer, and program it started is over.
     pub fn transform(
         &self,
@@ -195,7 +195,7 @@ impl Script {
     }
 
     /// Drives QuickJS's job queue and the host operations until `promise`
-    /// settles, the deadline passes, or Hex stops.
+    /// settles, the deadline passes, or Voinc stops.
     fn settle<'js>(
         &self,
         ctx: &Ctx<'js>,
@@ -213,7 +213,7 @@ impl Script {
                 return Ok(Err(timed_out(limit)));
             }
             if stop.load(Ordering::Acquire) {
-                return Ok(Err("Hex stopped before the transformation finished".into()));
+                return Ok(Err("Voinc stopped before the transformation finished".into()));
             }
             let wake = self.io.borrow_mut().wait(deadline);
             match wake {
@@ -326,9 +326,9 @@ fn timed_out(limit: Duration) -> String {
     format!("timed out after {} ms", limit.as_millis())
 }
 
-/// Resolves and loads modules for one workspace: `@hex/commands`, and files
+/// Resolves and loads modules for one workspace: `@voinc/commands`, and files
 /// inside the workspace by relative path. Module names are paths relative to
-/// the workspace, so errors read `hex.config.ts:12:5`.
+/// the workspace, so errors read `voinc.config.ts:12:5`.
 struct WorkspaceLoader {
     root: PathBuf,
     record: Rc<RefCell<Record>>,
@@ -432,17 +432,17 @@ impl Resolver for WorkspaceLoader {
                 Ok(CHILD_PROCESS.into())
             }
             UTIL | "util" => Ok(UTIL.into()),
-            "@hex/commands/effect" => {
+            "@voinc/commands/effect" => {
                 refuse("Effect handlers are not supported; use plain functions")
             }
             _ if name.starts_with("./") || name.starts_with("../") => self
                 .resolve_file(base, name)
                 .or_else(|message| refuse(&message)),
             _ if name.starts_with("node:") => refuse(
-                "Hex provides only node:child_process (exec, execFile) and node:util (promisify)",
+                "Voinc provides only node:child_process (exec, execFile) and node:util (promisify)",
             ),
             _ => refuse(
-                "only @hex/commands, node:child_process, node:util, and relative imports are available",
+                "only @voinc/commands, node:child_process, node:util, and relative imports are available",
             ),
         }
     }

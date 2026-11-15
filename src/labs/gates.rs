@@ -84,7 +84,7 @@ pub fn filler_words() -> bool {
     on(FILLER_WORDS)
 }
 
-/// `hex meetings show --srt|--vtt` may export subtitles (read when the
+/// `voinc meetings show --srt|--vtt` may export subtitles (read when the
 /// command starts).
 pub fn subtitle_export() -> bool {
     on(SUBTITLE_EXPORT)
@@ -126,7 +126,7 @@ pub fn parakeet_ultra() -> bool {
     on(PARAKEET_ULTRA)
 }
 
-/// History's summary of retained dictations and `hex history stats` (read
+/// History's summary of retained dictations and `voinc history stats` (read
 /// when the History pane reloads and when the command starts).
 pub fn history_stats() -> bool {
     on(HISTORY_STATS)
@@ -146,7 +146,7 @@ pub fn skip_pauses() -> bool {
     on(SKIP_PAUSES) && Feature::SkipPauses.on_this_os()
 }
 
-/// A meeting recording Hex started on its own stops once its call app has
+/// A meeting recording Voinc started on its own stops once its call app has
 /// left the microphone and gone quiet for a grace period (macOS; read on
 /// each pass of the meeting controller).
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
@@ -174,8 +174,8 @@ pub fn hide_menu_bar_icon() -> bool {
     on(HIDE_MENU_BAR_ICON) && Feature::HideMenuBarIcon.on_this_os()
 }
 
-/// ⌘Q closes the Settings window instead of quitting Hex (macOS; read each
-/// time the app menu's Quit Hex runs).
+/// ⌘Q closes the Settings window instead of quitting Voinc (macOS; read each
+/// time the app menu's Quit Voinc runs).
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub fn quit_closes_window() -> bool {
     on(QUIT_CLOSES_WINDOW) && Feature::QuitClosesWindow.on_this_os()
@@ -248,7 +248,7 @@ pub fn screenshots() -> bool {
 }
 
 /// Annotate's rolling 15 s display replay buffer (`SCClipBufferingOutput`,
-/// macOS 27+; read where the replay worker starts and on each `hex capture
+/// macOS 27+; read where the replay worker starts and on each `voinc capture
 /// replay`).
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub fn annotate_replay() -> bool {
@@ -284,7 +284,7 @@ pub fn speakers_only() -> bool {
     on(SPEAKERS_ONLY) && Feature::SpeakersOnly.on_this_os()
 }
 
-/// The menu bar offers Pause Hex, and every capture shortcut is inert while
+/// The menu bar offers Pause Voinc, and every capture shortcut is inert while
 /// it is paused (macOS; read each time the status item refreshes, as each
 /// shortcut's suspension is read, and when settings change so turning the
 /// lab off resumes).
@@ -294,7 +294,7 @@ pub fn pause_menu() -> bool {
 }
 
 /// A physical Caps Lock press starts and stops dictation, and its light
-/// follows Hex's recording and processing (macOS; read by the listener on
+/// follows Voinc's recording and processing (macOS; read by the listener on
 /// every pass and by the event tap and HID tracker through their own flag).
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub fn caps_lock_dictation() -> bool {

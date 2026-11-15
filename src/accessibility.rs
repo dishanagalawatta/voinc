@@ -274,9 +274,9 @@ impl Drop for CfObject {
 }
 
 /// The Accessibility application element for another process, never for
-/// Hex's own: its window serves that tree from the same runtime its main
+/// Voinc's own: its window serves that tree from the same runtime its main
 /// thread updates, so a read from the foreground-context thread (or Smart
-/// spacing) while an update runs can panic and take Hex down (#1402).
+/// spacing) while an update runs can panic and take Voinc down (#1402).
 fn foreign_application(pid: i32) -> Option<CfObject> {
     if pid == std::process::id() as i32 {
         return None;
@@ -367,7 +367,7 @@ mod tests {
         assert_eq!(char_before_caret(i32::MAX), None);
     }
 
-    /// Hex's own tree belongs to the main thread that updates it: the
+    /// Voinc's own tree belongs to the main thread that updates it: the
     /// foreground-context poller and Smart spacing must never ask for it
     /// (#1402).
     #[test]

@@ -1,4 +1,4 @@
-// The `@hex/commands` module scripts import. `hex.d.ts` types it.
+// The `@voinc/commands` module scripts import. `voinc.d.ts` types it.
 
 const frozen = (value) => Object.freeze(value)
 

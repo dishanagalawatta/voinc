@@ -1,10 +1,10 @@
-//! Hex's app icon on Linux: `anomaly.hex` in the hicolor theme, the name its
+//! Voinc's app icon on Linux: `io.voinc.voinc` in the hicolor theme, the name its
 //! desktop entries and window app id use. Packages install it under
 //! `/usr/share/icons`; a direct or source install and a downloaded executable
-//! have no package, so Hex writes the same PNGs into the user's icon theme at
+//! have no package, so Voinc writes the same PNGs into the user's icon theme at
 //! startup (#652). Each PNG carries an `X-Hex-Managed=true` text chunk, so
-//! Hex replaces, and the installer removes, only icons Hex wrote: a user's own
-//! `anomaly.hex.png` or a symlink stays.
+//! Voinc replaces, and the installer removes, only icons Voinc wrote: a user's own
+//! `io.voinc.voinc.png` or a symlink stays.
 
 use std::io::{ErrorKind, Write};
 use std::path::Path;
@@ -22,7 +22,7 @@ macro_rules! icon {
                 $size,
                 "x",
                 $size,
-                "/apps/anomaly.hex.png"
+                "/apps/io.voinc.voinc.png"
             ))
             .as_slice(),
         )
@@ -41,7 +41,7 @@ const ICONS: [(&str, &[u8]); 8] = [
     icon!("512"),
 ];
 
-/// Writes Hex's icon into the user's hicolor theme, unless a package
+/// Writes Voinc's icon into the user's hicolor theme, unless a package
 /// already installs it; rewrites only icons that differ.
 pub(crate) fn install() -> Result<()> {
     let Some(home) = dirs::data_dir() else {
@@ -150,15 +150,15 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let data = std::env::temp_dir().join(format!("hex-icons-own-{unique}"));
-        let own = data.join("icons/hicolor/48x48/apps/anomaly.hex.png");
-        let linked = data.join("icons/hicolor/64x64/apps/anomaly.hex.png");
+        let data = std::env::temp_dir().join(format!("voinc-icons-own-{unique}"));
+        let own = data.join("icons/hicolor/48x48/apps/io.voinc.voinc.png");
+        let linked = data.join("icons/hicolor/64x64/apps/io.voinc.voinc.png");
         std::fs::create_dir_all(own.parent().unwrap()).unwrap();
         std::fs::create_dir_all(linked.parent().unwrap()).unwrap();
         std::fs::write(&own, b"mine").unwrap();
         std::os::unix::fs::symlink(&own, &linked).unwrap();
-        // An older icon Hex wrote is replaced.
-        let older = data.join("icons/hicolor/32x32/apps/anomaly.hex.png");
+        // An older icon Voinc wrote is replaced.
+        let older = data.join("icons/hicolor/32x32/apps/io.voinc.voinc.png");
         std::fs::create_dir_all(older.parent().unwrap()).unwrap();
         std::fs::write(&older, b"old X-Hex-Managed=true").unwrap();
         install_in(&data).unwrap();
@@ -174,9 +174,9 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let data = std::env::temp_dir().join(format!("hex-icons-{unique}"));
+        let data = std::env::temp_dir().join(format!("voinc-icons-{unique}"));
         install_in(&data).unwrap();
-        let written = std::fs::read(data.join("icons/hicolor/48x48/apps/anomaly.hex.png")).unwrap();
+        let written = std::fs::read(data.join("icons/hicolor/48x48/apps/io.voinc.voinc.png")).unwrap();
         assert_eq!(written, ICONS[3].1);
         std::fs::remove_dir_all(data).unwrap();
     }

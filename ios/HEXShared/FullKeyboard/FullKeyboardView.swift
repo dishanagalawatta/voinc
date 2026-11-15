@@ -1,8 +1,8 @@
 import Combine
 import UIKit
 
-/// The experimental full keyboard: a strip, QWERTY keys with the Hex key right of space,
-/// and the recording panel that replaces both while Hex records. Dictation state comes
+/// The experimental full keyboard: a strip, QWERTY keys with the Voinc key right of space,
+/// and the recording panel that replaces both while Voinc records. Dictation state comes
 /// from the same `KeyboardViewModel` the dictation bar uses.
 @MainActor
 final class FullKeyboardView: UIView, UIInputViewAudioFeedback {
@@ -147,7 +147,7 @@ final class FullKeyboardView: UIView, UIInputViewAudioFeedback {
         dismissStyleMenu()
     }
 
-    /// Hex inserted a dictation; offer to take it back until the next edit.
+    /// Voinc inserted a dictation; offer to take it back until the next edit.
     func didInsertDictation(_ text: String) {
         lastDictation = text
         undoChip.isHidden = false
@@ -187,9 +187,9 @@ final class FullKeyboardView: UIView, UIInputViewAudioFeedback {
             height: 34
         )
 
-        if let hex = layout.key(.hex) {
-            hexKey.frame = hex.hitFrame
-            hexKey.keycapFrame = hex.frame.offsetBy(dx: -hex.hitFrame.minX, dy: -hex.hitFrame.minY)
+        if let voinc = layout.key(.voinc) {
+            hexKey.frame = voinc.hitFrame
+            hexKey.keycapFrame = voinc.frame.offsetBy(dx: -voinc.hitFrame.minX, dy: -voinc.hitFrame.minY)
         }
         if let globe = layout.key(.globe) {
             globeButton.isHidden = false
@@ -203,9 +203,9 @@ final class FullKeyboardView: UIView, UIInputViewAudioFeedback {
             panel.metrics = layout.metrics
             panel.sideKeyWidth = layout.letterWidth * KeyboardLayout.modifierWidthRatio
         }
-        if let menu = styleMenu, let hex = layout.key(.hex) {
+        if let menu = styleMenu, let voinc = layout.key(.voinc) {
             menu.frame = bounds
-            menu.anchor = hex.frame
+            menu.anchor = voinc.frame
         }
         plane.setNeedsDisplay()
         updateCallout()
@@ -276,7 +276,7 @@ final class FullKeyboardView: UIView, UIInputViewAudioFeedback {
         if !undoChip.isHidden {
             stripLabel.text = nil
         } else if !model.hasFullAccess {
-            stripLabel.text = "Allow Full Access to dictate with Hex"
+            stripLabel.text = "Allow Full Access to dictate with Voinc"
         } else if model.stagePhase == .failed, let message = model.statusMessage {
             stripLabel.text = message
         } else {
@@ -344,7 +344,7 @@ final class FullKeyboardView: UIView, UIInputViewAudioFeedback {
     private func engineChanged() {
         plane.setNeedsDisplay()
         updateCallout()
-        if globeButton.isHidden != (engine.layout.key(.globe) == nil) || hexKey.frame != engine.layout.key(.hex)?.hitFrame {
+        if globeButton.isHidden != (engine.layout.key(.globe) == nil) || hexKey.frame != engine.layout.key(.voinc)?.hitFrame {
             setNeedsLayout()
         }
     }
@@ -367,7 +367,7 @@ final class FullKeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
 
-    /// A still hold on the Hex key; a tap does nothing, so a stray one while typing is harmless.
+    /// A still hold on the Voinc key; a tap does nothing, so a stray one while typing is harmless.
     private func hexKeyHeld() {
         if allowsHaptics() { haptics.impactOccurred() }
         dismissStyleMenu()

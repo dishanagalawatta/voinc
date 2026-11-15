@@ -1,4 +1,4 @@
-//! `hex mcp` speaks MCP over stdio against synthetic fixture meetings.
+//! `voinc mcp` speaks MCP over stdio against synthetic fixture meetings.
 #![cfg(target_os = "macos")]
 
 use std::io::{BufRead, BufReader, Write};
@@ -12,12 +12,12 @@ use serde_json::{Value, json};
 #[test]
 fn mcp_server_initializes_lists_tools_and_answers_calls_over_stdio() {
     let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/meetings");
-    let support = std::env::temp_dir().join(format!("hex-mcp-support-{}", std::process::id()));
+    let support = std::env::temp_dir().join(format!("voinc-mcp-support-{}", std::process::id()));
     let mut child = Command::new(env!("CARGO_BIN_EXE_hex"))
         .arg("mcp")
         .arg("--meetings-dir")
         .arg(&fixtures)
-        .env("HEX_APPLICATION_SUPPORT_DIR", &support)
+        .env("VOINC_APPLICATION_SUPPORT_DIR", &support)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
@@ -55,11 +55,11 @@ fn mcp_server_initializes_lists_tools_and_answers_calls_over_stdio() {
         json!({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
             "protocolVersion": "2025-06-18",
             "capabilities": {},
-            "clientInfo": {"name": "hex-test", "version": "1"}
+            "clientInfo": {"name": "voinc-test", "version": "1"}
         }}),
     );
     let initialized = receive(1);
-    assert_eq!(initialized["result"]["serverInfo"]["name"], "hex-meetings");
+    assert_eq!(initialized["result"]["serverInfo"]["name"], "voinc-meetings");
     assert!(initialized["result"]["capabilities"]["tools"].is_object());
     send(json!({"jsonrpc": "2.0", "method": "notifications/initialized"}));
 
@@ -193,7 +193,7 @@ fn mcp_server_initializes_lists_tools_and_answers_calls_over_stdio() {
 
     send(
         json!({"jsonrpc": "2.0", "id": 6, "method": "resources/read", "params": {
-            "uri": "hex-meeting://1790000000000-1001"
+            "uri": "voinc-meeting://1790000000000-1001"
         }}),
     );
     let result = receive(6);
@@ -205,6 +205,6 @@ fn mcp_server_initializes_lists_tools_and_answers_calls_over_stdio() {
     assert!(status.success(), "{status}");
     assert!(
         !support.exists(),
-        "hex mcp must not create Application Support state"
+        "voinc mcp must not create Application Support state"
     );
 }

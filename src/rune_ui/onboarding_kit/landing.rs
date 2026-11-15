@@ -1,4 +1,4 @@
-//! Shared typography, motion transitions, and the `"Hex is ready"` finale.
+//! Shared typography, motion transitions, and the `"Voinc is ready"` finale.
 
 use rune::{El, Spring, SpringPair, TextStyle, Transition, col, el, row, text};
 use rune_kit::{Button, ButtonVariant};
@@ -144,7 +144,7 @@ pub(crate) fn keys(p: Paint, key: &str, caps: &[String], down: bool) -> El {
     )
 }
 
-/// Where Hex lives once onboarding closes, under `"Hex is ready"`.
+/// Where Voinc lives once onboarding closes, under `"Voinc is ready"`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Home {
     MenuBar,
@@ -162,9 +162,9 @@ impl Home {
     }
 }
 
-/// Final `"Hex is ready"` landing: the Hex logo builds outside in (its
+/// Final `"Voinc is ready"` landing: the Voinc logo builds outside in (its
 /// outline arriving from the top pill when `matched`), followed by
-/// staggered copy and where Hex lives. `age`: seconds since the page
+/// staggered copy and where Voinc lives. `age`: seconds since the page
 /// appeared.
 pub(crate) fn ready(
     p: Paint,
@@ -192,7 +192,7 @@ pub(crate) fn ready(
                     .gap(10.0)
                     .items_center()
                     .child(
-                        text(tr("Hex is ready"))
+                        text(tr("Voinc is ready"))
                             .key("title")
                             .font(title_font(p))
                             .color(p.text()),
@@ -221,7 +221,7 @@ pub(crate) fn hold_anywhere(p: Paint, caps: &[String]) -> El {
         )
 }
 
-/// Quiet capsule previewing the single-hexagon icon where Hex lives: the
+/// Quiet capsule previewing the single-hexagon icon where Voinc lives: the
 /// macOS menu bar, the Windows tray, or the Linux app launcher.
 fn menubar_hint(p: Paint, home: Home) -> El {
     let k = p.k;
@@ -234,7 +234,7 @@ fn menubar_hint(p: Paint, home: Home) -> El {
         .radius(15.0)
         .fill(k.c.surface_raised)
         .border(p.hair, k.c.border_weak)
-        .child(hex_meter(p, "menubar-hex", 14.0, 1.0, 1.0))
+        .child(hex_meter(p, "menubar-voinc", 14.0, 1.0, 1.0))
         .child(el().key("sep").size(p.hair, 12.0).fill(k.c.border_base))
         .child(
             text(home.copy())
