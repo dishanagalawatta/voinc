@@ -132,6 +132,29 @@ fi
 say "  (done: ${#FILES[@]} files)"
 
 # ---------------------------------------------------------------------------
+# 2b. Cargo.lock: rename the workspace's own package entry.
+# ---------------------------------------------------------------------------
+# The lock stays byte-for-byte upstream everywhere else (dependency checksums
+# keep their exact spelling), but its root package is the rebrand. Cargo
+# requires the lock to match the manifest (name = "voinc"), and --locked
+# builds fail otherwise. The registry dependency named hex (0.4.3) carries a
+# `source` line and is never touched: only the root entry (no source, a
+# `dependencies` list next) is renamed. Idempotent: after the rename no such
+# entry remains.
+say "== Cargo.lock root package =="
+# The root entry: name "hex", a version, then a `dependencies` list — the
+# registry dependency named hex has a `source` line there instead.
+if [ -f Cargo.lock ] \
+  && grep -q '^name = "hex"$' Cargo.lock \
+  && grep -A2 '^name = "hex"$' Cargo.lock | grep -q '^dependencies = \['; then
+  perl -0pi -e 's{^name = "hex"\nversion = "([^"]*)"\ndependencies}{name = "voinc"\nversion = "$1"\ndependencies}mg' Cargo.lock
+  grep -q '^name = "voinc"$' Cargo.lock || { echo "Cargo.lock root rename failed" >&2; exit 1; }
+  say "  (renamed the root package entry)"
+else
+  say "  (nothing to rename)"
+fi
+
+# ---------------------------------------------------------------------------
 # 3. Voinc-owned files that replace upstream counterparts.
 # ---------------------------------------------------------------------------
 cp .voinc/README.md README.md
