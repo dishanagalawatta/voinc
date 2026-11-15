@@ -278,7 +278,9 @@ pub(crate) fn launcher() -> Result<PathBuf> {
         Some(path) if !executable.is_file() => PathBuf::from(path),
         _ => executable,
     };
-    let current = crate::app_paths::support_dir()?.join("current").join("voinc");
+    let current = crate::app_paths::support_dir()?
+        .join("current")
+        .join("voinc");
     let managed = executable
         .parent()
         .and_then(Path::parent)
@@ -560,7 +562,8 @@ mod tests {
         let wants = units.join("graphical-session.target.wants");
         fs::create_dir_all(&wants).unwrap();
         assert!(!service_enabled_in(&units));
-        std::os::unix::fs::symlink(units.join("voinc.service"), wants.join("voinc.service")).unwrap();
+        std::os::unix::fs::symlink(units.join("voinc.service"), wants.join("voinc.service"))
+            .unwrap();
         assert!(service_enabled_in(&units));
         fs::remove_dir_all(units).unwrap();
     }

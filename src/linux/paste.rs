@@ -971,7 +971,8 @@ mod tests {
         assert_eq!(missing, Some(WL_COPY_MISSING));
 
         // A `wl-copy` on PATH that is executable is enough.
-        let directory = std::env::temp_dir().join(format!("voinc-paste-path-{}", std::process::id()));
+        let directory =
+            std::env::temp_dir().join(format!("voinc-paste-path-{}", std::process::id()));
         std::fs::create_dir_all(&directory).unwrap();
         let helper = directory.join("wl-copy");
         std::fs::write(&helper, b"").unwrap();

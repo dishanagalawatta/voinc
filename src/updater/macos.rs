@@ -122,7 +122,8 @@ fn remove_staging(parent: &Path) {
 }
 
 pub fn stage(archive: &Path, version: &str) -> Result<Staged> {
-    let installed = installed_bundle().ok_or_else(|| eyre!("Voinc is not running from Voinc.app"))?;
+    let installed =
+        installed_bundle().ok_or_else(|| eyre!("Voinc is not running from Voinc.app"))?;
     let parent = installed
         .parent()
         .ok_or_else(|| eyre!("Voinc.app has no parent folder"))?;

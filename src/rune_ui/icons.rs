@@ -162,7 +162,11 @@ line_icon!(
         "M3 15h18",
     ]
 );
-line_icon!(TERMINAL, "voinc-row-terminal", ["m4 17 6-6-6-6", "M12 19h8"]);
+line_icon!(
+    TERMINAL,
+    "voinc-row-terminal",
+    ["m4 17 6-6-6-6", "M12 19h8"]
+);
 line_icon!(
     PLAY,
     "voinc-row-play",

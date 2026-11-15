@@ -190,7 +190,10 @@ mod tests {
 
     #[test]
     fn requests_name_the_app_channel_and_version() {
-        assert_eq!(user_agent("dev", "0.0.0-dev-171"), "voinc/dev/0.0.0-dev-171");
+        assert_eq!(
+            user_agent("dev", "0.0.0-dev-171"),
+            "voinc/dev/0.0.0-dev-171"
+        );
         assert_eq!(user_agent("stable", "2.3.1"), "voinc/stable/2.3.1");
     }
 

@@ -40,7 +40,10 @@ pub(super) fn run(
         Ok(settings) => settings,
         Err(error) => {
             return print(
-                ControlReply::error("failed", format!("couldn't read Voinc's settings: {error:#}")),
+                ControlReply::error(
+                    "failed",
+                    format!("couldn't read Voinc's settings: {error:#}"),
+                ),
                 output,
             );
         }
@@ -161,26 +164,35 @@ fn refusal(status: u16, code: &str, model: &str) -> ControlReply {
         ),
         "unsupported-model" => ControlReply::error(
             "model-unavailable",
-            format!("the running Voinc can't use `{model}`; run `voinc model list` to see what it has"),
+            format!(
+                "the running Voinc can't use `{model}`; run `voinc model list` to see what it has"
+            ),
         ),
-        "invalid-request" => ControlReply::error("failed", "Voinc refused the request; update Voinc"),
+        "invalid-request" => {
+            ControlReply::error("failed", "Voinc refused the request; update Voinc")
+        }
         "unsupported-audio" | "invalid-audio" => ControlReply::error(
             "unsupported",
             "Voinc couldn't read the file as WAV; convert it to WAV first",
         ),
-        "length-required" => ControlReply::error("failed", "Voinc refused the upload; update Voinc"),
+        "length-required" => {
+            ControlReply::error("failed", "Voinc refused the upload; update Voinc")
+        }
         "resource-exhausted" => ControlReply::error(
             "resource-exhausted",
             "Voinc says the file is too large or too long to transcribe",
         ),
         "model-not-ready" => ControlReply::error("model-unavailable", not_ready(model)),
-        "queue-full" => {
-            ControlReply::error("busy", "Voinc is busy with another transcription; try again")
-        }
+        "queue-full" => ControlReply::error(
+            "busy",
+            "Voinc is busy with another transcription; try again",
+        ),
         "upload-timeout" => {
             ControlReply::error("failed", "Voinc timed out reading the file; try again")
         }
-        "cancelled" => ControlReply::error("failed", "Voinc cancelled the transcription; try again"),
+        "cancelled" => {
+            ControlReply::error("failed", "Voinc cancelled the transcription; try again")
+        }
         "service-gone" => ControlReply::error(
             "unavailable",
             "Voinc's transcription service stopped; restart Voinc",
@@ -204,7 +216,10 @@ fn refusal(status: u16, code: &str, model: &str) -> ControlReply {
                 "unsupported",
                 "Voinc couldn't read the file as WAV; convert it to WAV first",
             ),
-            429 => ControlReply::error("busy", "Voinc is busy with another transcription; try again"),
+            429 => ControlReply::error(
+                "busy",
+                "Voinc is busy with another transcription; try again",
+            ),
             _ if code.is_empty() || code.starts_with("http-") => {
                 ControlReply::error("failed", format!("Voinc answered HTTP {status}"))
             }

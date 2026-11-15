@@ -27,7 +27,8 @@ mod tests {
 
     #[test]
     fn a_meeting_finds_the_input_its_call_uses_by_uid() {
-        let names = ["MacBook Pro Microphone", "Voinc Microphone", "Jabra Evolve"].map(String::from);
+        let names =
+            ["MacBook Pro Microphone", "Voinc Microphone", "Jabra Evolve"].map(String::from);
         let ids = ["BuiltIn", "HexMic", "Jabra"].map(|id| Some(id.to_owned()));
         assert_eq!(position("Jabra", &ids, &names), Some(2));
         assert_eq!(position("BuiltIn", &ids, &names), Some(0));

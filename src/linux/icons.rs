@@ -176,7 +176,8 @@ mod tests {
             .as_nanos();
         let data = std::env::temp_dir().join(format!("voinc-icons-{unique}"));
         install_in(&data).unwrap();
-        let written = std::fs::read(data.join("icons/hicolor/48x48/apps/io.voinc.voinc.png")).unwrap();
+        let written =
+            std::fs::read(data.join("icons/hicolor/48x48/apps/io.voinc.voinc.png")).unwrap();
         assert_eq!(written, ICONS[3].1);
         std::fs::remove_dir_all(data).unwrap();
     }

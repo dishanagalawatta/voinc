@@ -235,7 +235,8 @@ fn evaluate_clip_at_release(
 #[ignore = "requires VOINC_DICTATION_CORPUS_DIR and Unified English GGUF model"]
 fn evaluate_dictation_corpus() {
     let corpus_dir = PathBuf::from(
-        std::env::var("VOINC_DICTATION_CORPUS_DIR").expect("VOINC_DICTATION_CORPUS_DIR must be set"),
+        std::env::var("VOINC_DICTATION_CORPUS_DIR")
+            .expect("VOINC_DICTATION_CORPUS_DIR must be set"),
     );
     let model_path = std::env::var("VOINC_TAIL_MODEL")
         .map(PathBuf::from)

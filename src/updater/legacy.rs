@@ -528,7 +528,10 @@ mod tests {
         );
 
         assert!(result.is_err());
-        assert_eq!(fs::read_to_string(&unit).unwrap(), "# X-VOINC-Managed=true\n");
+        assert_eq!(
+            fs::read_to_string(&unit).unwrap(),
+            "# X-VOINC-Managed=true\n"
+        );
         assert_eq!(
             fs::read_link(home.join(".local/bin/voinc")).unwrap(),
             legacy.join("current/voinc")

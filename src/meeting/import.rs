@@ -295,8 +295,10 @@ mod tests {
 
     #[cfg(target_os = "macos")]
     fn test_directory(name: &str) -> std::path::PathBuf {
-        let directory =
-            std::env::temp_dir().join(format!("voinc-meeting-import-{name}-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!(
+            "voinc-meeting-import-{name}-{}",
+            std::process::id()
+        ));
         let _ = fs::remove_dir_all(&directory);
         fs::create_dir_all(&directory).unwrap();
         directory

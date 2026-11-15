@@ -1108,7 +1108,9 @@ impl PortalProbe {
         {
             match self.running.take().map(std::thread::JoinHandle::join) {
                 Some(Ok(Ok(Some(portal)))) => {
-                    tracing::info!("the GlobalShortcuts portal appeared; binding Voinc's shortcuts");
+                    tracing::info!(
+                        "the GlobalShortcuts portal appeared; binding Voinc's shortcuts"
+                    );
                     return Ok(Some(portal));
                 }
                 Some(Ok(Err(error))) if !self.warned => {
@@ -1413,7 +1415,10 @@ mod tests {
     #[test]
     fn the_fallback_is_written_once_and_only_when_nothing_provides_it() {
         let (root, fallback) = entries("once");
-        assert_eq!(fallback.ensure("/opt/voinc").unwrap(), Some(fallback.entry()));
+        assert_eq!(
+            fallback.ensure("/opt/voinc").unwrap(),
+            Some(fallback.entry())
+        );
         let written = std::fs::metadata(fallback.entry())
             .unwrap()
             .modified()

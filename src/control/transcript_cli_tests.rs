@@ -16,8 +16,12 @@ use crate::control::cli::ControlCli;
 const FIXTURE: &str = include_str!("../../tests/fixtures/history.json");
 
 fn args(extra: &[&str]) -> HistoryArgs {
-    let cli =
-        Cli::try_parse_from(["voinc", "history"].into_iter().chain(extra.iter().copied())).unwrap();
+    let cli = Cli::try_parse_from(
+        ["voinc", "history"]
+            .into_iter()
+            .chain(extra.iter().copied()),
+    )
+    .unwrap();
     match cli.command.unwrap() {
         ControlCli::History(args) => args,
         _ => panic!("expected history"),

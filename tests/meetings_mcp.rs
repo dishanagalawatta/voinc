@@ -59,7 +59,10 @@ fn mcp_server_initializes_lists_tools_and_answers_calls_over_stdio() {
         }}),
     );
     let initialized = receive(1);
-    assert_eq!(initialized["result"]["serverInfo"]["name"], "voinc-meetings");
+    assert_eq!(
+        initialized["result"]["serverInfo"]["name"],
+        "voinc-meetings"
+    );
     assert!(initialized["result"]["capabilities"]["tools"].is_object());
     send(json!({"jsonrpc": "2.0", "method": "notifications/initialized"}));
 

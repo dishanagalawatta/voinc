@@ -2352,9 +2352,15 @@ mod tests {
     #[test]
     fn suggestions_stop_at_three() {
         let mut flow = Flow::new();
-        let suggested = ["SEER", "VOINC", "HOME", "A VERY LONG SESSION TITLE", "FIFTH"]
-            .map(|name| Dest::new(name, ""))
-            .to_vec();
+        let suggested = [
+            "SEER",
+            "VOINC",
+            "HOME",
+            "A VERY LONG SESSION TITLE",
+            "FIFTH",
+        ]
+        .map(|name| Dest::new(name, ""))
+        .to_vec();
         flow.input(
             Input::Routed(Route::Guess {
                 suggested,
@@ -2674,7 +2680,10 @@ mod tests {
             "title and folder"
         );
         assert_eq!(names("ses_3"), ["Voinc release notes"], "the id");
-        assert!(names("voinc search").is_empty(), "every word, in one session");
+        assert!(
+            names("voinc search").is_empty(),
+            "every word, in one session"
+        );
     }
 
     #[test]

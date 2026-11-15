@@ -100,7 +100,8 @@ mod tests {
         let folder =
             std::env::temp_dir().join(format!("voinc-recording-save-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
-        let source = std::env::temp_dir().join(format!("voinc-recording-{}.mp4", std::process::id()));
+        let source =
+            std::env::temp_dir().join(format!("voinc-recording-{}.mp4", std::process::id()));
         std::fs::write(&source, b"movie").unwrap();
         let first = save(&source, &folder).unwrap();
         let second = save(&source, &folder).unwrap();

@@ -178,7 +178,8 @@ fn backdrop(
 #[test]
 #[ignore = "writes frames for a review clip"]
 fn rune_hud_frames() {
-    let out = std::path::PathBuf::from(std::env::var("VOINC_HUD_FRAMES").expect("VOINC_HUD_FRAMES"));
+    let out =
+        std::path::PathBuf::from(std::env::var("VOINC_HUD_FRAMES").expect("VOINC_HUD_FRAMES"));
     std::fs::create_dir_all(&out).unwrap();
     let dark = std::env::var("VOINC_HUD_THEME").as_deref() != Ok("light");
     let mut fields = serde_json::to_value(Tuning::default()).unwrap();

@@ -26,7 +26,8 @@ pub fn is_enabled() -> Result<bool> {
 /// Register or unregister the current executable for the current Windows user.
 pub fn set_enabled(enabled: bool) -> Result<()> {
     if enabled {
-        let executable = std::env::current_exe().wrap_err("could not locate the Voinc executable")?;
+        let executable =
+            std::env::current_exe().wrap_err("could not locate the Voinc executable")?;
         write_startup_command(&executable, "could not register Voinc to launch at login")?;
     } else {
         let current_user = RegKey::predef(HKEY_CURRENT_USER);
@@ -53,7 +54,10 @@ pub fn repoint(executable: &Path) -> Result<()> {
     if !is_enabled()? {
         return Ok(());
     }
-    write_startup_command(executable, "could not repoint the Voinc startup registration")
+    write_startup_command(
+        executable,
+        "could not repoint the Voinc startup registration",
+    )
 }
 
 /// Points Launch at login at this Voinc when it starts another version of the
@@ -153,7 +157,8 @@ mod tests {
     fn a_manual_upgrade_moves_launch_at_login_to_the_current_version() {
         let support = Path::new(r"C:\Users\Jürgen\AppData\Roaming\voinc");
         let running = support.join(r"versions\3.4.0\voinc.exe");
-        let old = r#""C:\Users\Jürgen\AppData\Roaming\voinc\versions\3.3.0\voinc.exe" app --hidden"#;
+        let old =
+            r#""C:\Users\Jürgen\AppData\Roaming\voinc\versions\3.3.0\voinc.exe" app --hidden"#;
         let moves = |command: &str, executable: &Path, current: Option<&str>| {
             starts_another_version(command, executable, support, current)
         };

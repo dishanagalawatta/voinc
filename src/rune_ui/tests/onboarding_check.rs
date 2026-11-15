@@ -374,7 +374,10 @@ fn onboarding_walkthrough() {
     tap(&mut rt, "done");
     assert!(texts(&rt).contains(&"Voinc is ready".to_owned()));
     tap(&mut rt, "start-using-voinc");
-    assert!(rt.state.tour.is_none(), "Start using Voinc closes onboarding");
+    assert!(
+        rt.state.tour.is_none(),
+        "Start using Voinc closes onboarding"
+    );
     assert!(rt.state.first_run.is_none());
     println!(
         "onboarding walkthrough: Setting up Voinc -> {} downloaded ({} bytes) -> Your turn -> Voinc is ready",

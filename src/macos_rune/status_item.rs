@@ -694,7 +694,11 @@ fn icon_shown(hide: bool, meeting_active: bool) -> bool {
 /// Labs › Pause from menu bar's row: Pause Voinc while shortcuts run, Resume
 /// Voinc while they are paused or a resume waits for a neutral keyboard.
 fn pause_title(suspended: bool) -> &'static str {
-    if suspended { "Resume Voinc" } else { "Pause Voinc" }
+    if suspended {
+        "Resume Voinc"
+    } else {
+        "Pause Voinc"
+    }
 }
 
 /// A meeting title short enough for one menu line.

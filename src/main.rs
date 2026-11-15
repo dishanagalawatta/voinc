@@ -855,7 +855,12 @@ mod tests {
         assert!(opens(&["voinc"]));
         assert!(opens(&["/Applications/Voinc.app/Contents/MacOS/voinc"]));
         assert!(opens(&["voinc", "app"]));
-        assert!(opens(&["voinc", "app", "--device", "MacBook Pro Microphone"]));
+        assert!(opens(&[
+            "voinc",
+            "app",
+            "--device",
+            "MacBook Pro Microphone"
+        ]));
         assert!(!opens(&["voinc", "app", "--", "--snap", "/tmp/a.png"]));
         assert!(!opens(&["voinc", "app", "--hidden"]));
         assert!(!opens(&["voinc-service"]));

@@ -302,7 +302,11 @@ fn each_panes_advanced_fold_starts_closed_and_stays_its_own() {
 #[test]
 fn desktops_without_a_portal_list_commands_instead_of_recording_rows() {
     let rt = runtime("commands", true, GOLDEN_SIZE);
-    assert!(texts(&rt).iter().any(|text| text == "voinc dictation toggle"));
+    assert!(
+        texts(&rt)
+            .iter()
+            .any(|text| text == "voinc dictation toggle")
+    );
     assert!(rt.find("dictation-hotkey").is_none());
     assert!(rt.find("paste-last-hotkey").is_none());
 }

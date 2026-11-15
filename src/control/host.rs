@@ -215,8 +215,8 @@ fn command(host: &dyn Host, command: ControlCommand) -> ControlReply {
         }
         ControlCommand::OnboardingReset => host.onboarding_reset(),
         ControlCommand::HistoryClear => reply(clear_history(host)),
-        ControlCommand::CheckForUpdates => reply(host.state().and_then(|state| {
-            match state.update {
+        ControlCommand::CheckForUpdates => {
+            reply(host.state().and_then(|state| match state.update {
                 DesktopUpdateStatus::Managed => Err(ControlError::new(
                     "unsupported",
                     "updates are managed by your organization",
@@ -227,11 +227,11 @@ fn command(host: &dyn Host, command: ControlCommand) -> ControlReply {
                     "unavailable",
                     "this Voinc build doesn't update itself",
                 )),
-                _ => host
-                    .check_for_updates()
-                    .map(|()| ControlReply::done("Checking for updates; Voinc shows what it finds")),
-            }
-        })),
+                _ => host.check_for_updates().map(|()| {
+                    ControlReply::done("Checking for updates; Voinc shows what it finds")
+                }),
+            }))
+        }
         ControlCommand::LaunchAtLogin { enabled } => launch_at_login(host, enabled),
         ControlCommand::VocabularyList => reply(load().map(|settings| ControlReply::Vocabulary {
             entries: settings.vocabulary,

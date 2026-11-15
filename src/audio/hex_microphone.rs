@@ -1572,7 +1572,9 @@ mod tests {
     #[test]
     fn virtual_device_names_are_excluded_from_self_capture() {
         assert!(is_hex_virtual_device_name("Voinc Microphone"));
-        assert!(is_hex_virtual_device_name("Voinc Microphone (Internal Sink)"));
+        assert!(is_hex_virtual_device_name(
+            "Voinc Microphone (Internal Sink)"
+        ));
         assert!(is_hex_virtual_device_name("voinc microphone"));
         assert!(!is_hex_virtual_device_name("MacBook Pro Microphone"));
         assert!(!is_hex_virtual_device_name("Shure MV7"));

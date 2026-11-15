@@ -905,7 +905,8 @@ mod tests {
     use super::*;
 
     fn temporary(name: &str) -> PathBuf {
-        let path = std::env::temp_dir().join(format!("voinc-updater-{name}-{}", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("voinc-updater-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&path);
         std::fs::create_dir_all(&path).unwrap();
         path

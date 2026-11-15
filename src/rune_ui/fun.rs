@@ -248,7 +248,9 @@ fn source_row(ui: &Ui, p: Paint) -> El {
         );
     };
     let description = match &status.action_state {
-        DriverActionState::Failed(reason) => tr_fill("Could not start Voinc Microphone: {}", reason),
+        DriverActionState::Failed(reason) => {
+            tr_fill("Could not start Voinc Microphone: {}", reason)
+        }
         _ if status.driver_loaded => {
             tr("Choose Voinc Microphone as your input in Slack, Zoom, or Discord").to_string()
         }

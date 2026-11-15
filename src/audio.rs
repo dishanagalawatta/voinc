@@ -2123,7 +2123,11 @@ mod tests {
         );
         // With nothing else to use, say why rather than record silence.
         let only_built_in = listed(&["Voinc Microphone", "MacBook Pro Microphone"]);
-        for default in [Some("MacBook Pro Microphone"), Some("Voinc Microphone"), None] {
+        for default in [
+            Some("MacBook Pro Microphone"),
+            Some("Voinc Microphone"),
+            None,
+        ] {
             assert_eq!(
                 resolve_input(None, None, &only_built_in, default, &built_in, CLOSED),
                 Err(LID_CLOSED_ERROR.into())

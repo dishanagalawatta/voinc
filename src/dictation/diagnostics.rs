@@ -105,8 +105,10 @@ mod tests {
 
     #[test]
     fn diagnostic_recordings_are_owner_only_and_bounded() {
-        let directory =
-            std::env::temp_dir().join(format!("voinc-dictation-diagnostics-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!(
+            "voinc-dictation-diagnostics-{}",
+            std::process::id()
+        ));
         let _ = fs::remove_dir_all(&directory);
         persist_at(&directory, &[0.25; 16_000], Kind::Transcribed, 1).unwrap();
         std::thread::sleep(std::time::Duration::from_millis(2));

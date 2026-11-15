@@ -704,7 +704,10 @@ mod tests {
     #[test]
     fn path_entries_match_without_case_or_a_trailing_backslash() {
         let path = r"C:\Windows;C:\Users\Jo\AppData\Roaming\voinc\bin\;D:\tools";
-        assert!(path_contains(path, r"c:\users\jo\appdata\roaming\VOINC\bin"));
+        assert!(path_contains(
+            path,
+            r"c:\users\jo\appdata\roaming\VOINC\bin"
+        ));
         assert!(!path_contains(path, r"C:\Users\Jo\AppData\Roaming\voinc"));
         assert!(!path_contains("", r"C:\voinc\bin"));
     }

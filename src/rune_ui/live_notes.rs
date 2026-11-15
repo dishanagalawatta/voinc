@@ -344,8 +344,11 @@ mod tests {
         let slug = "prototypes-meetings-live-notes";
         #[cfg(target_os = "macos")]
         assert_eq!(
-            super::super::story_link::parse("voinc://story/prototypes/meetings/live-notes", "voinc")
-                .map(|link| link.story),
+            super::super::story_link::parse(
+                "voinc://story/prototypes/meetings/live-notes",
+                "voinc"
+            )
+            .map(|link| link.story),
             Ok(slug.to_owned())
         );
         let app = playground::attach(App::new(playground::spec(spec())));

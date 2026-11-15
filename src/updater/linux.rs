@@ -297,7 +297,8 @@ mod tests {
 
     #[test]
     fn activation_switches_current_without_removing_the_old_version() {
-        let root = std::env::temp_dir().join(format!("voinc-linux-activate-{}", std::process::id()));
+        let root =
+            std::env::temp_dir().join(format!("voinc-linux-activate-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(root.join("versions/1.0.0")).unwrap();
         fs::write(root.join("versions/1.0.0/voinc"), b"old").unwrap();

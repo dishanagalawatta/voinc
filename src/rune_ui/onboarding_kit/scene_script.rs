@@ -1299,7 +1299,10 @@ mod tests {
             fill("Typing: {secs}, {typos}.", 1.5, 26.6, 1),
             "Typing: 27 seconds, 1 typo."
         );
-        assert_eq!(fill("{voinc}, {typos}", 1.5, 0.0, 0), "1.5 seconds, no typos");
+        assert_eq!(
+            fill("{voinc}, {typos}", 1.5, 0.0, 0),
+            "1.5 seconds, no typos"
+        );
     }
 
     #[test]

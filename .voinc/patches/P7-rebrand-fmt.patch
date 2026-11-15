@@ -1,0 +1,800 @@
+diff --git a/crates/capture/src/transcribe.rs b/crates/capture/src/transcribe.rs
+index dda57e4e..1f2b85f3 100644
+--- a/crates/capture/src/transcribe.rs
++++ b/crates/capture/src/transcribe.rs
+@@ -357,7 +357,11 @@ pub fn menu_state(
+         .collect();
+     let ready = chosen.is_some();
+     MenuState {
+-        hex_title: if ready { "Voinc" } else { "Voinc (no model ready)" },
++        hex_title: if ready {
++            "Voinc"
++        } else {
++            "Voinc (no model ready)"
++        },
+         hex_enabled: ready,
+         hex_checked: ready && preferred == Engine::Voinc,
+         models,
+diff --git a/src/audio.rs b/src/audio.rs
+index f4b64ee0..2465cf8d 100644
+--- a/src/audio.rs
++++ b/src/audio.rs
+@@ -2123,7 +2123,11 @@ mod tests {
+         );
+         // With nothing else to use, say why rather than record silence.
+         let only_built_in = listed(&["Voinc Microphone", "MacBook Pro Microphone"]);
+-        for default in [Some("MacBook Pro Microphone"), Some("Voinc Microphone"), None] {
++        for default in [
++            Some("MacBook Pro Microphone"),
++            Some("Voinc Microphone"),
++            None,
++        ] {
+             assert_eq!(
+                 resolve_input(None, None, &only_built_in, default, &built_in, CLOSED),
+                 Err(LID_CLOSED_ERROR.into())
+diff --git a/src/audio/call_input.rs b/src/audio/call_input.rs
+index d8fa5ab5..eff6a24e 100644
+--- a/src/audio/call_input.rs
++++ b/src/audio/call_input.rs
+@@ -27,7 +27,8 @@ mod tests {
+ 
+     #[test]
+     fn a_meeting_finds_the_input_its_call_uses_by_uid() {
+-        let names = ["MacBook Pro Microphone", "Voinc Microphone", "Jabra Evolve"].map(String::from);
++        let names =
++            ["MacBook Pro Microphone", "Voinc Microphone", "Jabra Evolve"].map(String::from);
+         let ids = ["BuiltIn", "HexMic", "Jabra"].map(|id| Some(id.to_owned()));
+         assert_eq!(position("Jabra", &ids, &names), Some(2));
+         assert_eq!(position("BuiltIn", &ids, &names), Some(0));
+diff --git a/src/audio/hex_microphone.rs b/src/audio/hex_microphone.rs
+index e164ad25..adb3b134 100644
+--- a/src/audio/hex_microphone.rs
++++ b/src/audio/hex_microphone.rs
+@@ -1572,7 +1572,9 @@ mod tests {
+     #[test]
+     fn virtual_device_names_are_excluded_from_self_capture() {
+         assert!(is_hex_virtual_device_name("Voinc Microphone"));
+-        assert!(is_hex_virtual_device_name("Voinc Microphone (Internal Sink)"));
++        assert!(is_hex_virtual_device_name(
++            "Voinc Microphone (Internal Sink)"
++        ));
+         assert!(is_hex_virtual_device_name("voinc microphone"));
+         assert!(!is_hex_virtual_device_name("MacBook Pro Microphone"));
+         assert!(!is_hex_virtual_device_name("Shure MV7"));
+diff --git a/src/control/cli/transcribe.rs b/src/control/cli/transcribe.rs
+index b523dd55..fc29e6b5 100644
+--- a/src/control/cli/transcribe.rs
++++ b/src/control/cli/transcribe.rs
+@@ -40,7 +40,10 @@ pub(super) fn run(
+         Ok(settings) => settings,
+         Err(error) => {
+             return print(
+-                ControlReply::error("failed", format!("couldn't read Voinc's settings: {error:#}")),
++                ControlReply::error(
++                    "failed",
++                    format!("couldn't read Voinc's settings: {error:#}"),
++                ),
+                 output,
+             );
+         }
+@@ -161,26 +164,35 @@ fn refusal(status: u16, code: &str, model: &str) -> ControlReply {
+         ),
+         "unsupported-model" => ControlReply::error(
+             "model-unavailable",
+-            format!("the running Voinc can't use `{model}`; run `voinc model list` to see what it has"),
++            format!(
++                "the running Voinc can't use `{model}`; run `voinc model list` to see what it has"
++            ),
+         ),
+-        "invalid-request" => ControlReply::error("failed", "Voinc refused the request; update Voinc"),
++        "invalid-request" => {
++            ControlReply::error("failed", "Voinc refused the request; update Voinc")
++        }
+         "unsupported-audio" | "invalid-audio" => ControlReply::error(
+             "unsupported",
+             "Voinc couldn't read the file as WAV; convert it to WAV first",
+         ),
+-        "length-required" => ControlReply::error("failed", "Voinc refused the upload; update Voinc"),
++        "length-required" => {
++            ControlReply::error("failed", "Voinc refused the upload; update Voinc")
++        }
+         "resource-exhausted" => ControlReply::error(
+             "resource-exhausted",
+             "Voinc says the file is too large or too long to transcribe",
+         ),
+         "model-not-ready" => ControlReply::error("model-unavailable", not_ready(model)),
+-        "queue-full" => {
+-            ControlReply::error("busy", "Voinc is busy with another transcription; try again")
+-        }
++        "queue-full" => ControlReply::error(
++            "busy",
++            "Voinc is busy with another transcription; try again",
++        ),
+         "upload-timeout" => {
+             ControlReply::error("failed", "Voinc timed out reading the file; try again")
+         }
+-        "cancelled" => ControlReply::error("failed", "Voinc cancelled the transcription; try again"),
++        "cancelled" => {
++            ControlReply::error("failed", "Voinc cancelled the transcription; try again")
++        }
+         "service-gone" => ControlReply::error(
+             "unavailable",
+             "Voinc's transcription service stopped; restart Voinc",
+@@ -204,7 +216,10 @@ fn refusal(status: u16, code: &str, model: &str) -> ControlReply {
+                 "unsupported",
+                 "Voinc couldn't read the file as WAV; convert it to WAV first",
+             ),
+-            429 => ControlReply::error("busy", "Voinc is busy with another transcription; try again"),
++            429 => ControlReply::error(
++                "busy",
++                "Voinc is busy with another transcription; try again",
++            ),
+             _ if code.is_empty() || code.starts_with("http-") => {
+                 ControlReply::error("failed", format!("Voinc answered HTTP {status}"))
+             }
+diff --git a/src/control/host.rs b/src/control/host.rs
+index 983bd18b..af96e9b2 100644
+--- a/src/control/host.rs
++++ b/src/control/host.rs
+@@ -215,8 +215,8 @@ fn command(host: &dyn Host, command: ControlCommand) -> ControlReply {
+         }
+         ControlCommand::OnboardingReset => host.onboarding_reset(),
+         ControlCommand::HistoryClear => reply(clear_history(host)),
+-        ControlCommand::CheckForUpdates => reply(host.state().and_then(|state| {
+-            match state.update {
++        ControlCommand::CheckForUpdates => {
++            reply(host.state().and_then(|state| match state.update {
+                 DesktopUpdateStatus::Managed => Err(ControlError::new(
+                     "unsupported",
+                     "updates are managed by your organization",
+@@ -227,11 +227,11 @@ fn command(host: &dyn Host, command: ControlCommand) -> ControlReply {
+                     "unavailable",
+                     "this Voinc build doesn't update itself",
+                 )),
+-                _ => host
+-                    .check_for_updates()
+-                    .map(|()| ControlReply::done("Checking for updates; Voinc shows what it finds")),
+-            }
+-        })),
++                _ => host.check_for_updates().map(|()| {
++                    ControlReply::done("Checking for updates; Voinc shows what it finds")
++                }),
++            }))
++        }
+         ControlCommand::LaunchAtLogin { enabled } => launch_at_login(host, enabled),
+         ControlCommand::VocabularyList => reply(load().map(|settings| ControlReply::Vocabulary {
+             entries: settings.vocabulary,
+diff --git a/src/control/transcript_cli_tests.rs b/src/control/transcript_cli_tests.rs
+index bf603243..bebddfd9 100644
+--- a/src/control/transcript_cli_tests.rs
++++ b/src/control/transcript_cli_tests.rs
+@@ -16,8 +16,12 @@ use crate::control::cli::ControlCli;
+ const FIXTURE: &str = include_str!("../../tests/fixtures/history.json");
+ 
+ fn args(extra: &[&str]) -> HistoryArgs {
+-    let cli =
+-        Cli::try_parse_from(["voinc", "history"].into_iter().chain(extra.iter().copied())).unwrap();
++    let cli = Cli::try_parse_from(
++        ["voinc", "history"]
++            .into_iter()
++            .chain(extra.iter().copied()),
++    )
++    .unwrap();
+     match cli.command.unwrap() {
+         ControlCli::History(args) => args,
+         _ => panic!("expected history"),
+diff --git a/src/dictation/corpus_tests.rs b/src/dictation/corpus_tests.rs
+index c05b1cbf..7b13b426 100644
+--- a/src/dictation/corpus_tests.rs
++++ b/src/dictation/corpus_tests.rs
+@@ -235,7 +235,8 @@ fn evaluate_clip_at_release(
+ #[ignore = "requires VOINC_DICTATION_CORPUS_DIR and Unified English GGUF model"]
+ fn evaluate_dictation_corpus() {
+     let corpus_dir = PathBuf::from(
+-        std::env::var("VOINC_DICTATION_CORPUS_DIR").expect("VOINC_DICTATION_CORPUS_DIR must be set"),
++        std::env::var("VOINC_DICTATION_CORPUS_DIR")
++            .expect("VOINC_DICTATION_CORPUS_DIR must be set"),
+     );
+     let model_path = std::env::var("VOINC_TAIL_MODEL")
+         .map(PathBuf::from)
+diff --git a/src/dictation/diagnostics.rs b/src/dictation/diagnostics.rs
+index 42c4851f..d27bb6af 100644
+--- a/src/dictation/diagnostics.rs
++++ b/src/dictation/diagnostics.rs
+@@ -105,8 +105,10 @@ mod tests {
+ 
+     #[test]
+     fn diagnostic_recordings_are_owner_only_and_bounded() {
+-        let directory =
+-            std::env::temp_dir().join(format!("voinc-dictation-diagnostics-{}", std::process::id()));
++        let directory = std::env::temp_dir().join(format!(
++            "voinc-dictation-diagnostics-{}",
++            std::process::id()
++        ));
+         let _ = fs::remove_dir_all(&directory);
+         persist_at(&directory, &[0.25; 16_000], Kind::Transcribed, 1).unwrap();
+         std::thread::sleep(std::time::Duration::from_millis(2));
+diff --git a/src/linux/icons.rs b/src/linux/icons.rs
+index ca04ac2e..af257dad 100644
+--- a/src/linux/icons.rs
++++ b/src/linux/icons.rs
+@@ -176,7 +176,8 @@ mod tests {
+             .as_nanos();
+         let data = std::env::temp_dir().join(format!("voinc-icons-{unique}"));
+         install_in(&data).unwrap();
+-        let written = std::fs::read(data.join("icons/hicolor/48x48/apps/io.voinc.voinc.png")).unwrap();
++        let written =
++            std::fs::read(data.join("icons/hicolor/48x48/apps/io.voinc.voinc.png")).unwrap();
+         assert_eq!(written, ICONS[3].1);
+         std::fs::remove_dir_all(data).unwrap();
+     }
+diff --git a/src/linux/login_item.rs b/src/linux/login_item.rs
+index e674d20b..0fdb018a 100644
+--- a/src/linux/login_item.rs
++++ b/src/linux/login_item.rs
+@@ -278,7 +278,9 @@ pub(crate) fn launcher() -> Result<PathBuf> {
+         Some(path) if !executable.is_file() => PathBuf::from(path),
+         _ => executable,
+     };
+-    let current = crate::app_paths::support_dir()?.join("current").join("voinc");
++    let current = crate::app_paths::support_dir()?
++        .join("current")
++        .join("voinc");
+     let managed = executable
+         .parent()
+         .and_then(Path::parent)
+@@ -560,7 +562,8 @@ mod tests {
+         let wants = units.join("graphical-session.target.wants");
+         fs::create_dir_all(&wants).unwrap();
+         assert!(!service_enabled_in(&units));
+-        std::os::unix::fs::symlink(units.join("voinc.service"), wants.join("voinc.service")).unwrap();
++        std::os::unix::fs::symlink(units.join("voinc.service"), wants.join("voinc.service"))
++            .unwrap();
+         assert!(service_enabled_in(&units));
+         fs::remove_dir_all(units).unwrap();
+     }
+diff --git a/src/linux/paste.rs b/src/linux/paste.rs
+index 62dd6929..7dc3275e 100644
+--- a/src/linux/paste.rs
++++ b/src/linux/paste.rs
+@@ -971,7 +971,8 @@ mod tests {
+         assert_eq!(missing, Some(WL_COPY_MISSING));
+ 
+         // A `wl-copy` on PATH that is executable is enough.
+-        let directory = std::env::temp_dir().join(format!("voinc-paste-path-{}", std::process::id()));
++        let directory =
++            std::env::temp_dir().join(format!("voinc-paste-path-{}", std::process::id()));
+         std::fs::create_dir_all(&directory).unwrap();
+         let helper = directory.join("wl-copy");
+         std::fs::write(&helper, b"").unwrap();
+diff --git a/src/linux/portal.rs b/src/linux/portal.rs
+index b6cfb494..3f97b1fe 100644
+--- a/src/linux/portal.rs
++++ b/src/linux/portal.rs
+@@ -1108,7 +1108,9 @@ impl PortalProbe {
+         {
+             match self.running.take().map(std::thread::JoinHandle::join) {
+                 Some(Ok(Ok(Some(portal)))) => {
+-                    tracing::info!("the GlobalShortcuts portal appeared; binding Voinc's shortcuts");
++                    tracing::info!(
++                        "the GlobalShortcuts portal appeared; binding Voinc's shortcuts"
++                    );
+                     return Ok(Some(portal));
+                 }
+                 Some(Ok(Err(error))) if !self.warned => {
+@@ -1413,7 +1415,10 @@ mod tests {
+     #[test]
+     fn the_fallback_is_written_once_and_only_when_nothing_provides_it() {
+         let (root, fallback) = entries("once");
+-        assert_eq!(fallback.ensure("/opt/voinc").unwrap(), Some(fallback.entry()));
++        assert_eq!(
++            fallback.ensure("/opt/voinc").unwrap(),
++            Some(fallback.entry())
++        );
+         let written = std::fs::metadata(fallback.entry())
+             .unwrap()
+             .modified()
+diff --git a/src/linux/service.rs b/src/linux/service.rs
+index 3811352b..7e4cf8ac 100644
+--- a/src/linux/service.rs
++++ b/src/linux/service.rs
+@@ -365,8 +365,9 @@ pub(crate) fn route_shortcut(
+     route: Option<&ShortcutRoute>,
+     command: ShortcutCommand,
+ ) -> Result<()> {
+-    let route = route
+-        .ok_or_else(|| eyre!("Voinc is not listening; enable it in Settings or run `voinc start`"))?;
++    let route = route.ok_or_else(|| {
++        eyre!("Voinc is not listening; enable it in Settings or run `voinc start`")
++    })?;
+     route
+         .commands
+         .try_send(command.into())
+@@ -1043,7 +1044,9 @@ pub(crate) fn launch(activation: &Activation, show: bool) -> Result<Launch> {
+             restart()?;
+         }
+         Ok(_) => {
+-            bail!("Voinc is running in another desktop session; run `voinc quit`, then launch it again")
++            bail!(
++                "Voinc is running in another desktop session; run `voinc quit`, then launch it again"
++            )
+         }
+         Err(RequestError::Outdated) if supervised() => restart()?,
+         Err(RequestError::NotRunning) if supervised() => {
+@@ -1280,7 +1283,10 @@ mod tests {
+             Some(data)
+         ));
+         assert!(!default_root(Path::new("/tmp/voinc-test"), Some(data)));
+-        assert!(!default_root(Path::new("/home/kit/.local/share/voinc"), None));
++        assert!(!default_root(
++            Path::new("/home/kit/.local/share/voinc"),
++            None
++        ));
+     }
+ 
+     #[test]
+diff --git a/src/macos_rune/status_item.rs b/src/macos_rune/status_item.rs
+index 08afb09b..b400bce7 100644
+--- a/src/macos_rune/status_item.rs
++++ b/src/macos_rune/status_item.rs
+@@ -694,7 +694,11 @@ fn icon_shown(hide: bool, meeting_active: bool) -> bool {
+ /// Labs › Pause from menu bar's row: Pause Voinc while shortcuts run, Resume
+ /// Voinc while they are paused or a resume waits for a neutral keyboard.
+ fn pause_title(suspended: bool) -> &'static str {
+-    if suspended { "Resume Voinc" } else { "Pause Voinc" }
++    if suspended {
++        "Resume Voinc"
++    } else {
++        "Pause Voinc"
++    }
+ }
+ 
+ /// A meeting title short enough for one menu line.
+diff --git a/src/main.rs b/src/main.rs
+index ffb51544..075aaf4d 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -855,7 +855,12 @@ mod tests {
+         assert!(opens(&["voinc"]));
+         assert!(opens(&["/Applications/Voinc.app/Contents/MacOS/voinc"]));
+         assert!(opens(&["voinc", "app"]));
+-        assert!(opens(&["voinc", "app", "--device", "MacBook Pro Microphone"]));
++        assert!(opens(&[
++            "voinc",
++            "app",
++            "--device",
++            "MacBook Pro Microphone"
++        ]));
+         assert!(!opens(&["voinc", "app", "--", "--snap", "/tmp/a.png"]));
+         assert!(!opens(&["voinc", "app", "--hidden"]));
+         assert!(!opens(&["voinc-service"]));
+diff --git a/src/meeting/import.rs b/src/meeting/import.rs
+index cb77fd39..48194a8e 100644
+--- a/src/meeting/import.rs
++++ b/src/meeting/import.rs
+@@ -295,8 +295,10 @@ mod tests {
+ 
+     #[cfg(target_os = "macos")]
+     fn test_directory(name: &str) -> std::path::PathBuf {
+-        let directory =
+-            std::env::temp_dir().join(format!("voinc-meeting-import-{name}-{}", std::process::id()));
++        let directory = std::env::temp_dir().join(format!(
++            "voinc-meeting-import-{name}-{}",
++            std::process::id()
++        ));
+         let _ = fs::remove_dir_all(&directory);
+         fs::create_dir_all(&directory).unwrap();
+         directory
+diff --git a/src/meeting/tests.rs b/src/meeting/tests.rs
+index 0ef2a578..894660cc 100644
+--- a/src/meeting/tests.rs
++++ b/src/meeting/tests.rs
+@@ -317,7 +317,8 @@ fn meeting_lock_reports_liveness_across_file_descriptors() {
+ }
+ 
+ fn finished_meeting(name: &str, title: &str) -> (PathBuf, PathBuf) {
+-    let base = std::env::temp_dir().join(format!("voinc-{name}-{}-{}", std::process::id(), now_ms()));
++    let base =
++        std::env::temp_dir().join(format!("voinc-{name}-{}-{}", std::process::id(), now_ms()));
+     let directory = base.join("1760000000000-1");
+     fs::create_dir_all(&directory).unwrap();
+     let export = base.join("2026-10-15 1418 Meeting.md");
+diff --git a/src/paste/return_to_app.rs b/src/paste/return_to_app.rs
+index 10ad518a..a40b1c69 100644
+--- a/src/paste/return_to_app.rs
++++ b/src/paste/return_to_app.rs
+@@ -111,7 +111,11 @@ mod tests {
+     fn only_a_different_recorded_app_needs_a_switch() {
+         assert_eq!(decision(None, Some(7), 1), Decision::Paste);
+         assert_eq!(decision(Some(7), Some(7), 1), Decision::Paste);
+-        assert_eq!(decision(Some(1), Some(2), 1), Decision::Paste, "Voinc itself");
++        assert_eq!(
++            decision(Some(1), Some(2), 1),
++            Decision::Paste,
++            "Voinc itself"
++        );
+         assert_eq!(decision(Some(0), Some(2), 1), Decision::Paste, "no pid");
+         assert_eq!(decision(Some(7), Some(9), 1), Decision::ReturnTo(7));
+         assert_eq!(decision(Some(7), None, 1), Decision::ReturnTo(7));
+diff --git a/src/personal_commands/script.rs b/src/personal_commands/script.rs
+index 45cecd6d..66a1f565 100644
+--- a/src/personal_commands/script.rs
++++ b/src/personal_commands/script.rs
+@@ -213,7 +213,9 @@ impl Script {
+                 return Ok(Err(timed_out(limit)));
+             }
+             if stop.load(Ordering::Acquire) {
+-                return Ok(Err("Voinc stopped before the transformation finished".into()));
++                return Ok(Err(
++                    "Voinc stopped before the transformation finished".into()
++                ));
+             }
+             let wake = self.io.borrow_mut().wait(deadline);
+             match wake {
+diff --git a/src/rune_hud/tests.rs b/src/rune_hud/tests.rs
+index f1d978ef..afdad396 100644
+--- a/src/rune_hud/tests.rs
++++ b/src/rune_hud/tests.rs
+@@ -178,7 +178,8 @@ fn backdrop(
+ #[test]
+ #[ignore = "writes frames for a review clip"]
+ fn rune_hud_frames() {
+-    let out = std::path::PathBuf::from(std::env::var("VOINC_HUD_FRAMES").expect("VOINC_HUD_FRAMES"));
++    let out =
++        std::path::PathBuf::from(std::env::var("VOINC_HUD_FRAMES").expect("VOINC_HUD_FRAMES"));
+     std::fs::create_dir_all(&out).unwrap();
+     let dark = std::env::var("VOINC_HUD_THEME").as_deref() != Ok("light");
+     let mut fields = serde_json::to_value(Tuning::default()).unwrap();
+diff --git a/src/rune_ui/capture_capsule/flow.rs b/src/rune_ui/capture_capsule/flow.rs
+index 15dc8faa..a01e9f4e 100644
+--- a/src/rune_ui/capture_capsule/flow.rs
++++ b/src/rune_ui/capture_capsule/flow.rs
+@@ -2352,9 +2352,15 @@ mod tests {
+     #[test]
+     fn suggestions_stop_at_three() {
+         let mut flow = Flow::new();
+-        let suggested = ["SEER", "VOINC", "HOME", "A VERY LONG SESSION TITLE", "FIFTH"]
+-            .map(|name| Dest::new(name, ""))
+-            .to_vec();
++        let suggested = [
++            "SEER",
++            "VOINC",
++            "HOME",
++            "A VERY LONG SESSION TITLE",
++            "FIFTH",
++        ]
++        .map(|name| Dest::new(name, ""))
++        .to_vec();
+         flow.input(
+             Input::Routed(Route::Guess {
+                 suggested,
+@@ -2674,7 +2680,10 @@ mod tests {
+             "title and folder"
+         );
+         assert_eq!(names("ses_3"), ["Voinc release notes"], "the id");
+-        assert!(names("voinc search").is_empty(), "every word, in one session");
++        assert!(
++            names("voinc search").is_empty(),
++            "every word, in one session"
++        );
+     }
+ 
+     #[test]
+diff --git a/src/rune_ui/fun.rs b/src/rune_ui/fun.rs
+index be77881d..e3ee8a1f 100644
+--- a/src/rune_ui/fun.rs
++++ b/src/rune_ui/fun.rs
+@@ -248,7 +248,9 @@ fn source_row(ui: &Ui, p: Paint) -> El {
+         );
+     };
+     let description = match &status.action_state {
+-        DriverActionState::Failed(reason) => tr_fill("Could not start Voinc Microphone: {}", reason),
++        DriverActionState::Failed(reason) => {
++            tr_fill("Could not start Voinc Microphone: {}", reason)
++        }
+         _ if status.driver_loaded => {
+             tr("Choose Voinc Microphone as your input in Slack, Zoom, or Discord").to_string()
+         }
+diff --git a/src/rune_ui/icons.rs b/src/rune_ui/icons.rs
+index dd55829e..b5280cad 100644
+--- a/src/rune_ui/icons.rs
++++ b/src/rune_ui/icons.rs
+@@ -162,7 +162,11 @@ line_icon!(
+         "M3 15h18",
+     ]
+ );
+-line_icon!(TERMINAL, "voinc-row-terminal", ["m4 17 6-6-6-6", "M12 19h8"]);
++line_icon!(
++    TERMINAL,
++    "voinc-row-terminal",
++    ["m4 17 6-6-6-6", "M12 19h8"]
++);
+ line_icon!(
+     PLAY,
+     "voinc-row-play",
+diff --git a/src/rune_ui/live_notes.rs b/src/rune_ui/live_notes.rs
+index 979f86a2..32be5065 100644
+--- a/src/rune_ui/live_notes.rs
++++ b/src/rune_ui/live_notes.rs
+@@ -344,8 +344,11 @@ mod tests {
+         let slug = "prototypes-meetings-live-notes";
+         #[cfg(target_os = "macos")]
+         assert_eq!(
+-            super::super::story_link::parse("voinc://story/prototypes/meetings/live-notes", "voinc")
+-                .map(|link| link.story),
++            super::super::story_link::parse(
++                "voinc://story/prototypes/meetings/live-notes",
++                "voinc"
++            )
++            .map(|link| link.story),
+             Ok(slug.to_owned())
+         );
+         let app = playground::attach(App::new(playground::spec(spec())));
+diff --git a/src/rune_ui/onboarding_kit/game/certificate.rs b/src/rune_ui/onboarding_kit/game/certificate.rs
+index 4f5f5154..17e1915f 100644
+--- a/src/rune_ui/onboarding_kit/game/certificate.rs
++++ b/src/rune_ui/onboarding_kit/game/certificate.rs
+@@ -45,10 +45,12 @@ pub(super) fn certificate(p: Paint, targeted: bool, signed: bool) -> El {
+                         .color(p.text()),
+                 )
+                 .child(
+-                    text(tr("I hereby certify that I have completed Voinc onboarding."))
+-                        .key("body")
+-                        .font(k.ty.ui)
+-                        .color(p.text()),
++                    text(tr(
++                        "I hereby certify that I have completed Voinc onboarding.",
++                    ))
++                    .key("body")
++                    .font(k.ty.ui)
++                    .color(p.text()),
+                 ),
+         )
+         .child(line)
+diff --git a/src/rune_ui/onboarding_kit/scene_script.rs b/src/rune_ui/onboarding_kit/scene_script.rs
+index 492e304f..85e936ae 100644
+--- a/src/rune_ui/onboarding_kit/scene_script.rs
++++ b/src/rune_ui/onboarding_kit/scene_script.rs
+@@ -1299,7 +1299,10 @@ mod tests {
+             fill("Typing: {secs}, {typos}.", 1.5, 26.6, 1),
+             "Typing: 27 seconds, 1 typo."
+         );
+-        assert_eq!(fill("{voinc}, {typos}", 1.5, 0.0, 0), "1.5 seconds, no typos");
++        assert_eq!(
++            fill("{voinc}, {typos}", 1.5, 0.0, 0),
++            "1.5 seconds, no typos"
++        );
+     }
+ 
+     #[test]
+diff --git a/src/rune_ui/practice.rs b/src/rune_ui/practice.rs
+index 149d9af5..bbeece43 100644
+--- a/src/rune_ui/practice.rs
++++ b/src/rune_ui/practice.rs
+@@ -83,7 +83,8 @@ mod tests {
+ 
+     #[test]
+     fn practice_hears_dictations_logged_after_it_began() {
+-        let path = std::env::temp_dir().join(format!("voinc-practice-{}.ndjson", std::process::id()));
++        let path =
++            std::env::temp_dir().join(format!("voinc-practice-{}.ndjson", std::process::id()));
+         let dictation = |timestamp_ms, phase| {
+             serde_json::to_string(&VoiceEvent::Dictation {
+                 timestamp_ms,
+diff --git a/src/rune_ui/tests.rs b/src/rune_ui/tests.rs
+index 7454ecb6..40e1e095 100644
+--- a/src/rune_ui/tests.rs
++++ b/src/rune_ui/tests.rs
+@@ -302,7 +302,11 @@ fn each_panes_advanced_fold_starts_closed_and_stays_its_own() {
+ #[test]
+ fn desktops_without_a_portal_list_commands_instead_of_recording_rows() {
+     let rt = runtime("commands", true, GOLDEN_SIZE);
+-    assert!(texts(&rt).iter().any(|text| text == "voinc dictation toggle"));
++    assert!(
++        texts(&rt)
++            .iter()
++            .any(|text| text == "voinc dictation toggle")
++    );
+     assert!(rt.find("dictation-hotkey").is_none());
+     assert!(rt.find("paste-last-hotkey").is_none());
+ }
+diff --git a/src/rune_ui/tests/onboarding_check.rs b/src/rune_ui/tests/onboarding_check.rs
+index aefabad3..ad004b8f 100644
+--- a/src/rune_ui/tests/onboarding_check.rs
++++ b/src/rune_ui/tests/onboarding_check.rs
+@@ -374,7 +374,10 @@ fn onboarding_walkthrough() {
+     tap(&mut rt, "done");
+     assert!(texts(&rt).contains(&"Voinc is ready".to_owned()));
+     tap(&mut rt, "start-using-voinc");
+-    assert!(rt.state.tour.is_none(), "Start using Voinc closes onboarding");
++    assert!(
++        rt.state.tour.is_none(),
++        "Start using Voinc closes onboarding"
++    );
+     assert!(rt.state.first_run.is_none());
+     println!(
+         "onboarding walkthrough: Setting up Voinc -> {} downloaded ({} bytes) -> Your turn -> Voinc is ready",
+diff --git a/src/screenshots/recording.rs b/src/screenshots/recording.rs
+index 8a37a281..67b737e3 100644
+--- a/src/screenshots/recording.rs
++++ b/src/screenshots/recording.rs
+@@ -100,7 +100,8 @@ mod tests {
+         let folder =
+             std::env::temp_dir().join(format!("voinc-recording-save-{}", std::process::id()));
+         let _ = std::fs::remove_dir_all(&folder);
+-        let source = std::env::temp_dir().join(format!("voinc-recording-{}.mp4", std::process::id()));
++        let source =
++            std::env::temp_dir().join(format!("voinc-recording-{}.mp4", std::process::id()));
+         std::fs::write(&source, b"movie").unwrap();
+         let first = save(&source, &folder).unwrap();
+         let second = save(&source, &folder).unwrap();
+diff --git a/src/updater.rs b/src/updater.rs
+index d219c30e..0a4bcf3d 100644
+--- a/src/updater.rs
++++ b/src/updater.rs
+@@ -905,7 +905,8 @@ mod tests {
+     use super::*;
+ 
+     fn temporary(name: &str) -> PathBuf {
+-        let path = std::env::temp_dir().join(format!("voinc-updater-{name}-{}", std::process::id()));
++        let path =
++            std::env::temp_dir().join(format!("voinc-updater-{name}-{}", std::process::id()));
+         let _ = std::fs::remove_dir_all(&path);
+         std::fs::create_dir_all(&path).unwrap();
+         path
+diff --git a/src/updater/legacy.rs b/src/updater/legacy.rs
+index 198f4068..d5f44f16 100644
+--- a/src/updater/legacy.rs
++++ b/src/updater/legacy.rs
+@@ -528,7 +528,10 @@ mod tests {
+         );
+ 
+         assert!(result.is_err());
+-        assert_eq!(fs::read_to_string(&unit).unwrap(), "# X-VOINC-Managed=true\n");
++        assert_eq!(
++            fs::read_to_string(&unit).unwrap(),
++            "# X-VOINC-Managed=true\n"
++        );
+         assert_eq!(
+             fs::read_link(home.join(".local/bin/voinc")).unwrap(),
+             legacy.join("current/voinc")
+diff --git a/src/updater/linux.rs b/src/updater/linux.rs
+index 05cfb5d5..40a079a1 100644
+--- a/src/updater/linux.rs
++++ b/src/updater/linux.rs
+@@ -297,7 +297,8 @@ mod tests {
+ 
+     #[test]
+     fn activation_switches_current_without_removing_the_old_version() {
+-        let root = std::env::temp_dir().join(format!("voinc-linux-activate-{}", std::process::id()));
++        let root =
++            std::env::temp_dir().join(format!("voinc-linux-activate-{}", std::process::id()));
+         let _ = fs::remove_dir_all(&root);
+         fs::create_dir_all(root.join("versions/1.0.0")).unwrap();
+         fs::write(root.join("versions/1.0.0/voinc"), b"old").unwrap();
+diff --git a/src/updater/macos.rs b/src/updater/macos.rs
+index 7f6ea51f..ab8c7380 100644
+--- a/src/updater/macos.rs
++++ b/src/updater/macos.rs
+@@ -122,7 +122,8 @@ fn remove_staging(parent: &Path) {
+ }
+ 
+ pub fn stage(archive: &Path, version: &str) -> Result<Staged> {
+-    let installed = installed_bundle().ok_or_else(|| eyre!("Voinc is not running from Voinc.app"))?;
++    let installed =
++        installed_bundle().ok_or_else(|| eyre!("Voinc is not running from Voinc.app"))?;
+     let parent = installed
+         .parent()
+         .ok_or_else(|| eyre!("Voinc.app has no parent folder"))?;
+diff --git a/src/updater/transport.rs b/src/updater/transport.rs
+index 45bb7ccf..ef2e095b 100644
+--- a/src/updater/transport.rs
++++ b/src/updater/transport.rs
+@@ -190,7 +190,10 @@ mod tests {
+ 
+     #[test]
+     fn requests_name_the_app_channel_and_version() {
+-        assert_eq!(user_agent("dev", "0.0.0-dev-171"), "voinc/dev/0.0.0-dev-171");
++        assert_eq!(
++            user_agent("dev", "0.0.0-dev-171"),
++            "voinc/dev/0.0.0-dev-171"
++        );
+         assert_eq!(user_agent("stable", "2.3.1"), "voinc/stable/2.3.1");
+     }
+ 
+diff --git a/src/updater/windows.rs b/src/updater/windows.rs
+index ee8ffa2e..471ca66b 100644
+--- a/src/updater/windows.rs
++++ b/src/updater/windows.rs
+@@ -704,7 +704,10 @@ mod tests {
+     #[test]
+     fn path_entries_match_without_case_or_a_trailing_backslash() {
+         let path = r"C:\Windows;C:\Users\Jo\AppData\Roaming\voinc\bin\;D:\tools";
+-        assert!(path_contains(path, r"c:\users\jo\appdata\roaming\VOINC\bin"));
++        assert!(path_contains(
++            path,
++            r"c:\users\jo\appdata\roaming\VOINC\bin"
++        ));
+         assert!(!path_contains(path, r"C:\Users\Jo\AppData\Roaming\voinc"));
+         assert!(!path_contains("", r"C:\voinc\bin"));
+     }
+diff --git a/src/windows/app.rs b/src/windows/app.rs
+index 0b7ff015..471344e4 100644
+--- a/src/windows/app.rs
++++ b/src/windows/app.rs
+@@ -328,7 +328,10 @@ impl WindowsDesktopHost {
+             | DesktopAction::ConfirmUpdateSwitch
+             | DesktopAction::WindowFocused => {
+                 if let Err(error) = self.updater.act(&action) {
+-                    self.error = Some(tr_fill("Could not restart Voinc: {}", &format!("{error:#}")));
++                    self.error = Some(tr_fill(
++                        "Could not restart Voinc: {}",
++                        &format!("{error:#}"),
++                    ));
+                 }
+             }
+             // Windows saves shortcuts from the window.
+@@ -654,7 +657,10 @@ impl WindowsDesktopHost {
+                 true
+             }
+             Some(Err(error)) => {
+-                self.error = Some(tr_fill("Could not restart Voinc: {}", &format!("{error:#}")));
++                self.error = Some(tr_fill(
++                    "Could not restart Voinc: {}",
++                    &format!("{error:#}"),
++                ));
+                 false
+             }
+             None => false,
+diff --git a/src/windows/login_item.rs b/src/windows/login_item.rs
+index 36cc01b3..90e60b3c 100644
+--- a/src/windows/login_item.rs
++++ b/src/windows/login_item.rs
+@@ -26,7 +26,8 @@ pub fn is_enabled() -> Result<bool> {
+ /// Register or unregister the current executable for the current Windows user.
+ pub fn set_enabled(enabled: bool) -> Result<()> {
+     if enabled {
+-        let executable = std::env::current_exe().wrap_err("could not locate the Voinc executable")?;
++        let executable =
++            std::env::current_exe().wrap_err("could not locate the Voinc executable")?;
+         write_startup_command(&executable, "could not register Voinc to launch at login")?;
+     } else {
+         let current_user = RegKey::predef(HKEY_CURRENT_USER);
+@@ -53,7 +54,10 @@ pub fn repoint(executable: &Path) -> Result<()> {
+     if !is_enabled()? {
+         return Ok(());
+     }
+-    write_startup_command(executable, "could not repoint the Voinc startup registration")
++    write_startup_command(
++        executable,
++        "could not repoint the Voinc startup registration",
++    )
+ }
+ 
+ /// Points Launch at login at this Voinc when it starts another version of the
+@@ -153,7 +157,8 @@ mod tests {
+     fn a_manual_upgrade_moves_launch_at_login_to_the_current_version() {
+         let support = Path::new(r"C:\Users\Jürgen\AppData\Roaming\voinc");
+         let running = support.join(r"versions\3.4.0\voinc.exe");
+-        let old = r#""C:\Users\Jürgen\AppData\Roaming\voinc\versions\3.3.0\voinc.exe" app --hidden"#;
++        let old =
++            r#""C:\Users\Jürgen\AppData\Roaming\voinc\versions\3.3.0\voinc.exe" app --hidden"#;
+         let moves = |command: &str, executable: &Path, current: Option<&str>| {
+             starts_another_version(command, executable, support, current)
+         };
+diff --git a/tests/meetings_mcp.rs b/tests/meetings_mcp.rs
+index defab2e3..c8d1f32d 100644
+--- a/tests/meetings_mcp.rs
++++ b/tests/meetings_mcp.rs
+@@ -59,7 +59,10 @@ fn mcp_server_initializes_lists_tools_and_answers_calls_over_stdio() {
+         }}),
+     );
+     let initialized = receive(1);
+-    assert_eq!(initialized["result"]["serverInfo"]["name"], "voinc-meetings");
++    assert_eq!(
++        initialized["result"]["serverInfo"]["name"],
++        "voinc-meetings"
++    );
+     assert!(initialized["result"]["capabilities"]["tools"].is_object());
+     send(json!({"jsonrpc": "2.0", "method": "notifications/initialized"}));
+ 

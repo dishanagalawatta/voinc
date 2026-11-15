@@ -365,8 +365,9 @@ pub(crate) fn route_shortcut(
     route: Option<&ShortcutRoute>,
     command: ShortcutCommand,
 ) -> Result<()> {
-    let route = route
-        .ok_or_else(|| eyre!("Voinc is not listening; enable it in Settings or run `voinc start`"))?;
+    let route = route.ok_or_else(|| {
+        eyre!("Voinc is not listening; enable it in Settings or run `voinc start`")
+    })?;
     route
         .commands
         .try_send(command.into())
@@ -1043,7 +1044,9 @@ pub(crate) fn launch(activation: &Activation, show: bool) -> Result<Launch> {
             restart()?;
         }
         Ok(_) => {
-            bail!("Voinc is running in another desktop session; run `voinc quit`, then launch it again")
+            bail!(
+                "Voinc is running in another desktop session; run `voinc quit`, then launch it again"
+            )
         }
         Err(RequestError::Outdated) if supervised() => restart()?,
         Err(RequestError::NotRunning) if supervised() => {
@@ -1280,7 +1283,10 @@ mod tests {
             Some(data)
         ));
         assert!(!default_root(Path::new("/tmp/voinc-test"), Some(data)));
-        assert!(!default_root(Path::new("/home/kit/.local/share/voinc"), None));
+        assert!(!default_root(
+            Path::new("/home/kit/.local/share/voinc"),
+            None
+        ));
     }
 
     #[test]
