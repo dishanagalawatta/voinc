@@ -217,18 +217,21 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..8eb41bc0
+index 00000000..d1c90511
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,145 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
 +Google's Gemini speech models in the cloud, using the person's own Gemini API
 +key. It is a runtime beside the local GGUF models and Apple Speech, not a
 +download: the picker offers **Google Transcribe (Gemini)** while the toggle is
-+on and a key answers, and a saved choice of it stays saved while it can't run,
-+with the listener running its usual fallback (`custom_models::runnable`).
++on and a key answers, and a saved choice of it stays saved while it can't run.
++While Voinc listens, it keeps running its usual fallback
++(`custom_models::runnable`); starting from launch, a Linux pending listen
++holds at Model required and a save that makes the model installed — the key,
++its only install — starts it, since Google Transcribe never prepares.
 +**Your audio goes to Google.** The Labs card's description and the picker row
 +say so.
 +
@@ -348,8 +351,16 @@ index 00000000..8eb41bc0
 +[gemini.rs](../../src/transcription/gemini.rs) holds the Skip live streaming
 +gate, and `google_transcribe_batch_only_round_trips` in
 +[app_settings.rs](../../src/app_settings.rs) its setting.
++`a_saved_gemini_choice_waits_pending_until_its_key_arrives` in
++[linux/app.rs](../../src/linux/app.rs) holds the launch gate's pending state
++and the key-as-install rule.
 +
-+Not yet observed, and not covered by any check: a real request to Google.
++Observed on a real Linux desktop (GNOME Wayland, x86_64): selecting
++`gemini_transcribe` with a key through `voinc model use` switches at once, a
++saved choice without a key survives and holds the pending listen at Model
++required, and saving the key starts the pending listener without a
++preparation. Not yet observed, and not covered by any check: a real request
++to Google.
 +The Live session's state machine (its reads between writes, tunnel
 +timeouts, and turn assembly) has no unit tests — the engine's stream rules
 +around it do. No macOS meeting with Gemini selected has been recorded, and
@@ -863,10 +874,30 @@ index e833503b..b67bb248 100644
      }
  }
 diff --git a/src/linux/app.rs b/src/linux/app.rs
-index 24aced88..677651f2 100644
+index 24aced88..dcb1db47 100644
 --- a/src/linux/app.rs
 +++ b/src/linux/app.rs
-@@ -1174,15 +1174,26 @@ impl LinuxDesktopHost {
+@@ -1020,13 +1020,17 @@ impl LinuxDesktopHost {
+         {
+             self.supersede_automatic();
+         }
+-        let was_valid = self.settings_valid;
+         self.settings = settings;
+         self.settings_valid = true;
+         self.apply_output_settings();
+         if let Some(listener) = &self.listener {
+             listener.update(ListenerUpdate::Settings(Box::new(self.settings.clone())));
+-        } else if self.listen_when_ready && !was_valid {
++        } else if self.listen_when_ready {
++            // A pending listen retries with the new settings: a saved model
++            // that couldn't run — Google Transcribe without its key yet, a
++            // custom file gone missing — runs as soon as a save makes it
++            // installed. Google Transcribe never prepares, so its key save
++            // is the only thing that can start it.
+             self.start();
+         }
+     }
+@@ -1174,15 +1178,26 @@ impl LinuxDesktopHost {
          let worker_stage = stage.clone();
          let worker = std::thread::spawn(move || {
              (|| {
@@ -902,6 +933,45 @@ index 24aced88..677651f2 100644
                  }
                  if worker_canceled.load(Ordering::Relaxed) {
                      return Err(color_eyre::eyre::eyre!("model activation canceled"));
+@@ -1632,6 +1647,38 @@ mod tests {
+         assert!(!host.is_running());
+     }
+ 
++    /// A saved Google Transcribe waits pending like any model: with no key
++    /// yet the listener holds at Model required, and the key — never a
++    /// download — is what makes the model installed. The pending listen
++    /// retries with new settings, so saving the key starts it (observed
++    /// live; a start past this gate opens the real listener, which no unit
++    /// test may do).
++    #[test]
++    fn a_saved_gemini_choice_waits_pending_until_its_key_arrives() {
++        let mut settings = host_for_edit(false).settings.clone();
++        settings.transcription = crate::transcription::models::TranscriptionSelection {
++            model: TranscriptionModelId::GeminiTranscribe,
++            language: "en".into(),
++        };
++        crate::transcription::gemini::set_api_key(None);
++        let mut host = test_host(crate::app_settings::LaunchLoad {
++            settings,
++            note: None,
++        });
++        host.start();
++        assert!(host.listen_when_ready);
++        assert_eq!(host.status, "Model required");
++        assert!(!host.is_running());
++        // The key is the install: with it saved, the model answers installed
++        // and the pending listen may start.
++        crate::transcription::gemini::set_api_key(Some("test-key".into()));
++        let gemini =
++            crate::transcription::models::definition(TranscriptionModelId::GeminiTranscribe);
++        assert!(crate::transcription::models::is_installed(gemini, "en"));
++        crate::transcription::gemini::set_api_key(None);
++        assert!(!crate::transcription::models::is_installed(gemini, "en"));
++    }
++
+     #[test]
+     fn malformed_settings_cannot_start_even_after_dismissing_the_error() {
+         let mut host = test_host(
 diff --git a/src/local_api.rs b/src/local_api.rs
 index 85b45d5b..abd2b2be 100644
 --- a/src/local_api.rs

@@ -1020,13 +1020,17 @@ impl LinuxDesktopHost {
         {
             self.supersede_automatic();
         }
-        let was_valid = self.settings_valid;
         self.settings = settings;
         self.settings_valid = true;
         self.apply_output_settings();
         if let Some(listener) = &self.listener {
             listener.update(ListenerUpdate::Settings(Box::new(self.settings.clone())));
-        } else if self.listen_when_ready && !was_valid {
+        } else if self.listen_when_ready {
+            // A pending listen retries with the new settings: a saved model
+            // that couldn't run — Google Transcribe without its key yet, a
+            // custom file gone missing — runs as soon as a save makes it
+            // installed. Google Transcribe never prepares, so its key save
+            // is the only thing that can start it.
             self.start();
         }
     }
@@ -1641,6 +1645,38 @@ mod tests {
         assert!(host.listen_when_ready);
         assert_eq!(host.status, "Model required");
         assert!(!host.is_running());
+    }
+
+    /// A saved Google Transcribe waits pending like any model: with no key
+    /// yet the listener holds at Model required, and the key — never a
+    /// download — is what makes the model installed. The pending listen
+    /// retries with new settings, so saving the key starts it (observed
+    /// live; a start past this gate opens the real listener, which no unit
+    /// test may do).
+    #[test]
+    fn a_saved_gemini_choice_waits_pending_until_its_key_arrives() {
+        let mut settings = host_for_edit(false).settings.clone();
+        settings.transcription = crate::transcription::models::TranscriptionSelection {
+            model: TranscriptionModelId::GeminiTranscribe,
+            language: "en".into(),
+        };
+        crate::transcription::gemini::set_api_key(None);
+        let mut host = test_host(crate::app_settings::LaunchLoad {
+            settings,
+            note: None,
+        });
+        host.start();
+        assert!(host.listen_when_ready);
+        assert_eq!(host.status, "Model required");
+        assert!(!host.is_running());
+        // The key is the install: with it saved, the model answers installed
+        // and the pending listen may start.
+        crate::transcription::gemini::set_api_key(Some("test-key".into()));
+        let gemini =
+            crate::transcription::models::definition(TranscriptionModelId::GeminiTranscribe);
+        assert!(crate::transcription::models::is_installed(gemini, "en"));
+        crate::transcription::gemini::set_api_key(None);
+        assert!(!crate::transcription::models::is_installed(gemini, "en"));
     }
 
     #[test]

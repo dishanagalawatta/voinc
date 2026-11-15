@@ -4,8 +4,11 @@ Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
 Google's Gemini speech models in the cloud, using the person's own Gemini API
 key. It is a runtime beside the local GGUF models and Apple Speech, not a
 download: the picker offers **Google Transcribe (Gemini)** while the toggle is
-on and a key answers, and a saved choice of it stays saved while it can't run,
-with the listener running its usual fallback (`custom_models::runnable`).
+on and a key answers, and a saved choice of it stays saved while it can't run.
+While Voinc listens, it keeps running its usual fallback
+(`custom_models::runnable`); starting from launch, a Linux pending listen
+holds at Model required and a save that makes the model installed — the key,
+its only install — starts it, since Google Transcribe never prepares.
 **Your audio goes to Google.** The Labs card's description and the picker row
 say so.
 
@@ -125,8 +128,16 @@ and the rest of
 [gemini.rs](../../src/transcription/gemini.rs) holds the Skip live streaming
 gate, and `google_transcribe_batch_only_round_trips` in
 [app_settings.rs](../../src/app_settings.rs) its setting.
+`a_saved_gemini_choice_waits_pending_until_its_key_arrives` in
+[linux/app.rs](../../src/linux/app.rs) holds the launch gate's pending state
+and the key-as-install rule.
 
-Not yet observed, and not covered by any check: a real request to Google.
+Observed on a real Linux desktop (GNOME Wayland, x86_64): selecting
+`gemini_transcribe` with a key through `voinc model use` switches at once, a
+saved choice without a key survives and holds the pending listen at Model
+required, and saving the key starts the pending listener without a
+preparation. Not yet observed, and not covered by any check: a real request
+to Google.
 The Live session's state machine (its reads between writes, tunnel
 timeouts, and turn assembly) has no unit tests — the engine's stream rules
 around it do. No macOS meeting with Gemini selected has been recorded, and
