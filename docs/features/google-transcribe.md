@@ -15,8 +15,10 @@ say so.
 
 ```ts
 Labs > Google Transcribe (off)                       // labs.google_transcribe
-├── Toggle on -> the card shows an "API key" field (drafted while typed,
-│   saved with Apply; `google_transcribe.api_key`, or the environment's
+├── Toggle on -> the card shows an "API key" field (drafted while typed and
+│   committed once typing pauses — the shared draft save every text field
+│   uses, so the first key saves through the field and a cleared field
+│   clears it; `google_transcribe.api_key`, or the environment's
 │   VOINC_GOOGLE_API_KEY, read again at every run) and, while on, a
 │   "Skip live streaming" switch (`google_transcribe.batch_only`)
 ├── Skip live streaming (on) -> no live session at all: each dictation
@@ -142,7 +144,11 @@ gate, and `google_transcribe_batch_only_round_trips` in
 [app_settings.rs](../../src/app_settings.rs) its setting.
 `a_saved_gemini_choice_waits_pending_until_its_key_arrives` in
 [linux/app.rs](../../src/linux/app.rs) holds the launch gate's pending state
-and the key-as-install rule.
+and the key-as-install rule. `the_labs_api_key_draft_saves_and_clears` in
+[rune_ui/tests.rs](../../src/rune_ui/tests.rs) holds the card's field itself:
+seeded at the store's open (an unopened store projects nothing), a pasted
+first key commits through the shared draft save, a later open reseeds from
+the saved key, and clearing the field clears it.
 
 Observed on a real Linux desktop (GNOME Wayland, x86_64): selecting
 `gemini_transcribe` with a key through `voinc model use` switches at once, a

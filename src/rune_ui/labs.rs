@@ -213,6 +213,11 @@ pub(super) struct Store {
     /// `drafted()` never rewrites a saved key while Labs stays closed.
     pub(super) api_key: TextEdit,
     pub(super) api_key_seeded: Option<String>,
+    /// Whether the store opened at all: an unopened store projects
+    /// nothing, so another editor's draft save never touches the key.
+    /// The saved key is `None` when there is none — that must not read as
+    /// unopened, or a first key could never be saved through the field.
+    pub(super) api_key_open: bool,
 }
 
 impl Store {
@@ -223,12 +228,12 @@ impl Store {
     /// Writes the typed key into the candidate settings, once it differs
     /// from the seed the store opened with (an empty draft clears it).
     pub(super) fn project(&self, settings: &mut crate::app_settings::AppSettings) {
-        let Some(seed) = &self.api_key_seeded else {
+        if !self.api_key_open {
             return;
-        };
+        }
         let text = self.api_key.text.trim();
         let key = (!text.is_empty()).then(|| text.to_owned());
-        if *seed != text {
+        if self.api_key_seeded.as_deref() != Some(text) {
             settings.google_transcribe.api_key = key;
         }
     }
@@ -236,9 +241,10 @@ impl Store {
     /// Re-seeds the API-key draft from the saved settings: the Labs page's
     /// single entry point runs it, so a save elsewhere (CLI, older store)
     /// is picked up on the next open.
-    fn seed_api_key(&mut self, settings: &crate::app_settings::AppSettings) {
+    pub(super) fn seed_api_key(&mut self, settings: &crate::app_settings::AppSettings) {
         self.api_key_seeded = settings.google_transcribe.api_key.clone();
         self.api_key = TextEdit::new(self.api_key_seeded.clone().unwrap_or_default());
+        self.api_key_open = true;
     }
 }
 

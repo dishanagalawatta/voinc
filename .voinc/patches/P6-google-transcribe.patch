@@ -217,10 +217,10 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..f3169ab6
+index 00000000..2af5153c
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,163 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
@@ -238,8 +238,10 @@ index 00000000..f3169ab6
 +
 +```ts
 +Labs > Google Transcribe (off)                       // labs.google_transcribe
-+├── Toggle on -> the card shows an "API key" field (drafted while typed,
-+│   saved with Apply; `google_transcribe.api_key`, or the environment's
++├── Toggle on -> the card shows an "API key" field (drafted while typed and
++│   committed once typing pauses — the shared draft save every text field
++│   uses, so the first key saves through the field and a cleared field
++│   clears it; `google_transcribe.api_key`, or the environment's
 +│   VOINC_GOOGLE_API_KEY, read again at every run) and, while on, a
 +│   "Skip live streaming" switch (`google_transcribe.batch_only`)
 +├── Skip live streaming (on) -> no live session at all: each dictation
@@ -365,7 +367,11 @@ index 00000000..f3169ab6
 +[app_settings.rs](../../src/app_settings.rs) its setting.
 +`a_saved_gemini_choice_waits_pending_until_its_key_arrives` in
 +[linux/app.rs](../../src/linux/app.rs) holds the launch gate's pending state
-+and the key-as-install rule.
++and the key-as-install rule. `the_labs_api_key_draft_saves_and_clears` in
++[rune_ui/tests.rs](../../src/rune_ui/tests.rs) holds the card's field itself:
++seeded at the store's open (an unopened store projects nothing), a pasted
++first key commits through the shared draft save, a later open reseeds from
++the saved key, and clearing the field clears it.
 +
 +Observed on a real Linux desktop (GNOME Wayland, x86_64): selecting
 +`gemini_transcribe` with a key through `voinc model use` switches at once, a
@@ -1148,7 +1154,7 @@ index ffed7758..d58ec70c 100644
      let description_text = description.as_ref().map(|(text, _)| text.clone());
      rows.push_described(
 diff --git a/src/rune_ui/labs.rs b/src/rune_ui/labs.rs
-index 6307e29c..c273d104 100644
+index 6307e29c..e82dedcc 100644
 --- a/src/rune_ui/labs.rs
 +++ b/src/rune_ui/labs.rs
 @@ -11,7 +11,8 @@ mod group;
@@ -1161,7 +1167,7 @@ index 6307e29c..c273d104 100644
  
  pub(super) use self::store::{page, search_field, tabs};
  use super::controls::{self, Paint};
-@@ -199,19 +200,46 @@ pub(super) enum Tab {
+@@ -199,19 +200,52 @@ pub(super) enum Tab {
      On,
  }
  
@@ -1179,6 +1185,11 @@ index 6307e29c..c273d104 100644
 +    /// `drafted()` never rewrites a saved key while Labs stays closed.
 +    pub(super) api_key: TextEdit,
 +    pub(super) api_key_seeded: Option<String>,
++    /// Whether the store opened at all: an unopened store projects
++    /// nothing, so another editor's draft save never touches the key.
++    /// The saved key is `None` when there is none — that must not read as
++    /// unopened, or a first key could never be saved through the field.
++    pub(super) api_key_open: bool,
  }
  
  impl Store {
@@ -1189,12 +1200,12 @@ index 6307e29c..c273d104 100644
 +    /// Writes the typed key into the candidate settings, once it differs
 +    /// from the seed the store opened with (an empty draft clears it).
 +    pub(super) fn project(&self, settings: &mut crate::app_settings::AppSettings) {
-+        let Some(seed) = &self.api_key_seeded else {
++        if !self.api_key_open {
 +            return;
-+        };
++        }
 +        let text = self.api_key.text.trim();
 +        let key = (!text.is_empty()).then(|| text.to_owned());
-+        if *seed != text {
++        if self.api_key_seeded.as_deref() != Some(text) {
 +            settings.google_transcribe.api_key = key;
 +        }
 +    }
@@ -1202,14 +1213,15 @@ index 6307e29c..c273d104 100644
 +    /// Re-seeds the API-key draft from the saved settings: the Labs page's
 +    /// single entry point runs it, so a save elsewhere (CLI, older store)
 +    /// is picked up on the next open.
-+    fn seed_api_key(&mut self, settings: &crate::app_settings::AppSettings) {
++    pub(super) fn seed_api_key(&mut self, settings: &crate::app_settings::AppSettings) {
 +        self.api_key_seeded = settings.google_transcribe.api_key.clone();
 +        self.api_key = TextEdit::new(self.api_key_seeded.clone().unwrap_or_default());
++        self.api_key_open = true;
 +    }
  }
  
  /// What a `voinc://labs` link asks the store to show.
-@@ -269,6 +297,7 @@ fn open(ui: &mut Ui, tx: &mut Tx) {
+@@ -269,6 +303,7 @@ fn open(ui: &mut Ui, tx: &mut Tx) {
      ui.select_pane(Pane::General, tx);
      ui.labs_open = true;
      ui.lab_store = Store::default();
@@ -1217,7 +1229,7 @@ index 6307e29c..c273d104 100644
      tx.settle();
  }
  
-@@ -792,6 +821,12 @@ fn rows(ui: &Ui) -> Vec<Row> {
+@@ -792,6 +827,12 @@ fn rows(ui: &Ui) -> Vec<Row> {
          tr("Timestamps in API transcripts"),
          tr("Apps can ask Voinc's local API for each segment's or word's start and end times."),
      ));
@@ -1230,7 +1242,7 @@ index 6307e29c..c273d104 100644
      rows.push(row(
          Feature::SpeakersOnly,
          None,
-@@ -917,6 +952,7 @@ fn row_key(lab: Lab) -> &'static str {
+@@ -917,6 +958,7 @@ fn row_key(lab: Lab) -> &'static str {
          Feature::RecentDictations => "lab-recent-dictations",
          Feature::SkipPauses => "lab-skip-pauses",
          Feature::StopWhenCallEnds => "lab-stop-when-call-ends",
@@ -1238,7 +1250,7 @@ index 6307e29c..c273d104 100644
          Feature::OutputFixes => "lab-output-fixes",
          Feature::PickerActiveFirst => "lab-picker-active-first",
          Feature::ModelInPlace => "lab-model-in-place",
-@@ -997,6 +1033,19 @@ fn flip(ui: &mut Ui, lab: Lab) {
+@@ -997,6 +1039,19 @@ fn flip(ui: &mut Ui, lab: Lab) {
  /// A lab's own settings, on its card while it's on: how long the model sits
  /// unused before it unloads, or the screenshot shortcut and folder.
  fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
@@ -1258,7 +1270,7 @@ index 6307e29c..c273d104 100644
      if !entry.on {
          return None;
      }
-@@ -1053,6 +1102,61 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
+@@ -1053,6 +1108,61 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
      }
  }
  
@@ -10363,10 +10375,46 @@ literal 0
 HcmV?d00001
 
 diff --git a/src/rune_ui/tests.rs b/src/rune_ui/tests.rs
-index 7454ecb6..2eac0e17 100644
+index 7454ecb6..97b8de02 100644
 --- a/src/rune_ui/tests.rs
 +++ b/src/rune_ui/tests.rs
-@@ -2930,6 +2930,9 @@ fn goldens() {
+@@ -834,6 +834,35 @@ fn a_draft_keeps_only_its_own_editor() {
+     );
+ }
+ 
++/// The Labs card's API-key field saves its pasted key through the same
++/// draft mechanism: seeded at the store's open, committed once typing
++/// pauses, and a clear (an empty field over a saved key) clears it.
++#[test]
++fn the_labs_api_key_draft_saves_and_clears() {
++    let mut ui = portal_fixture();
++    ui.lab_store.seed_api_key(&ui.settings);
++    assert!(ui.lab_store.api_key_seeded.is_none());
++    // The paste arrives.
++    ui.lab_store.api_key = TextEdit::new("test-key-for-draft");
++    let start = std::time::Instant::now();
++    assert!(!ui.save_drafts(start), "waits for a pause");
++    assert!(ui.save_drafts(start + DRAFT_DELAY));
++    assert_eq!(
++        ui.settings.google_transcribe.api_key.as_deref(),
++        Some("test-key-for-draft")
++    );
++    // A later open reseeds the field from the saved key.
++    ui.lab_store = crate::rune_ui::labs::Store::default();
++    ui.lab_store.seed_api_key(&ui.settings);
++    assert_eq!(ui.lab_store.api_key.text, "test-key-for-draft");
++    // Clearing the field clears the key.
++    ui.lab_store.api_key = TextEdit::new("");
++    let start = std::time::Instant::now();
++    assert!(!ui.save_drafts(start), "waits for a pause");
++    assert!(ui.save_drafts(start + DRAFT_DELAY));
++    assert_eq!(ui.settings.google_transcribe.api_key, None);
++}
++
+ fn settle(rt: &mut Runtime<Ui>) {
+     for _ in 0..60 {
+         rt.frame(1.0 / 60.0);
+@@ -2930,6 +2959,9 @@ fn goldens() {
      check_golden("output-trust", false, PANE_SIZE);
      check_golden("picker-custom-models", false, PANE_SIZE);
      check_golden("picker-found", false, PANE_SIZE);

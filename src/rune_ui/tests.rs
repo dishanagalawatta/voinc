@@ -838,6 +838,35 @@ fn a_draft_keeps_only_its_own_editor() {
     );
 }
 
+/// The Labs card's API-key field saves its pasted key through the same
+/// draft mechanism: seeded at the store's open, committed once typing
+/// pauses, and a clear (an empty field over a saved key) clears it.
+#[test]
+fn the_labs_api_key_draft_saves_and_clears() {
+    let mut ui = portal_fixture();
+    ui.lab_store.seed_api_key(&ui.settings);
+    assert!(ui.lab_store.api_key_seeded.is_none());
+    // The paste arrives.
+    ui.lab_store.api_key = TextEdit::new("test-key-for-draft");
+    let start = std::time::Instant::now();
+    assert!(!ui.save_drafts(start), "waits for a pause");
+    assert!(ui.save_drafts(start + DRAFT_DELAY));
+    assert_eq!(
+        ui.settings.google_transcribe.api_key.as_deref(),
+        Some("test-key-for-draft")
+    );
+    // A later open reseeds the field from the saved key.
+    ui.lab_store = crate::rune_ui::labs::Store::default();
+    ui.lab_store.seed_api_key(&ui.settings);
+    assert_eq!(ui.lab_store.api_key.text, "test-key-for-draft");
+    // Clearing the field clears the key.
+    ui.lab_store.api_key = TextEdit::new("");
+    let start = std::time::Instant::now();
+    assert!(!ui.save_drafts(start), "waits for a pause");
+    assert!(ui.save_drafts(start + DRAFT_DELAY));
+    assert_eq!(ui.settings.google_transcribe.api_key, None);
+}
+
 fn settle(rt: &mut Runtime<Ui>) {
     for _ in 0..60 {
         rt.frame(1.0 / 60.0);
