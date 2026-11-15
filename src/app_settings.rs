@@ -134,6 +134,17 @@ pub fn env_hex_experimental_mic() -> bool {
         .is_some_and(|v| matches!(v.trim(), "1" | "true" | "TRUE" | "yes"))
 }
 
+/// Google Transcribe's settings: the person's Gemini API key, held for
+/// [`crate::transcription::gemini`] to read at each request. Kept outside
+/// `labs` so the key is not a switch.
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(default)]
+pub struct GoogleTranscribeSettings {
+    /// The key saved in Settings › Labs; `None` asks `VOINC_GOOGLE_API_KEY`
+    /// first and otherwise leaves Google Transcribe unavailable.
+    pub api_key: Option<String>,
+}
+
 /// Where Linux and Windows run the speech model (#856): Auto picks a GPU
 /// unless it failed before under its current driver, then the CPU.
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -322,6 +333,8 @@ pub struct AppSettings {
     pub capture_from_other_build: Option<serde_json::Value>,
     #[serde(default)]
     pub experimental: ExperimentalSettings,
+    /// Google Transcribe's API key (`crate::transcription::gemini`).
+    pub google_transcribe: GoogleTranscribeSettings,
     /// The Labs features' own switches (`crate::labs`).
     pub labs: LabsSettings,
     /// Labs › Screenshots' shortcut and folder (macOS).
@@ -452,6 +465,7 @@ impl Default for AppSettings {
             #[cfg(not(hex_capture))]
             capture_from_other_build: None,
             experimental: ExperimentalSettings::default(),
+            google_transcribe: GoogleTranscribeSettings::default(),
             labs: LabsSettings::default(),
             screenshots: ScreenshotSettings::default(),
             enable_on_launch: true,
@@ -502,6 +516,9 @@ impl KeyboardModelChoice {
         let model = crate::transcription::models::validate(&selection)?;
         match model.runtime {
             crate::transcription::models::ModelRuntime::Gguf(_) => Ok(()),
+            // Google Transcribe takes the language hint from the keyboard
+            // language like any other.
+            crate::transcription::models::ModelRuntime::Gemini => Ok(()),
             crate::transcription::models::ModelRuntime::AppleSpeech => {
                 Err(eyre!("{} can't be switched to by input source", model.name))
             }
@@ -779,6 +796,8 @@ impl AppSettings {
             Ordering::Release,
         );
         crate::labs::apply(&self.labs);
+        // set_api_key trims and drops an empty key itself.
+        crate::transcription::gemini::set_api_key(self.google_transcribe.api_key.clone());
         screenshots::apply_screenshots(self);
         #[cfg(hex_capture)]
         {

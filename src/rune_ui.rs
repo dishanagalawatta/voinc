@@ -884,6 +884,7 @@ impl Ui {
     fn drafted(&self) -> AppSettings {
         let mut candidate = self.settings.clone();
         self.modes.project(&mut candidate);
+        self.lab_store.project(&mut candidate);
         candidate.vocabulary = self.vocabulary.project();
         candidate
     }

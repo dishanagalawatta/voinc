@@ -1,29 +1,8 @@
 use super::*;
 
-/// Feeds whatever part of the clip the stream has not seen, then finalizes.
-/// The clip is authoritative: a stream fed well past its trimmed end, or one
-/// that produced nothing, is reported unusable so the caller falls back.
-/// The live stream as the worker drives it.
-pub(super) trait StreamFeed {
-    fn feed(&mut self, samples: &[f32]) -> Result<(), String>;
-    fn finalize(&mut self) -> Result<String, String>;
-    fn partial(&self) -> Partial;
-    /// Where the stream's text starts in the audio it heard, in milliseconds,
-    /// once it has finalized; `None` when the model gives no timing.
-    fn text_start_ms(&self) -> Option<u64> {
-        None
-    }
-    /// Where the stream's text ends in the audio it heard, in milliseconds,
-    /// once it has finalized; `None` when the model gives no timing.
-    fn text_end_ms(&self) -> Option<u64> {
-        None
-    }
-    /// The distinct language tags the model's raw decode carries, in order of
-    /// first appearance, once it has finalized; empty when it emits none.
-    fn language_tags(&self) -> Vec<String> {
-        Vec::new()
-    }
-}
+/// The live stream as the worker drives it. The GGUF stream implements the
+/// engine's one seam ([`crate::transcription::stream_feed::StreamFeed`]).
+use crate::transcription::stream_feed::StreamFeed;
 
 impl StreamFeed for transcribe_cpp::Stream<'_> {
     fn feed(&mut self, samples: &[f32]) -> Result<(), String> {
@@ -176,8 +155,8 @@ pub(super) const UNTRANSCRIBED_SPEECH_SAMPLES: usize = 4_800;
 /// speech well past its end means it dropped a phrase (#1101), and the whole
 /// clip decides. A raw decode carrying two different language tags means it
 /// changed language mid-clip, so the whole clip decides too.
-pub(super) struct PauseCap<'a, S> {
-    stream: &'a mut S,
+pub(super) struct PauseCap<'a> {
+    stream: &'a mut dyn StreamFeed,
     speech: crate::transcription::pause_segmenter::SpeechFrames,
     /// Samples not yet a whole 20 ms frame.
     frame: Vec<f32>,
@@ -196,8 +175,8 @@ pub(super) struct PauseCap<'a, S> {
     trailing_silence: usize,
 }
 
-impl<'a, S: StreamFeed> PauseCap<'a, S> {
-    pub(super) fn new(stream: &'a mut S, trailing_silence: usize) -> Self {
+impl<'a> PauseCap<'a> {
+    pub(super) fn new(stream: &'a mut dyn StreamFeed, trailing_silence: usize) -> Self {
         Self {
             stream,
             speech: Default::default(),
@@ -239,7 +218,7 @@ impl<'a, S: StreamFeed> PauseCap<'a, S> {
     }
 }
 
-impl<S: StreamFeed> StreamFeed for PauseCap<'_, S> {
+impl StreamFeed for PauseCap<'_> {
     fn feed(&mut self, mut samples: &[f32]) -> Result<(), String> {
         let mut out = Vec::with_capacity(samples.len() + self.tail.len());
         while !samples.is_empty() {
@@ -405,7 +384,7 @@ pub(super) struct FeedStats {
 /// command interrupts the stream.
 pub(super) fn drive_stream(
     id: u64,
-    stream: &mut impl StreamFeed,
+    stream: &mut dyn StreamFeed,
     commands: &Receiver<Command>,
     stalled: &AtomicBool,
     partials: Option<&Partials>,
@@ -486,7 +465,7 @@ pub(super) fn drive_stream(
 /// begin or finish, model work, shutdown) closes it and is returned.
 pub(super) fn drive_yielding(
     id: u64,
-    stream: &mut impl StreamFeed,
+    stream: &mut dyn StreamFeed,
     commands: &Receiver<Command>,
     yielding: &Yielding,
     deferred: &mut VecDeque<Command>,
@@ -528,7 +507,7 @@ pub(super) fn drive_yielding(
 }
 
 pub(super) fn finish_stream(
-    stream: &mut impl StreamFeed,
+    stream: &mut dyn StreamFeed,
     clip: &[f32],
     fed: usize,
 ) -> Result<String, String> {

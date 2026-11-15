@@ -118,7 +118,8 @@ impl Feature {
             | Self::ModelInPlace
             | Self::PickerDownloaded
             | Self::ParakeetUltra
-            | Self::TranscribeFiles => Group::Models,
+            | Self::TranscribeFiles
+            | Self::GoogleTranscribe => Group::Models,
         }
     }
 }

@@ -197,20 +197,37 @@ pub fn entries() -> Vec<VocabularyEntry> {
         .clone()
 }
 
-/// The terms and options a Parakeet run biases its transcript with, read
-/// at the start of each run and live stream so settings changes apply to the
-/// next one. `None` while the list is empty or the boost is off.
-pub(crate) fn transcription_bias()
--> Option<(Vec<String>, transcribe_cpp::ParakeetVocabularyOptions)> {
+/// Labs › Vocabulary biasing, with a boost the person turned off respected:
+/// `Some` with the boost while transcription may take the list at all.
+fn biasing() -> Option<VocabularyBoost> {
     // Labs › Vocabulary biasing: transcription takes the list only while on.
     if !crate::labs::vocabulary_biasing() {
         return None;
     }
     let boost = VocabularyBoost::from_index(BOOST.load(Ordering::Relaxed));
-    if boost == VocabularyBoost::Off {
-        return None;
-    }
-    bias_for(&transcription_entries(), boost)
+    (boost != VocabularyBoost::Off).then_some(boost)
+}
+
+/// The terms and options a Parakeet run biases its transcript with, read
+/// at the start of each run and live stream so settings changes apply to the
+/// next one. `None` while the list is empty or the boost is off.
+pub(crate) fn transcription_bias()
+-> Option<(Vec<String>, transcribe_cpp::ParakeetVocabularyOptions)> {
+    biasing().and_then(|boost| bias_for(&transcription_entries(), boost))
+}
+
+/// The terms a bias-reading cloud runtime sends as its custom vocabulary,
+/// read at the start of each run so settings changes apply to the next one.
+/// Empty under the same gate [`transcription_bias`] keeps for Parakeet.
+pub(crate) fn transcription_terms() -> Vec<String> {
+    biasing()
+        .map(|_| {
+            transcription_entries()
+                .into_iter()
+                .map(|entry| entry.term)
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 fn bias_for(
@@ -692,7 +709,8 @@ mod tests {
 
     #[test]
     fn saved_entries_read_without_loading_settings() {
-        let directory = std::env::temp_dir().join(format!("voinc-vocabulary-{}", std::process::id()));
+        let directory =
+            std::env::temp_dir().join(format!("voinc-vocabulary-{}", std::process::id()));
         std::fs::create_dir_all(&directory).unwrap();
         let path = directory.join("settings.json");
         assert_eq!(read_from(&path).unwrap(), []);

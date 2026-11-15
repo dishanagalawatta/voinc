@@ -70,6 +70,7 @@ Feature             Pane  Toggle (settings.json, voinc settings)   On: what it d
 ├── Sort and filter models no labs.picker_sort_filter   the Local transcription picker sorts by recommendation, size, or name and can show only models for the saved language (#645)
 ├── Benchmark details no  labs.benchmark_details        picker rows show raw WER/CER (lower is better), language, dataset, source, and conditions; incomparable "Most accurate" badges drop (#647)
 ├── Parakeet Ultra  no    labs.parakeet_ultra          the picker offers Moondream's Parakeet Ultra (pinned Q8_0, CC BY 4.0) with a details view; stays on while it dictates (#648)
+├── Google Transcribe no labs.google_transcribe + google_transcribe.api_key   the picker offers Google's cloud transcription with the person's Gemini API key; your audio goes to Google (google-transcribe.md)
 ├── Special keys alone no labs.standalone_special_keys (Linux, Windows) Linux: Menu, Pause, Scroll Lock may be a shortcut's key, alone or with modifiers (#767); Windows: Insert, Home, End, Page Up, Page Down may stand alone (#794)
 ├── Section key alone no  labs.section_key_alone       (Linux) the § key, left of 1 on ISO keyboards, may be a shortcut with no modifier (#1050)
 ├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; voinc history stats prints it (#790)
@@ -2763,6 +2764,27 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
 [labs.rs](../../src/labs.rs). Not yet observed: a real Mac with wired and
 Bluetooth headphones and the lab on, and the Linux and Windows backends on a
 real desktop.
+
+- Google Transcribe: Google's Gemini speech models in the cloud, behind the
+  person's Gemini API key (every OS; see
+  [Google Transcribe](google-transcribe.md)). Its toggle is
+  `labs.google_transcribe` (off by default, applied at once) and the key is
+  `google_transcribe.api_key` or the environment's `VOINC_GOOGLE_API_KEY`.
+  The gate, `labs::google_transcribe()` plus the key
+  (`ModelDefinition::available`), is where the work starts: with either
+  missing the picker doesn't offer it and a saved choice of it runs the usual
+  fallback. Dictation rides one Gemini Live WebSocket per capture through the
+  engine's stream machinery, so every stream rule is the GGUF streams' —
+  deadlines, nothing pasting before the final text, falling back to the whole
+  clip — and every batch need (fallback whole clips, meeting chunks,
+  `voinc transcribe` files) is one REST call with `store: false`; a clip
+  longer than 30 minutes is split client-side because Google truncates past
+  it silently while still reporting completed. The saved vocabulary rides as
+  `customVocabulary` only while Labs › Vocabulary biasing is on
+  (`vocabulary::transcription_terms`). Checks: the fixture-JSON tests named
+  in [google-transcribe.md](google-transcribe.md); no request to Google has
+  ever been made, the Live session's own state machine has no tests, and the
+  Labs page goldens show the new card.
 
 Checks: `labs_is_one_flat_list_of_toggles_off_by_default`,
 `contributed_options_are_labs_toggles_off_by_default`,

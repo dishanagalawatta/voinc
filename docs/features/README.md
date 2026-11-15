@@ -45,7 +45,10 @@ sidebar footer; its Appearance toggle (off by default) forces the main window
 light or dark instead of following the OS, while the HUD and other overlays
 keep following it; its Transcribe files toggle (off by default) adds
 `voinc transcribe <file>`, which prints a saved WAV recording's transcript from
-the selected model ([control-cli.md](control-cli.md)).
+the selected model ([control-cli.md](control-cli.md)); its Google Transcribe
+toggle (off by default) offers Google's cloud transcription behind the
+person's own Gemini API key ([Google Transcribe](google-transcribe.md)), and
+your audio goes to Google.
 General › Advanced › Interface language offers Português (Brasil), and Voinc
 uses it for any Portuguese system language (#867); it also offers Français,
 used for any French system language (#892), and Русский, used for any

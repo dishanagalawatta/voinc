@@ -65,6 +65,7 @@ rquickjs = { version = "0.14.0", default-features = false, features = ["std", "l
 rodio = { version = "0.23.0", default-features = false, features = ["playback", "mp3"] }
 rubato = "5.0.1"
 same-file = "1.0.6"
+base64 = "0.22.1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 serde_path_to_error = "0.1"
@@ -81,6 +82,12 @@ url = "2.5.8"
 # `native-tls`, not `native-tls-no-default`: ureq 3.4 checks the former's
 # name and panics on any https request without it.
 ureq = { version = "3.4.2", default-features = false, features = ["native-tls"] }
+# The Gemini Live API's WebSocket (`transcription::gemini`): TLS through the
+# same `native-tls` ureq uses, so a managed network's roots are trusted.
+tungstenite = { version = "0.28.0", default-features = false, features = ["handshake", "native-tls"] }
+# The TLS of Google's Live WebSocket, over the same roots ureq trusts; a
+# direct dependency so the session can wrap its own socket and tunnels.
+native-tls = "0.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 capture-core = { path = "crates/capture-core" }

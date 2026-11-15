@@ -1245,6 +1245,8 @@ const TRANSLATIONS: &[(&str, [&str; 6])] = &[
     ("1 in {} words wrong", ["1 na {} słów błędnie", "每 {} 个词错 1 个", "{} 語に 1 語の誤り", "1 von {} Wörtern falsch", "1 de cada {} palabras mal", "1 з {} слів хибне"]),
     ("1 in {} characters wrong", ["1 na {} znaków błędnie", "每 {} 个字错 1 个", "{} 文字に 1 文字の誤り", "1 von {} Zeichen falsch", "1 de cada {} caracteres mal", "1 з {} символів хибний"]),
     ("Managed by macOS", ["Zarządzany przez macOS", "由 macOS 管理", "macOS が管理", "Von macOS verwaltet", "Gestionado por macOS", "Керує macOS"]),
+    ("Runs in Google's cloud", ["Działa w chmurze Google", "在 Google 云端运行", "Google のクラウドで実行", "Läuft in Googles Cloud", "Funciona en la nube de Google", "Працює в хмарі Google"]),
+    ("Google's Gemini, transcribing in the cloud with your API key", ["Gemini od Google, transkrybujące w chmurze z Twoim kluczem API", "Google 的 Gemini，使用你的 API 密钥在云端转录", "Google の Gemini。API キーでクラウド上の文字起こし", "Googles Gemini, transkribiert in der Cloud mit deinem API-Schlüssel", "El Gemini de Google, transcribe en la nube con tu clave de API", "Gemini від Google, транскрибуція в хмарі з вашим ключем API"]),
     ("Downloaded", ["Pobrano", "已下载", "ダウンロード済み", "Heruntergeladen", "Descargado", "Завантажено"]),
     ("Download {}", ["Pobierz {}", "下载 {}", "{} をダウンロード", "{} herunterladen", "Descargar {}", "Завантажити {}"]),
     ("of {}", ["z {}", "共 {}", "/ {}", "von {}", "de {}", "з {}"]),

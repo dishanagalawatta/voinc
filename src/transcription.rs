@@ -11,6 +11,7 @@ pub(crate) mod cpu_floor;
 pub(crate) mod custom_models;
 pub(crate) mod engine;
 pub(crate) mod found_models;
+pub(crate) mod gemini;
 pub(crate) mod gguf_header;
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 pub(crate) mod gguf_session;
@@ -29,6 +30,7 @@ pub(crate) mod preparation;
 pub(crate) mod service;
 pub(crate) mod speech_detector;
 pub(crate) mod stream;
+pub(crate) mod stream_feed;
 pub(crate) mod subtitle_credits;
 pub(crate) mod transcript;
 
@@ -57,6 +59,7 @@ pub(crate) const UNIFIED_ENGLISH_TRAILING_SILENCE_SAMPLES: usize = 6_400;
 pub enum Transcriber {
     Gguf(Box<Parakeet>),
     AppleSpeech(AppleSpeech),
+    Gemini(gemini::Gemini),
 }
 
 #[cfg(target_os = "macos")]
@@ -78,6 +81,7 @@ impl Transcriber {
                 .map(Box::new)
                 .map(Self::Gguf),
             ModelRuntime::AppleSpeech => AppleSpeech::load(selection).map(Self::AppleSpeech),
+            ModelRuntime::Gemini => gemini::Gemini::load_selection(selection).map(Self::Gemini),
         }
     }
 
@@ -85,15 +89,18 @@ impl Transcriber {
         match self {
             Self::Gguf(model) => model.matches_selection(selection),
             Self::AppleSpeech(model) => model.matches_selection(selection),
+            Self::Gemini(model) => model.matches_selection(selection),
         }
     }
 
     /// Brings an idle GGUF model's weights back before audio arrives (see
-    /// [`Parakeet::prewarm`]). Apple Speech has no weights of Voinc's to warm.
+    /// [`Parakeet::prewarm`]). Apple Speech has no weights of Voinc's to warm,
+    /// and Google Transcribe reads its key and vocabulary afresh per request.
     pub fn prewarm(&mut self) -> Result<()> {
         match self {
             Self::Gguf(model) => model.prewarm(),
             Self::AppleSpeech(_) => Ok(()),
+            Self::Gemini(model) => model.prewarm(),
         }
     }
 
@@ -106,6 +113,8 @@ impl Transcriber {
                 model.transcribe(&samples)
             }
             Self::AppleSpeech(model) => model.transcribe(&samples).map(|result| result.text),
+            // Google hears the clip as it is: no weights to pad for.
+            Self::Gemini(model) => model.transcribe(&samples),
         }
     }
 
@@ -140,6 +149,7 @@ impl Transcriber {
                     })
             }
             Self::AppleSpeech(model) => model.transcribe(&samples),
+            Self::Gemini(model) => model.transcribe_segments(&samples),
         }
     }
 
@@ -153,6 +163,7 @@ impl Transcriber {
             }
             // Apple Speech segments the whole clip itself.
             Self::AppleSpeech(model) => model.transcribe(&samples),
+            Self::Gemini(model) => model.transcribe_timed(&samples),
         }
     }
 
@@ -162,6 +173,8 @@ impl Transcriber {
         match self {
             Self::Gguf(model) => model.timestamps(),
             Self::AppleSpeech(_) => crate::transcription::transcript::TimestampLevel::Segment,
+            // Google's batch answers word times for a timed request.
+            Self::Gemini(_) => crate::transcription::transcript::TimestampLevel::Word,
         }
     }
 }
@@ -199,10 +212,13 @@ impl WarmTranscriber {
         })
     }
 
-    /// The selection of the warm model when it is a GGUF model.
+    /// The selection of the warm model when it is one the engine can hold:
+    /// a GGUF model with weights, or Google Transcribe, which reloads for
+    /// nothing.
     pub(crate) fn gguf_selection(&self) -> Option<&TranscriptionSelection> {
         match &self.active {
             Some(Transcriber::Gguf(model)) => model.selection(),
+            Some(Transcriber::Gemini(model)) => Some(model.selection()),
             _ => None,
         }
     }
@@ -212,6 +228,7 @@ impl WarmTranscriber {
     pub(crate) fn stream_trailing_silence(&self) -> usize {
         match &self.active {
             Some(Transcriber::Gguf(model)) => trailing_silence_samples(model.model_id()),
+            Some(Transcriber::Gemini(_)) => gemini::LIVE_TRAILING_SILENCE_SAMPLES,
             _ => 0,
         }
     }
@@ -220,6 +237,7 @@ impl WarmTranscriber {
     pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
         match &self.active {
             Some(Transcriber::Gguf(model)) => model.stream_options(),
+            Some(Transcriber::Gemini(_)) => Some(&gemini::STREAM_OPTIONS),
             _ => None,
         }
     }
@@ -228,10 +246,11 @@ impl WarmTranscriber {
         &mut self,
         stream_options: &transcribe_cpp::StreamOptions,
         cancel: &transcribe_cpp::CancelToken,
-        drive: impl FnOnce(&mut transcribe_cpp::Stream<'_>) -> R,
+        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
     ) -> transcribe_cpp::Result<R> {
         match &mut self.active {
             Some(Transcriber::Gguf(model)) => model.with_stream(stream_options, cancel, drive),
+            Some(Transcriber::Gemini(model)) => model.with_stream(stream_options, cancel, drive),
             _ => Err(transcribe_cpp::Error::NotImplemented(
                 "the active transcriber cannot stream".into(),
             )),

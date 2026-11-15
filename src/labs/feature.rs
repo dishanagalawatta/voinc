@@ -74,13 +74,14 @@ pub enum Feature {
     TranscribeFiles,
     ApiProcessing,
     ApiTimestamps,
+    GoogleTranscribe,
     SpeakersOnly,
     MoreDictationShortcuts,
     PauseMenu,
 }
 
 impl Feature {
-    pub const ALL: [Self; 72] = [
+    pub const ALL: [Self; 73] = [
         Self::Meetings,
         Self::VoiceFilter,
         Self::Playground,
@@ -150,6 +151,7 @@ impl Feature {
         Self::TranscribeFiles,
         Self::ApiProcessing,
         Self::ApiTimestamps,
+        Self::GoogleTranscribe,
         Self::SpeakersOnly,
         Self::MoreDictationShortcuts,
         Self::PauseMenu,

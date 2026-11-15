@@ -12,6 +12,7 @@ mod screenshots;
 mod store;
 
 use rune::{El, Icon, TextEdit, Tx, row, text};
+use rune_kit::TextInput;
 
 pub(super) use self::store::{page, search_field, tabs};
 use super::controls::{self, Paint};
@@ -199,18 +200,45 @@ pub(super) enum Tab {
     On,
 }
 
-/// What the Labs store shows: its search, tab, and chip.
+/// What the Labs store shows: its search, tab, chip, and Google
+/// Transcribe's API-key draft.
 #[derive(Default)]
 pub(super) struct Store {
     pub(super) search: TextEdit,
     pub(super) tab: Tab,
     /// The chip selected: only this group's labs show.
     pub(super) group: Option<Group>,
+    /// The Gemini API key being typed, and the saved key it was seeded
+    /// from. A draft whose text still equals the seed changes nothing, so
+    /// `drafted()` never rewrites a saved key while Labs stays closed.
+    pub(super) api_key: TextEdit,
+    pub(super) api_key_seeded: Option<String>,
 }
 
 impl Store {
     fn query(&self) -> String {
         self.search.text.trim().to_lowercase()
+    }
+
+    /// Writes the typed key into the candidate settings, once it differs
+    /// from the seed the store opened with (an empty draft clears it).
+    pub(super) fn project(&self, settings: &mut crate::app_settings::AppSettings) {
+        let Some(seed) = &self.api_key_seeded else {
+            return;
+        };
+        let text = self.api_key.text.trim();
+        let key = (!text.is_empty()).then(|| text.to_owned());
+        if *seed != text {
+            settings.google_transcribe.api_key = key;
+        }
+    }
+
+    /// Re-seeds the API-key draft from the saved settings: the Labs page's
+    /// single entry point runs it, so a save elsewhere (CLI, older store)
+    /// is picked up on the next open.
+    fn seed_api_key(&mut self, settings: &crate::app_settings::AppSettings) {
+        self.api_key_seeded = settings.google_transcribe.api_key.clone();
+        self.api_key = TextEdit::new(self.api_key_seeded.clone().unwrap_or_default());
     }
 }
 
@@ -269,6 +297,7 @@ fn open(ui: &mut Ui, tx: &mut Tx) {
     ui.select_pane(Pane::General, tx);
     ui.labs_open = true;
     ui.lab_store = Store::default();
+    ui.lab_store.seed_api_key(&ui.settings);
     tx.settle();
 }
 
@@ -793,6 +822,12 @@ fn rows(ui: &Ui) -> Vec<Row> {
         tr("Apps can ask Voinc's local API for each segment's or word's start and end times."),
     ));
     rows.push(row(
+        Feature::GoogleTranscribe,
+        None,
+        tr("Google Transcribe"),
+        tr("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google."),
+    ));
+    rows.push(row(
         Feature::SpeakersOnly,
         None,
         tr("Only on speakers"),
@@ -917,6 +952,7 @@ fn row_key(lab: Lab) -> &'static str {
         Feature::RecentDictations => "lab-recent-dictations",
         Feature::SkipPauses => "lab-skip-pauses",
         Feature::StopWhenCallEnds => "lab-stop-when-call-ends",
+        Feature::GoogleTranscribe => "lab-google-transcribe",
         Feature::OutputFixes => "lab-output-fixes",
         Feature::PickerActiveFirst => "lab-picker-active-first",
         Feature::ModelInPlace => "lab-model-in-place",
@@ -997,6 +1033,11 @@ fn flip(ui: &mut Ui, lab: Lab) {
 /// A lab's own settings, on its card while it's on: how long the model sits
 /// unused before it unloads, or the screenshot shortcut and folder.
 fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
+    // The key shows whether Google Transcribe is on or off: it is what makes
+    // the runtime available at all.
+    if matches!(entry.lab, Lab::Feature(Feature::GoogleTranscribe)) {
+        return Some(google_api_key(ui, p));
+    }
     if !entry.on {
         return None;
     }
@@ -1051,6 +1092,32 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
         )),
         _ => None,
     }
+}
+
+/// How wide the API-key field is, on the card.
+const GOOGLE_KEY_WIDTH: f32 = 320.0;
+
+/// The person's Gemini API key, saved as they type (the window's draft
+/// mechanism commits it once typing pauses).
+fn google_api_key(ui: &Ui, p: Paint) -> El {
+    let field = TextInput::new(&ui.lab_store.api_key)
+        .placeholder(tr("Paste your Gemini API key"))
+        .width(Some(GOOGLE_KEY_WIDTH))
+        .on_edit(|ui: &mut Ui| &mut ui.lab_store.api_key)
+        .build(p.k)
+        .key("google-api-key");
+    row()
+        .key("google-api-key-row")
+        .gap(8.0)
+        .center_y()
+        .flex_wrap()
+        .child(
+            text(tr("API key"))
+                .key("label")
+                .font(controls::DESCRIPTION)
+                .color(p.muted()),
+        )
+        .child(field)
 }
 
 /// Whether the Caps Lock light stays solid or blinks slowly while recording.

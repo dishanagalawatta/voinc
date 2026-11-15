@@ -10,6 +10,8 @@ use std::time::{Duration, Instant};
 
 use color_eyre::eyre::{Result, WrapErr, eyre};
 
+use crate::transcription::stream_feed::StreamFeed;
+
 use crate::transcription::models::{
     AUTO_LANGUAGE, ModelDefinition, ModelRuntime, TranscriptionSelection,
 };
@@ -291,8 +293,13 @@ impl OfflineGgufSession {
                 stream.finalize().map(|_| ())
             },
         );
-        match probe {
-            Ok(Ok(())) => {
+        // The stream's own errors are strings; the session's are typed.
+        let probed = match probe {
+            Ok(probed) => probed,
+            Err(error) => Err(error.to_string()),
+        };
+        match probed {
+            Ok(()) => {
                 tracing::info!(
                     ?device_type,
                     chunk_ms,
@@ -301,7 +308,7 @@ impl OfflineGgufSession {
                 );
                 Some(stream_options)
             }
-            Ok(Err(error)) | Err(error) => {
+            Err(error) => {
                 tracing::warn!(%error, "model advertises streaming but could not stream");
                 None
             }
@@ -316,7 +323,7 @@ impl OfflineGgufSession {
         options: &transcribe_cpp::RunOptions,
         stream_options: &transcribe_cpp::StreamOptions,
         cancel: &transcribe_cpp::CancelToken,
-        drive: impl FnOnce(&mut transcribe_cpp::Stream<'_>) -> R,
+        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
     ) -> transcribe_cpp::Result<R> {
         let mut session = match self.session.take() {
             Some(session) => session,

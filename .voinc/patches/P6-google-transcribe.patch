@@ -1,0 +1,3565 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index d6d5d287..01a79880 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -1398,6 +1398,12 @@ version = "0.11.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0c87e182de0887fd5361989c677c4e8f5000cd9491d6d563161a8f3a5519fc7f"
+ 
++[[package]]
++name = "data-encoding"
++version = "2.11.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4583a4551df46e2792f82ceeac45e850d2e2d5debba0b91f102385cda5b11f06"
++
+ [[package]]
+ name = "data-url"
+ version = "0.3.2"
+@@ -4256,7 +4262,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3c80231409c20246a13fddb31776fb942c38553c51e871f8cbd687a4cfb5843d"
+ dependencies = [
+  "phf_shared 0.11.3",
+- "rand",
++ "rand 0.8.8",
+ ]
+ 
+ [[package]]
+@@ -4456,6 +4462,15 @@ version = "0.2.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
+ 
++[[package]]
++name = "ppv-lite86"
++version = "0.2.21"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
++dependencies = [
++ "zerocopy",
++]
++
+ [[package]]
+ name = "presser"
+ version = "0.3.1"
+@@ -4551,7 +4566,27 @@ version = "0.8.8"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c"
+ dependencies = [
+- "rand_core",
++ "rand_core 0.6.4",
++]
++
++[[package]]
++name = "rand"
++version = "0.9.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b9ef1d0d795eb7d84685bca4f72f3649f064e6641543d3a8c415898726a57b41"
++dependencies = [
++ "rand_chacha",
++ "rand_core 0.9.5",
++]
++
++[[package]]
++name = "rand_chacha"
++version = "0.9.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb"
++dependencies = [
++ "ppv-lite86",
++ "rand_core 0.9.5",
+ ]
+ 
+ [[package]]
+@@ -4563,6 +4598,15 @@ dependencies = [
+  "getrandom 0.2.17",
+ ]
+ 
++[[package]]
++name = "rand_core"
++version = "0.9.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c"
++dependencies = [
++ "getrandom 0.3.4",
++]
++
+ [[package]]
+ name = "range-alloc"
+ version = "0.1.5"
+@@ -5429,6 +5473,17 @@ dependencies = [
+  "serde_core",
+ ]
+ 
++[[package]]
++name = "sha1"
++version = "0.10.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a978451301f4db1d02937a4ab3ccce137717b81826e79b7d49ffe3244a13c3b8"
++dependencies = [
++ "cfg-if",
++ "cpufeatures 0.2.17",
++ "digest 0.10.7",
++]
++
+ [[package]]
+ name = "sha2"
+ version = "0.10.9"
+@@ -5503,7 +5558,7 @@ version = "2.2.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
+ dependencies = [
+- "rand_core",
++ "rand_core 0.6.4",
+ ]
+ 
+ [[package]]
+@@ -6365,6 +6420,24 @@ version = "0.25.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
+ 
++[[package]]
++name = "tungstenite"
++version = "0.28.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8628dcc84e5a09eb3d8423d6cb682965dea9133204e8fb3efee74c2a0c259442"
++dependencies = [
++ "bytes",
++ "data-encoding",
++ "http",
++ "httparse",
++ "log",
++ "native-tls",
++ "rand 0.9.5",
++ "sha1",
++ "thiserror 2.0.21",
++ "utf-8",
++]
++
+ [[package]]
+ name = "typenum"
+ version = "1.20.1"
+@@ -6496,6 +6569,12 @@ dependencies = [
+  "xmlwriter",
+ ]
+ 
++[[package]]
++name = "utf-8"
++version = "0.7.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
++
+ [[package]]
+ name = "utf8-zero"
+ version = "0.8.1"
+@@ -6562,6 +6641,7 @@ version = "3.4.0"
+ dependencies = [
+  "anyhow",
+  "arboard",
++ "base64 0.22.1",
+  "block2 0.6.2",
+  "capture-core",
+  "cc",
+@@ -6579,6 +6659,7 @@ dependencies = [
+  "getrandom 0.4.3",
+  "hound",
+  "libc",
++ "native-tls",
+  "objc2 0.6.5",
+  "objc2-app-kit 0.3.2",
+  "objc2-core-audio",
+@@ -6617,6 +6698,7 @@ dependencies = [
+  "tracing-subscriber",
+  "transcribe-cpp",
+  "transcribe-rs",
++ "tungstenite",
+  "unicode-normalization",
+  "unicode-segmentation",
+  "ureq",
+diff --git a/Cargo.toml b/Cargo.toml
+index 4ca227d0..0e03c9b2 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -65,6 +65,7 @@ rquickjs = { version = "0.14.0", default-features = false, features = ["std", "l
+ rodio = { version = "0.23.0", default-features = false, features = ["playback", "mp3"] }
+ rubato = "5.0.1"
+ same-file = "1.0.6"
++base64 = "0.22.1"
+ serde = { version = "1.0.229", features = ["derive"] }
+ serde_json = "1.0.151"
+ serde_path_to_error = "0.1"
+@@ -81,6 +82,12 @@ url = "2.5.8"
+ # `native-tls`, not `native-tls-no-default`: ureq 3.4 checks the former's
+ # name and panics on any https request without it.
+ ureq = { version = "3.4.2", default-features = false, features = ["native-tls"] }
++# The Gemini Live API's WebSocket (`transcription::gemini`): TLS through the
++# same `native-tls` ureq uses, so a managed network's roots are trusted.
++tungstenite = { version = "0.28.0", default-features = false, features = ["handshake", "native-tls"] }
++# The TLS of Google's Live WebSocket, over the same roots ureq trusts; a
++# direct dependency so the session can wrap its own socket and tunnels.
++native-tls = "0.2"
+ 
+ [target.'cfg(target_os = "macos")'.dependencies]
+ capture-core = { path = "crates/capture-core" }
+diff --git a/docs/features/README.md b/docs/features/README.md
+index 97dba05e..11ab5a8c 100644
+--- a/docs/features/README.md
++++ b/docs/features/README.md
+@@ -45,7 +45,10 @@ sidebar footer; its Appearance toggle (off by default) forces the main window
+ light or dark instead of following the OS, while the HUD and other overlays
+ keep following it; its Transcribe files toggle (off by default) adds
+ `voinc transcribe <file>`, which prints a saved WAV recording's transcript from
+-the selected model ([control-cli.md](control-cli.md)).
++the selected model ([control-cli.md](control-cli.md)); its Google Transcribe
++toggle (off by default) offers Google's cloud transcription behind the
++person's own Gemini API key ([Google Transcribe](google-transcribe.md)), and
++your audio goes to Google.
+ General › Advanced › Interface language offers Português (Brasil), and Voinc
+ uses it for any Portuguese system language (#867); it also offers Français,
+ used for any French system language (#892), and Русский, used for any
+diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
+new file mode 100644
+index 00000000..fb866c41
+--- /dev/null
++++ b/docs/features/google-transcribe.md
+@@ -0,0 +1,114 @@
++# Google Transcribe
++
++Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
++Google's Gemini speech models in the cloud, using the person's own Gemini API
++key. It is a runtime beside the local GGUF models and Apple Speech, not a
++download: the picker offers **Google Transcribe (Gemini)** while the toggle is
++on and a key answers, and a saved choice of it stays saved while it can't run,
++with the listener running its usual fallback (`custom_models::runnable`).
++**Your audio goes to Google.** The Labs card's description and the picker row
++say so.
++
++```ts
++Labs > Google Transcribe (off)                       // labs.google_transcribe
++├── Toggle on -> the card shows an "API key" field (drafted while typed,
++│   saved with Apply; `google_transcribe.api_key`, or the environment's
++│   VOINC_GOOGLE_API_KEY, read again at every run)
++├── Picker -> "Google Transcribe (Gemini)" · Cloud · every language · streams;
++│   size reads "Runs in Google's cloud"; no download ever starts
++├── Dictate (hold) -> the capture rides one Gemini Live WebSocket session:
++│   setup (model, language hint, custom vocabulary, SMART mode), then 16 kHz
++│   mono PCM fed as base64; interim text replaces the words so far and each
++│   turn's final text appends
++│   ├── Any stream failure — refused setup, a stalled or capped connection, a
++│   │   missed finish — is an ordinary stream error, and the whole clip
++│   │   decides, transcribed by batch as every runtime's fallback does
++│   └── Ten minutes after it opened the session stops a little early (9:30)
++│       so the last turn finalizes; a longer capture's stream fails and the
++│       whole clip decides
++├── Finish (release) -> the stream finalizes with 0.4 s of trailing silence
++│   (a GGUF stream does the same, so a last word still lands); the complete
++│   clip is authoritative, as with every runtime
++├── Meetings -> each pause-cut chunk is transcribed by batch, word-timed;
++│   macOS loads its own transcriber, Linux and Windows share the engine
++└── Labs › Transcribe files -> `voinc transcribe <file>` runs batch over the
++    file; clips longer than 30 minutes are split at that limit client-side,
++    because audio past it is silently truncated while the answer still
++    reports completed
++```
++
++## The key
++
++The key is the person's: the saved setting first (`voinc settings set
++google_transcribe.api_key …`, or the field on the Labs card, serialized as
++`null` while unset), else the `VOINC_GOOGLE_API_KEY` environment variable.
++Either is trimmed; an empty one is no key. Google Transcribe is prepared —
++nothing to download — while its key answers, and `voinc model use
++gemini_transcribe` selects it under the same rule. A request with no key fails
++before anything is sent, named for a person; a refused key, a rate limit, and
++Google's HTML error pages are named for a person too. Requests and
++WebSockets go out like every other Voinc request: the platform's TLS and
++roots, and the proxy the computer uses — a SOCKS proxy refuses the live
++session (the batch request still goes out).
++
++## Batch and Live
++
++Batch is one REST call per clip over the Interactions API: the clip as inline
++base64 mono WAV, `store: false` so nothing is kept in Google's interactions
++history on Voinc's behalf. A dictation's processed text is wanted as plain
++text (`SMART`); a meeting chunk or a timed file asks for verbatim text with
++word timestamps, and the answer's `word_info` annotations carry each word and
++its start and end in decimal seconds, read as milliseconds. The deadline is
++the clip's length plus slack, clamped to a minute and five.
++
++Live is one WebSocket per streaming dictation capture, driven by the engine's
++own stream machinery: the engine feeds it while the capture runs, a finish
++finalizes, and every rule the GGUF streams follow — deadlines, falling back
++to the whole clip, nothing pasting before the final text — applies unchanged,
++because it is the same code with a different transport under it. Google's
++Live API does not give word timestamps; interim text replaces and turn text
++appends, so the fallback's whole clip supplies anything the session dropped.
++
++## Vocabulary
++
++The saved vocabulary list rides along as the request's `customVocabulary`
++(at most 1000 terms), read at the start of each run so a settings change
++applies to the next one — only while Labs › Vocabulary biasing is on and the
++boost is not off, exactly the gate Parakeet's bias keeps
++(`vocabulary::transcription_terms`, which also carries a focused mode's own
++terms while that dictation records).
++
++## Free tier
++
++The free tier keeps some content to improve Google products and bounds
++requests per minute and per day (the day resets at midnight Pacific); the
++Live API allows a few sessions at once and caps one at ten minutes. Every
++request Voinc sends carries `store: false`. A rate limit is named for a
++person, not shown as a raw status.
++
++## Checks
++
++`missing_key_is_reported_without_a_request`,
++`a_refused_key_is_named_for_a_person`, `a_rate_limit_says_what_to_do`, and
++`an_html_error_page_still_names_a_reason` in
++[gemini.rs](../../src/transcription/gemini.rs);
++`wav_bytes_is_a_well_formed_mono_wav`, `offsets_carry_milliseconds`,
++`text_prefers_the_named_output_text`, `text_joins_step_contents`,
++`a_word_annotation_is_a_timed_word`, `a_non_completed_status_is_a_server_failure`,
++and `timeout_bounds_hold` in
++[batch.rs](../../src/transcription/gemini/batch.rs) — every one against
++fixture JSON and in-memory sockets; no request ever left the machine.
++`gemini_transcribe_is_offered_only_with_its_lab_and_key` in
++[models.rs](../../src/transcription/models.rs) holds the picker's rule, and
++the engine's stream tests
++(`a_stream_that_dropped_a_phrase_after_a_pause_falls_back_to_the_whole_clip`
++and the rest of
++[engine.rs](../../src/transcription/engine.rs)) drive the same
++`StreamFeed` seam the Live session rides with a fake transport.
++
++Not yet observed, and not covered by any check: a real request to Google.
++The Live session's state machine (its reads between writes, tunnel
++timeouts, and turn assembly) has no unit tests — the engine's stream rules
++around it do. No macOS meeting with Gemini selected has been recorded, and
++`voinc transcribe` over a real long file (segment splitting) is untested
++against Google's truncation behavior.
+diff --git a/docs/features/labs.md b/docs/features/labs.md
+index ab4db808..31224714 100644
+--- a/docs/features/labs.md
++++ b/docs/features/labs.md
+@@ -70,6 +70,7 @@ Feature             Pane  Toggle (settings.json, voinc settings)   On: what it d
+ ├── Sort and filter models no labs.picker_sort_filter   the Local transcription picker sorts by recommendation, size, or name and can show only models for the saved language (#645)
+ ├── Benchmark details no  labs.benchmark_details        picker rows show raw WER/CER (lower is better), language, dataset, source, and conditions; incomparable "Most accurate" badges drop (#647)
+ ├── Parakeet Ultra  no    labs.parakeet_ultra          the picker offers Moondream's Parakeet Ultra (pinned Q8_0, CC BY 4.0) with a details view; stays on while it dictates (#648)
++├── Google Transcribe no labs.google_transcribe + google_transcribe.api_key   the picker offers Google's cloud transcription with the person's Gemini API key; your audio goes to Google (google-transcribe.md)
+ ├── Special keys alone no labs.standalone_special_keys (Linux, Windows) Linux: Menu, Pause, Scroll Lock may be a shortcut's key, alone or with modifiers (#767); Windows: Insert, Home, End, Page Up, Page Down may stand alone (#794)
+ ├── Section key alone no  labs.section_key_alone       (Linux) the § key, left of 1 on ISO keyboards, may be a shortcut with no modifier (#1050)
+ ├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; voinc history stats prints it (#790)
+@@ -2764,6 +2765,27 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
+ Bluetooth headphones and the lab on, and the Linux and Windows backends on a
+ real desktop.
+ 
++- Google Transcribe: Google's Gemini speech models in the cloud, behind the
++  person's Gemini API key (every OS; see
++  [Google Transcribe](google-transcribe.md)). Its toggle is
++  `labs.google_transcribe` (off by default, applied at once) and the key is
++  `google_transcribe.api_key` or the environment's `VOINC_GOOGLE_API_KEY`.
++  The gate, `labs::google_transcribe()` plus the key
++  (`ModelDefinition::available`), is where the work starts: with either
++  missing the picker doesn't offer it and a saved choice of it runs the usual
++  fallback. Dictation rides one Gemini Live WebSocket per capture through the
++  engine's stream machinery, so every stream rule is the GGUF streams' —
++  deadlines, nothing pasting before the final text, falling back to the whole
++  clip — and every batch need (fallback whole clips, meeting chunks,
++  `voinc transcribe` files) is one REST call with `store: false`; a clip
++  longer than 30 minutes is split client-side because Google truncates past
++  it silently while still reporting completed. The saved vocabulary rides as
++  `customVocabulary` only while Labs › Vocabulary biasing is on
++  (`vocabulary::transcription_terms`). Checks: the fixture-JSON tests named
++  in [google-transcribe.md](google-transcribe.md); no request to Google has
++  ever been made, the Live session's own state machine has no tests, and the
++  Labs page goldens show the new card.
++
+ Checks: `labs_is_one_flat_list_of_toggles_off_by_default`,
+ `contributed_options_are_labs_toggles_off_by_default`,
+ `the_browser_labs_toggle_turns_on_and_asks_for_system_audio`,
+diff --git a/src/app_settings.rs b/src/app_settings.rs
+index ada7a094..c5fb223e 100644
+--- a/src/app_settings.rs
++++ b/src/app_settings.rs
+@@ -134,6 +134,17 @@ pub fn env_hex_experimental_mic() -> bool {
+         .is_some_and(|v| matches!(v.trim(), "1" | "true" | "TRUE" | "yes"))
+ }
+ 
++/// Google Transcribe's settings: the person's Gemini API key, held for
++/// [`crate::transcription::gemini`] to read at each request. Kept outside
++/// `labs` so the key is not a switch.
++#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
++#[serde(default)]
++pub struct GoogleTranscribeSettings {
++    /// The key saved in Settings › Labs; `None` asks `VOINC_GOOGLE_API_KEY`
++    /// first and otherwise leaves Google Transcribe unavailable.
++    pub api_key: Option<String>,
++}
++
+ /// Where Linux and Windows run the speech model (#856): Auto picks a GPU
+ /// unless it failed before under its current driver, then the CPU.
+ #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+@@ -322,6 +333,8 @@ pub struct AppSettings {
+     pub capture_from_other_build: Option<serde_json::Value>,
+     #[serde(default)]
+     pub experimental: ExperimentalSettings,
++    /// Google Transcribe's API key (`crate::transcription::gemini`).
++    pub google_transcribe: GoogleTranscribeSettings,
+     /// The Labs features' own switches (`crate::labs`).
+     pub labs: LabsSettings,
+     /// Labs › Screenshots' shortcut and folder (macOS).
+@@ -452,6 +465,7 @@ impl Default for AppSettings {
+             #[cfg(not(hex_capture))]
+             capture_from_other_build: None,
+             experimental: ExperimentalSettings::default(),
++            google_transcribe: GoogleTranscribeSettings::default(),
+             labs: LabsSettings::default(),
+             screenshots: ScreenshotSettings::default(),
+             enable_on_launch: true,
+@@ -502,6 +516,9 @@ impl KeyboardModelChoice {
+         let model = crate::transcription::models::validate(&selection)?;
+         match model.runtime {
+             crate::transcription::models::ModelRuntime::Gguf(_) => Ok(()),
++            // Google Transcribe takes the language hint from the keyboard
++            // language like any other.
++            crate::transcription::models::ModelRuntime::Gemini => Ok(()),
+             crate::transcription::models::ModelRuntime::AppleSpeech => {
+                 Err(eyre!("{} can't be switched to by input source", model.name))
+             }
+@@ -779,6 +796,8 @@ impl AppSettings {
+             Ordering::Release,
+         );
+         crate::labs::apply(&self.labs);
++        // set_api_key trims and drops an empty key itself.
++        crate::transcription::gemini::set_api_key(self.google_transcribe.api_key.clone());
+         screenshots::apply_screenshots(self);
+         #[cfg(hex_capture)]
+         {
+diff --git a/src/app_settings/labs.rs b/src/app_settings/labs.rs
+index b88e4224..3a5a2417 100644
+--- a/src/app_settings/labs.rs
++++ b/src/app_settings/labs.rs
+@@ -201,6 +201,9 @@ pub struct LabsSettings {
+     /// The local API's `timestamps=segment|word` returns the speech model's
+     /// own segment and word times.
+     pub api_timestamps: bool,
++    /// Google Transcribe's cloud runtime transcribes with the person's
++    /// Gemini API key (GoogleTranscribeSettings' api_key).
++    pub google_transcribe: bool,
+     /// "While dictating" applies only while the default output is speakers;
+     /// headphones are left alone.
+     pub speakers_only: bool,
+@@ -280,6 +283,7 @@ impl Default for LabsSettings {
+             transcribe_files: false,
+             api_processing: false,
+             api_timestamps: false,
++            google_transcribe: false,
+             speakers_only: false,
+             app_model_switching: false,
+             pause_menu: false,
+diff --git a/src/control/settings/registry.rs b/src/control/settings/registry.rs
+index e9f833a8..b0f37a5a 100644
+--- a/src/control/settings/registry.rs
++++ b/src/control/settings/registry.rs
+@@ -615,6 +615,18 @@ pub(super) const KEYS: &[Key] = &[
+         "Labs: apps using Voinc's local API can ask for each segment's or word's start and end times \
+          in a transcript, as the speech model heard them (timestamps=segment|word)",
+     ),
++    key(
++        "labs.google_transcribe",
++        Kind::Bool,
++        "Labs: transcribe with Google's Gemini models in the cloud, using the Gemini API key saved \
++         under google_transcribe.api_key (or VOINC_GOOGLE_API_KEY); audio is sent to Google",
++    ),
++    optional(
++        "google_transcribe.api_key",
++        Kind::Text,
++        "The Gemini API key Google Transcribe uses; none asks VOINC_GOOGLE_API_KEY first and \
++         otherwise leaves Google Transcribe unavailable",
++    ),
+     key(
+         "labs.speakers_only",
+         Kind::Bool,
+diff --git a/src/desktop/i18n.rs b/src/desktop/i18n.rs
+index 77315831..da4010e3 100644
+--- a/src/desktop/i18n.rs
++++ b/src/desktop/i18n.rs
+@@ -1245,6 +1245,8 @@ const TRANSLATIONS: &[(&str, [&str; 6])] = &[
+     ("1 in {} words wrong", ["1 na {} słów błędnie", "每 {} 个词错 1 个", "{} 語に 1 語の誤り", "1 von {} Wörtern falsch", "1 de cada {} palabras mal", "1 з {} слів хибне"]),
+     ("1 in {} characters wrong", ["1 na {} znaków błędnie", "每 {} 个字错 1 个", "{} 文字に 1 文字の誤り", "1 von {} Zeichen falsch", "1 de cada {} caracteres mal", "1 з {} символів хибний"]),
+     ("Managed by macOS", ["Zarządzany przez macOS", "由 macOS 管理", "macOS が管理", "Von macOS verwaltet", "Gestionado por macOS", "Керує macOS"]),
++    ("Runs in Google's cloud", ["Działa w chmurze Google", "在 Google 云端运行", "Google のクラウドで実行", "Läuft in Googles Cloud", "Funciona en la nube de Google", "Працює в хмарі Google"]),
++    ("Google's Gemini, transcribing in the cloud with your API key", ["Gemini od Google, transkrybujące w chmurze z Twoim kluczem API", "Google 的 Gemini，使用你的 API 密钥在云端转录", "Google の Gemini。API キーでクラウド上の文字起こし", "Googles Gemini, transkribiert in der Cloud mit deinem API-Schlüssel", "El Gemini de Google, transcribe en la nube con tu clave de API", "Gemini від Google, транскрибуція в хмарі з вашим ключем API"]),
+     ("Downloaded", ["Pobrano", "已下载", "ダウンロード済み", "Heruntergeladen", "Descargado", "Завантажено"]),
+     ("Download {}", ["Pobierz {}", "下载 {}", "{} をダウンロード", "{} herunterladen", "Descargar {}", "Завантажити {}"]),
+     ("of {}", ["z {}", "共 {}", "/ {}", "von {}", "de {}", "з {}"]),
+diff --git a/src/desktop/i18n/french.rs b/src/desktop/i18n/french.rs
+index c414be39..fe51362e 100644
+--- a/src/desktop/i18n/french.rs
++++ b/src/desktop/i18n/french.rs
+@@ -952,6 +952,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+     ("1 in {} words wrong", "1 mot sur {} erroné"),
+     ("1 in {} characters wrong", "1 caractère sur {} erroné"),
+     ("Managed by macOS", "Géré par macOS"),
++    ("Runs in Google's cloud", "Fonctionne dans le cloud de Google"),
++    ("Google's Gemini, transcribing in the cloud with your API key", "Le Gemini de Google, transcrit dans le cloud avec votre clé d'API"),
+     ("Downloaded", "Téléchargé"),
+     ("Download {}", "Télécharger {}"),
+     ("of {}", "sur {}"),
+@@ -1245,6 +1247,10 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+     ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", "Les apps peuvent demander à l'API locale de Voinc des transcriptions avec le traitement du mode Global appliqué"),
+     ("Timestamps in API transcripts", "Horodatages dans les transcriptions de l'API"),
+     ("Apps can ask Voinc's local API for each segment's or word's start and end times.", "Les apps peuvent demander à l'API locale de Voinc l'heure de début et de fin de chaque segment ou mot"),
++    ("Google Transcribe", "Google Transcribe"),
++    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Transcrit avec les modèles Gemini de Google dans le cloud, en utilisant votre clé d'API Gemini. Votre audio est envoyé à Google."),
++    ("API key", "Clé d'API"),
++    ("Paste your Gemini API key", "Collez votre clé d'API Gemini"),
+     ("Appearance", "Apparence"),
+     ("Use light or dark for the main window instead of the system's", "Utilise le clair ou le sombre pour la fenêtre principale au lieu du système"),
+     ("Theme", "Thème"),
+diff --git a/src/desktop/i18n/labs.rs b/src/desktop/i18n/labs.rs
+index 756b4a74..4799a415 100644
+--- a/src/desktop/i18n/labs.rs
++++ b/src/desktop/i18n/labs.rs
+@@ -59,6 +59,10 @@ pub(super) const TRANSLATIONS: &[(&str, [&str; 6])] = &[
+     ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", ["Aplikacje mogą prosić lokalne API Voinc o transkrypcje z przetwarzaniem trybu Globalnego", "应用可以向 Voinc 本地 API 请求应用了全局模式处理的转写", "アプリは Voinc のローカル API にグローバルモードの処理を適用した文字起こしを要求できます", "Apps können die lokale API von Voinc um Transkripte mit der Verarbeitung des Global-Modus bitten", "Las apps pueden pedir a la API local de Voinc transcripciones con el procesamiento del modo Global aplicado", "Програми можуть запитувати в локального API Voinc транскрипти із застосованою обробкою Глобального режиму"]),
+     ("Timestamps in API transcripts", ["Znaczniki czasu w transkrypcjach API", "API 转写的时间戳", "API の文字起こしのタイムスタンプ", "Zeitstempel in API-Transkripten", "Marcas de tiempo en las transcripciones de la API", "Позначки часу в транскриптах API"]),
+     ("Apps can ask Voinc's local API for each segment's or word's start and end times.", ["Aplikacje mogą prosić lokalne API Voinc o czasy początku i końca każdego segmentu lub słowa", "应用可以向 Voinc 本地 API 请求每个片段或单词的开始和结束时间", "アプリは Voinc のローカル API に各セグメントや単語の開始と終了の時刻を要求できます", "Apps können die lokale API von Voinc um Start- und Endzeit jedes Abschnitts oder Worts bitten", "Las apps pueden pedir a la API local de Voinc los tiempos de inicio y fin de cada segmento o palabra", "Програми можуть запитувати в локального API Voinc час початку й кінця кожного сегмента чи слова"]),
++    ("Google Transcribe", ["Google Transcribe", "Google Transcribe", "Google Transcribe", "Google Transcribe", "Google Transcribe", "Google Transcribe"]),
++    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", ["Transkrybuj w chmurze modelami Gemini od Google, używając swojego klucza API Gemini. Twój dźwięk trafia do Google.", "使用你的 Gemini API 密钥，通过 Google 的 Gemini 模型在云端转录。你的音频会发送给 Google。", "Gemini API キーを使って、Google の Gemini モデルでクラウド上の文字起こしを行います。音声は Google に送信されます。", "Transkribiert mit Googles Gemini-Modellen in der Cloud, mit deinem Gemini-API-Schlüssel. Dein Audio geht an Google.", "Transcribe con los modelos Gemini de Google en la nube, usando tu clave de API de Gemini. Tu audio va a Google.", "Транскрибуйте в хмарі моделями Gemini від Google, використовуючи свій ключ API Gemini. Ваше аудіо надходить до Google."]),
++    ("API key", ["Klucz API", "API 密钥", "API キー", "API-Schlüssel", "Clave de API", "Ключ API"]),
++    ("Paste your Gemini API key", ["Wklej swój klucz API Gemini", "粘贴你的 Gemini API 密钥", "Gemini API キーを貼り付け", "Gemini-API-Schlüssel einfügen", "Pega tu clave de API de Gemini", "Вставте свій ключ API Gemini"]),
+     ("Appearance", ["Wygląd", "外观", "外観", "Darstellung", "Apariencia", "Вигляд"]),
+     ("Use light or dark for the main window instead of the system's", ["Używaj jasnego lub ciemnego wyglądu głównego okna zamiast systemowego", "让主窗口使用浅色或深色，而不是跟随系统", "メインウインドウをシステムの代わりにライトまたはダークで表示します", "Hauptfenster hell oder dunkel statt wie das System anzeigen", "Usa claro u oscuro en la ventana principal en lugar del sistema", "Використовуйте світле або темне оформлення головного вікна замість системного"]),
+     ("Theme", ["Motyw", "主题", "テーマ", "Design", "Tema", "Тема"]),
+diff --git a/src/desktop/i18n/portuguese.rs b/src/desktop/i18n/portuguese.rs
+index 573bb1fb..8e138fb6 100644
+--- a/src/desktop/i18n/portuguese.rs
++++ b/src/desktop/i18n/portuguese.rs
+@@ -955,6 +955,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+     ("1 in {} words wrong", "1 em {} palavras errada"),
+     ("1 in {} characters wrong", "1 em {} caracteres errado"),
+     ("Managed by macOS", "Gerenciado pelo macOS"),
++    ("Runs in Google's cloud", "Funciona na nuvem do Google"),
++    ("Google's Gemini, transcribing in the cloud with your API key", "O Gemini do Google, transcreve na nuvem com sua chave de API"),
+     ("Downloaded", "Baixado"),
+     ("Download {}", "Baixar {}"),
+     ("of {}", "de {}"),
+@@ -1242,6 +1244,10 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+     ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", "Apps podem pedir à API local do Voinc transcrições com o processamento do modo Global aplicado"),
+     ("Timestamps in API transcripts", "Marcas de tempo nas transcrições da API"),
+     ("Apps can ask Voinc's local API for each segment's or word's start and end times.", "Apps podem pedir à API local do Voinc os horários de início e fim de cada segmento ou palavra"),
++    ("Google Transcribe", "Google Transcribe"),
++    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Transcreve com os modelos Gemini do Google na nuvem, usando sua chave de API do Gemini. Seu áudio vai para o Google."),
++    ("API key", "Chave de API"),
++    ("Paste your Gemini API key", "Cole sua chave de API do Gemini"),
+     ("Appearance", "Aparência"),
+     ("Use light or dark for the main window instead of the system's", "Usa claro ou escuro na janela principal em vez do sistema"),
+     ("Theme", "Tema"),
+diff --git a/src/desktop/i18n/russian.rs b/src/desktop/i18n/russian.rs
+index 81e1ab9b..cfbe6429 100644
+--- a/src/desktop/i18n/russian.rs
++++ b/src/desktop/i18n/russian.rs
+@@ -948,6 +948,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+     ("1 in {} words wrong", "1 из {} слов неверно"),
+     ("1 in {} characters wrong", "1 из {} символов неверно"),
+     ("Managed by macOS", "Управляется macOS"),
++    ("Runs in Google's cloud", "Работает в облаке Google"),
++    ("Google's Gemini, transcribing in the cloud with your API key", "Gemini от Google, транскрибирует в облаке с вашим ключом API"),
+     ("Downloaded", "Загружено"),
+     ("Download {}", "Загрузить {}"),
+     ("of {}", "из {}"),
+@@ -1245,6 +1247,10 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+     ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", "Приложения могут запрашивать у локального API Voinc транскрипты с обработкой глобального режима"),
+     ("Timestamps in API transcripts", "Метки времени в транскриптах API"),
+     ("Apps can ask Voinc's local API for each segment's or word's start and end times.", "Приложения могут запрашивать у локального API Voinc время начала и конца каждого сегмента или слова"),
++    ("Google Transcribe", "Google Transcribe"),
++    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Транскрибируйте в облаке моделями Gemini от Google, используя свой ключ API Gemini. Ваше аудио отправляется в Google."),
++    ("API key", "Ключ API"),
++    ("Paste your Gemini API key", "Вставьте свой ключ API Gemini"),
+     ("Appearance", "Внешний вид"),
+     ("Use light or dark for the main window instead of the system's", "Используйте светлое или тёмное оформление главного окна вместо системного"),
+     ("Theme", "Тема"),
+diff --git a/src/dictation/vocabulary.rs b/src/dictation/vocabulary.rs
+index 0860d5dc..a1df4498 100644
+--- a/src/dictation/vocabulary.rs
++++ b/src/dictation/vocabulary.rs
+@@ -197,20 +197,37 @@ pub fn entries() -> Vec<VocabularyEntry> {
+         .clone()
+ }
+ 
+-/// The terms and options a Parakeet run biases its transcript with, read
+-/// at the start of each run and live stream so settings changes apply to the
+-/// next one. `None` while the list is empty or the boost is off.
+-pub(crate) fn transcription_bias()
+--> Option<(Vec<String>, transcribe_cpp::ParakeetVocabularyOptions)> {
++/// Labs › Vocabulary biasing, with a boost the person turned off respected:
++/// `Some` with the boost while transcription may take the list at all.
++fn biasing() -> Option<VocabularyBoost> {
+     // Labs › Vocabulary biasing: transcription takes the list only while on.
+     if !crate::labs::vocabulary_biasing() {
+         return None;
+     }
+     let boost = VocabularyBoost::from_index(BOOST.load(Ordering::Relaxed));
+-    if boost == VocabularyBoost::Off {
+-        return None;
+-    }
+-    bias_for(&transcription_entries(), boost)
++    (boost != VocabularyBoost::Off).then_some(boost)
++}
++
++/// The terms and options a Parakeet run biases its transcript with, read
++/// at the start of each run and live stream so settings changes apply to the
++/// next one. `None` while the list is empty or the boost is off.
++pub(crate) fn transcription_bias()
++-> Option<(Vec<String>, transcribe_cpp::ParakeetVocabularyOptions)> {
++    biasing().and_then(|boost| bias_for(&transcription_entries(), boost))
++}
++
++/// The terms a bias-reading cloud runtime sends as its custom vocabulary,
++/// read at the start of each run so settings changes apply to the next one.
++/// Empty under the same gate [`transcription_bias`] keeps for Parakeet.
++pub(crate) fn transcription_terms() -> Vec<String> {
++    biasing()
++        .map(|_| {
++            transcription_entries()
++                .into_iter()
++                .map(|entry| entry.term)
++                .collect()
++        })
++        .unwrap_or_default()
+ }
+ 
+ fn bias_for(
+@@ -692,7 +709,8 @@ mod tests {
+ 
+     #[test]
+     fn saved_entries_read_without_loading_settings() {
+-        let directory = std::env::temp_dir().join(format!("voinc-vocabulary-{}", std::process::id()));
++        let directory =
++            std::env::temp_dir().join(format!("voinc-vocabulary-{}", std::process::id()));
+         std::fs::create_dir_all(&directory).unwrap();
+         let path = directory.join("settings.json");
+         assert_eq!(read_from(&path).unwrap(), []);
+diff --git a/src/labs.rs b/src/labs.rs
+index d4763386..c60ff978 100644
+--- a/src/labs.rs
++++ b/src/labs.rs
+@@ -160,6 +160,7 @@ impl Feature {
+             | Self::TranscribeFiles
+             | Self::ApiProcessing
+             | Self::ApiTimestamps
++            | Self::GoogleTranscribe
+             | Self::SpeakersOnly
+             | Self::PauseMenu
+             | Self::MoreDictationShortcuts => Audience::Everyone,
+@@ -237,6 +238,7 @@ impl Feature {
+             | Self::MeetingNotesFile
+             | Self::MoreDictationShortcuts => 20261109,
+             Self::AppModelSwitching | Self::ApiTimestamps | Self::PauseMenu => 20261110,
++            Self::GoogleTranscribe => 20261115,
+         }
+     }
+ 
+@@ -355,6 +357,7 @@ impl Feature {
+             | Self::TranscribeFiles
+             | Self::ApiProcessing
+             | Self::ApiTimestamps
++            | Self::GoogleTranscribe
+             | Self::SpeakersOnly => true,
+         }
+     }
+@@ -431,6 +434,7 @@ impl Feature {
+             Self::TranscribeFiles => "transcribe-files",
+             Self::ApiProcessing => "api-processing",
+             Self::ApiTimestamps => "api-timestamps",
++            Self::GoogleTranscribe => "google-transcribe",
+             Self::SpeakersOnly => "speakers-only",
+             Self::PauseMenu => "pause-menu",
+             Self::MoreDictationShortcuts => "more-dictation-shortcuts",
+@@ -509,6 +513,7 @@ impl Feature {
+             Self::TranscribeFiles => "labs.transcribe_files",
+             Self::ApiProcessing => "labs.api_processing",
+             Self::ApiTimestamps => "labs.api_timestamps",
++            Self::GoogleTranscribe => "labs.google_transcribe",
+             Self::SpeakersOnly => "labs.speakers_only",
+             Self::PauseMenu => "labs.pause_menu",
+             Self::MoreDictationShortcuts => "labs.more_dictation_shortcuts",
+@@ -591,6 +596,7 @@ impl Feature {
+             Self::TranscribeFiles => settings.labs.transcribe_files,
+             Self::ApiProcessing => settings.labs.api_processing,
+             Self::ApiTimestamps => settings.labs.api_timestamps,
++            Self::GoogleTranscribe => settings.labs.google_transcribe,
+             Self::SpeakersOnly => settings.labs.speakers_only,
+             Self::PauseMenu => settings.labs.pause_menu,
+             Self::MoreDictationShortcuts => settings.labs.more_dictation_shortcuts,
+@@ -670,6 +676,7 @@ impl Feature {
+             &mut labs.transcribe_files,
+             &mut labs.api_processing,
+             &mut labs.api_timestamps,
++            &mut labs.google_transcribe,
+             &mut labs.speakers_only,
+             &mut labs.app_model_switching,
+             &mut labs.pause_menu,
+@@ -756,6 +763,7 @@ impl Feature {
+             Self::TranscribeFiles => settings.labs.transcribe_files = on,
+             Self::ApiProcessing => settings.labs.api_processing = on,
+             Self::ApiTimestamps => settings.labs.api_timestamps = on,
++            Self::GoogleTranscribe => settings.labs.google_transcribe = on,
+             Self::SpeakersOnly => settings.labs.speakers_only = on,
+             Self::PauseMenu => settings.labs.pause_menu = on,
+             Self::MoreDictationShortcuts => settings.labs.more_dictation_shortcuts = on,
+@@ -858,6 +866,9 @@ const PAUSE_MENU: u64 = APP_MODEL_SWITCHING << 1;
+ /// The next bit above Pause from menu bar: the local API's
+ /// `timestamps=segment|word` returns native timings.
+ const API_TIMESTAMPS: u64 = PAUSE_MENU << 1;
++/// The next bit above the API's timestamps: Google Transcribe's runtime (the
++/// model reads it, the catalog lists it only while its key answers).
++const GOOGLE_TRANSCRIBE: u64 = API_TIMESTAMPS << 1;
+ 
+ /// This process's `labs` switches: unknown until settings load or one is
+ /// first read.
+@@ -1081,6 +1092,11 @@ fn encode_where(settings: &LabsSettings, reaches: impl Fn(Feature) -> bool) -> u
+             settings.api_timestamps,
+             API_TIMESTAMPS,
+         ),
++        (
++            Feature::GoogleTranscribe,
++            settings.google_transcribe,
++            GOOGLE_TRANSCRIBE,
++        ),
+         (Feature::SpeakersOnly, settings.speakers_only, SPEAKERS_ONLY),
+         (Feature::PauseMenu, settings.pause_menu, PAUSE_MENU),
+         (
+diff --git a/src/labs/description.rs b/src/labs/description.rs
+index 1ddac678..b1614020 100644
+--- a/src/labs/description.rs
++++ b/src/labs/description.rs
+@@ -193,6 +193,9 @@ impl Feature {
+             Self::ApiTimestamps => {
+                 "Let apps using Voinc's local API ask for each segment's or word's start and end times in the transcript, as the speech model heard them"
+             }
++            Self::GoogleTranscribe => {
++                "Transcribe with Google's Gemini models in the cloud, using your Gemini API key (Settings › Labs holds it); your audio goes to Google"
++            }
+             Self::SpeakersOnly => {
+                 "Apply \"While dictating\" only when sound plays through speakers; headphones are left alone"
+             }
+diff --git a/src/labs/feature.rs b/src/labs/feature.rs
+index 3bcee1c2..873371b5 100644
+--- a/src/labs/feature.rs
++++ b/src/labs/feature.rs
+@@ -74,13 +74,14 @@ pub enum Feature {
+     TranscribeFiles,
+     ApiProcessing,
+     ApiTimestamps,
++    GoogleTranscribe,
+     SpeakersOnly,
+     MoreDictationShortcuts,
+     PauseMenu,
+ }
+ 
+ impl Feature {
+-    pub const ALL: [Self; 72] = [
++    pub const ALL: [Self; 73] = [
+         Self::Meetings,
+         Self::VoiceFilter,
+         Self::Playground,
+@@ -150,6 +151,7 @@ impl Feature {
+         Self::TranscribeFiles,
+         Self::ApiProcessing,
+         Self::ApiTimestamps,
++        Self::GoogleTranscribe,
+         Self::SpeakersOnly,
+         Self::MoreDictationShortcuts,
+         Self::PauseMenu,
+diff --git a/src/labs/gates.rs b/src/labs/gates.rs
+index 3c0b41f4..3c9ec019 100644
+--- a/src/labs/gates.rs
++++ b/src/labs/gates.rs
+@@ -329,6 +329,12 @@ pub fn api_timestamps() -> bool {
+     on(API_TIMESTAMPS) && Feature::ApiTimestamps.on_this_os()
+ }
+ 
++/// Google Transcribe's cloud runtime may transcribe (read where each
++/// transcription starts; the catalog also checks its API key).
++pub fn google_transcribe() -> bool {
++    on(GOOGLE_TRANSCRIBE) && Feature::GoogleTranscribe.on_this_os()
++}
++
+ /// Finished meetings may drop their WAV tracks on `meetings.audio_retention`
+ /// (read by the meeting controller's expiry pass and the window's Settings
+ /// row).
+diff --git a/src/labs/group.rs b/src/labs/group.rs
+index e833503b..b67bb248 100644
+--- a/src/labs/group.rs
++++ b/src/labs/group.rs
+@@ -118,7 +118,8 @@ impl Feature {
+             | Self::ModelInPlace
+             | Self::PickerDownloaded
+             | Self::ParakeetUltra
+-            | Self::TranscribeFiles => Group::Models,
++            | Self::TranscribeFiles
++            | Self::GoogleTranscribe => Group::Models,
+         }
+     }
+ }
+diff --git a/src/local_api.rs b/src/local_api.rs
+index 85b45d5b..abd2b2be 100644
+--- a/src/local_api.rs
++++ b/src/local_api.rs
+@@ -830,6 +830,10 @@ fn transcription_action(
+         crate::transcription::models::ModelRuntime::Gguf(_) => {
+             crate::transcription::models::is_verified(model)
+         }
++        // Google Transcribe is prepared when its key answers.
++        crate::transcription::models::ModelRuntime::Gemini => {
++            crate::transcription::models::is_installed(model, &selection.language)
++        }
+         crate::transcription::models::ModelRuntime::AppleSpeech => {
+             crate::transcription::models::is_installed(model, &selection.language)
+         }
+diff --git a/src/rune_ui.rs b/src/rune_ui.rs
+index 8a7847ca..cbda4d5a 100644
+--- a/src/rune_ui.rs
++++ b/src/rune_ui.rs
+@@ -884,6 +884,7 @@ impl Ui {
+     fn drafted(&self) -> AppSettings {
+         let mut candidate = self.settings.clone();
+         self.modes.project(&mut candidate);
++        self.lab_store.project(&mut candidate);
+         candidate.vocabulary = self.vocabulary.project();
+         candidate
+     }
+diff --git a/src/rune_ui/labs.rs b/src/rune_ui/labs.rs
+index 6307e29c..42eb13b1 100644
+--- a/src/rune_ui/labs.rs
++++ b/src/rune_ui/labs.rs
+@@ -12,6 +12,7 @@ mod screenshots;
+ mod store;
+ 
+ use rune::{El, Icon, TextEdit, Tx, row, text};
++use rune_kit::TextInput;
+ 
+ pub(super) use self::store::{page, search_field, tabs};
+ use super::controls::{self, Paint};
+@@ -199,19 +200,46 @@ pub(super) enum Tab {
+     On,
+ }
+ 
+-/// What the Labs store shows: its search, tab, and chip.
++/// What the Labs store shows: its search, tab, chip, and Google
++/// Transcribe's API-key draft.
+ #[derive(Default)]
+ pub(super) struct Store {
+     pub(super) search: TextEdit,
+     pub(super) tab: Tab,
+     /// The chip selected: only this group's labs show.
+     pub(super) group: Option<Group>,
++    /// The Gemini API key being typed, and the saved key it was seeded
++    /// from. A draft whose text still equals the seed changes nothing, so
++    /// `drafted()` never rewrites a saved key while Labs stays closed.
++    pub(super) api_key: TextEdit,
++    pub(super) api_key_seeded: Option<String>,
+ }
+ 
+ impl Store {
+     fn query(&self) -> String {
+         self.search.text.trim().to_lowercase()
+     }
++
++    /// Writes the typed key into the candidate settings, once it differs
++    /// from the seed the store opened with (an empty draft clears it).
++    pub(super) fn project(&self, settings: &mut crate::app_settings::AppSettings) {
++        let Some(seed) = &self.api_key_seeded else {
++            return;
++        };
++        let text = self.api_key.text.trim();
++        let key = (!text.is_empty()).then(|| text.to_owned());
++        if *seed != text {
++            settings.google_transcribe.api_key = key;
++        }
++    }
++
++    /// Re-seeds the API-key draft from the saved settings: the Labs page's
++    /// single entry point runs it, so a save elsewhere (CLI, older store)
++    /// is picked up on the next open.
++    fn seed_api_key(&mut self, settings: &crate::app_settings::AppSettings) {
++        self.api_key_seeded = settings.google_transcribe.api_key.clone();
++        self.api_key = TextEdit::new(self.api_key_seeded.clone().unwrap_or_default());
++    }
+ }
+ 
+ /// What a `voinc://labs` link asks the store to show.
+@@ -269,6 +297,7 @@ fn open(ui: &mut Ui, tx: &mut Tx) {
+     ui.select_pane(Pane::General, tx);
+     ui.labs_open = true;
+     ui.lab_store = Store::default();
++    ui.lab_store.seed_api_key(&ui.settings);
+     tx.settle();
+ }
+ 
+@@ -792,6 +821,12 @@ fn rows(ui: &Ui) -> Vec<Row> {
+         tr("Timestamps in API transcripts"),
+         tr("Apps can ask Voinc's local API for each segment's or word's start and end times."),
+     ));
++    rows.push(row(
++        Feature::GoogleTranscribe,
++        None,
++        tr("Google Transcribe"),
++        tr("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google."),
++    ));
+     rows.push(row(
+         Feature::SpeakersOnly,
+         None,
+@@ -917,6 +952,7 @@ fn row_key(lab: Lab) -> &'static str {
+         Feature::RecentDictations => "lab-recent-dictations",
+         Feature::SkipPauses => "lab-skip-pauses",
+         Feature::StopWhenCallEnds => "lab-stop-when-call-ends",
++        Feature::GoogleTranscribe => "lab-google-transcribe",
+         Feature::OutputFixes => "lab-output-fixes",
+         Feature::PickerActiveFirst => "lab-picker-active-first",
+         Feature::ModelInPlace => "lab-model-in-place",
+@@ -997,6 +1033,11 @@ fn flip(ui: &mut Ui, lab: Lab) {
+ /// A lab's own settings, on its card while it's on: how long the model sits
+ /// unused before it unloads, or the screenshot shortcut and folder.
+ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
++    // The key shows whether Google Transcribe is on or off: it is what makes
++    // the runtime available at all.
++    if matches!(entry.lab, Lab::Feature(Feature::GoogleTranscribe)) {
++        return Some(google_api_key(ui, p));
++    }
+     if !entry.on {
+         return None;
+     }
+@@ -1053,6 +1094,32 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
+     }
+ }
+ 
++/// How wide the API-key field is, on the card.
++const GOOGLE_KEY_WIDTH: f32 = 320.0;
++
++/// The person's Gemini API key, saved as they type (the window's draft
++/// mechanism commits it once typing pauses).
++fn google_api_key(ui: &Ui, p: Paint) -> El {
++    let field = TextInput::new(&ui.lab_store.api_key)
++        .placeholder(tr("Paste your Gemini API key"))
++        .width(Some(GOOGLE_KEY_WIDTH))
++        .on_edit(|ui: &mut Ui| &mut ui.lab_store.api_key)
++        .build(p.k)
++        .key("google-api-key");
++    row()
++        .key("google-api-key-row")
++        .gap(8.0)
++        .center_y()
++        .flex_wrap()
++        .child(
++            text(tr("API key"))
++                .key("label")
++                .font(controls::DESCRIPTION)
++                .color(p.muted()),
++        )
++        .child(field)
++}
++
+ /// Whether the Caps Lock light stays solid or blinks slowly while recording.
+ fn caps_lock_light(ui: &Ui, p: Paint) -> El {
+     use crate::app_settings::CapsLockLight;
+diff --git a/src/rune_ui/picker/facts.rs b/src/rune_ui/picker/facts.rs
+index a0f44d13..5ee7f1c5 100644
+--- a/src/rune_ui/picker/facts.rs
++++ b/src/rune_ui/picker/facts.rs
+@@ -201,6 +201,8 @@ pub(super) fn reads_vocabulary(ui: &Ui, def: &ModelDefinition) -> bool {
+ pub(super) fn size_text(def: &ModelDefinition) -> String {
+     match def.runtime {
+         ModelRuntime::AppleSpeech => tr("Managed by macOS").into(),
++        // Google Transcribe has no weights of Voinc's to measure.
++        ModelRuntime::Gemini => tr("Runs in Google's cloud").into(),
+         ModelRuntime::Gguf(_) => def.size_label(),
+     }
+ }
+@@ -234,6 +236,7 @@ pub(super) fn blurb(def: &ModelDefinition) -> &'static str {
+         M::NbWhisperMedium => tr("Whisper, tuned for Norwegian by its National Library"),
+         M::GraniteSpeech5 => tr("IBM's model for seven languages, with punctuation"),
+         M::AppleSpeech => tr("Apple's speech recognition, kept up to date by macOS"),
++        M::GeminiTranscribe => tr("Google's Gemini, transcribing in the cloud with your API key"),
+         M::Custom(_) => "",
+     }
+ }
+diff --git a/src/transcription.rs b/src/transcription.rs
+index ea733e8e..563cbf22 100644
+--- a/src/transcription.rs
++++ b/src/transcription.rs
+@@ -11,6 +11,7 @@ pub(crate) mod cpu_floor;
+ pub(crate) mod custom_models;
+ pub(crate) mod engine;
+ pub(crate) mod found_models;
++pub(crate) mod gemini;
+ pub(crate) mod gguf_header;
+ #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+ pub(crate) mod gguf_session;
+@@ -29,6 +30,7 @@ pub(crate) mod preparation;
+ pub(crate) mod service;
+ pub(crate) mod speech_detector;
+ pub(crate) mod stream;
++pub(crate) mod stream_feed;
+ pub(crate) mod subtitle_credits;
+ pub(crate) mod transcript;
+ 
+@@ -57,6 +59,7 @@ pub(crate) const UNIFIED_ENGLISH_TRAILING_SILENCE_SAMPLES: usize = 6_400;
+ pub enum Transcriber {
+     Gguf(Box<Parakeet>),
+     AppleSpeech(AppleSpeech),
++    Gemini(gemini::Gemini),
+ }
+ 
+ #[cfg(target_os = "macos")]
+@@ -78,6 +81,7 @@ impl Transcriber {
+                 .map(Box::new)
+                 .map(Self::Gguf),
+             ModelRuntime::AppleSpeech => AppleSpeech::load(selection).map(Self::AppleSpeech),
++            ModelRuntime::Gemini => gemini::Gemini::load_selection(selection).map(Self::Gemini),
+         }
+     }
+ 
+@@ -85,15 +89,18 @@ impl Transcriber {
+         match self {
+             Self::Gguf(model) => model.matches_selection(selection),
+             Self::AppleSpeech(model) => model.matches_selection(selection),
++            Self::Gemini(model) => model.matches_selection(selection),
+         }
+     }
+ 
+     /// Brings an idle GGUF model's weights back before audio arrives (see
+-    /// [`Parakeet::prewarm`]). Apple Speech has no weights of Voinc's to warm.
++    /// [`Parakeet::prewarm`]). Apple Speech has no weights of Voinc's to warm,
++    /// and Google Transcribe reads its key and vocabulary afresh per request.
+     pub fn prewarm(&mut self) -> Result<()> {
+         match self {
+             Self::Gguf(model) => model.prewarm(),
+             Self::AppleSpeech(_) => Ok(()),
++            Self::Gemini(model) => model.prewarm(),
+         }
+     }
+ 
+@@ -106,6 +113,8 @@ impl Transcriber {
+                 model.transcribe(&samples)
+             }
+             Self::AppleSpeech(model) => model.transcribe(&samples).map(|result| result.text),
++            // Google hears the clip as it is: no weights to pad for.
++            Self::Gemini(model) => model.transcribe(&samples),
+         }
+     }
+ 
+@@ -140,6 +149,7 @@ impl Transcriber {
+                     })
+             }
+             Self::AppleSpeech(model) => model.transcribe(&samples),
++            Self::Gemini(model) => model.transcribe_segments(&samples),
+         }
+     }
+ 
+@@ -153,6 +163,7 @@ impl Transcriber {
+             }
+             // Apple Speech segments the whole clip itself.
+             Self::AppleSpeech(model) => model.transcribe(&samples),
++            Self::Gemini(model) => model.transcribe_timed(&samples),
+         }
+     }
+ 
+@@ -162,6 +173,8 @@ impl Transcriber {
+         match self {
+             Self::Gguf(model) => model.timestamps(),
+             Self::AppleSpeech(_) => crate::transcription::transcript::TimestampLevel::Segment,
++            // Google's batch answers word times for a timed request.
++            Self::Gemini(_) => crate::transcription::transcript::TimestampLevel::Word,
+         }
+     }
+ }
+@@ -199,10 +212,13 @@ impl WarmTranscriber {
+         })
+     }
+ 
+-    /// The selection of the warm model when it is a GGUF model.
++    /// The selection of the warm model when it is one the engine can hold:
++    /// a GGUF model with weights, or Google Transcribe, which reloads for
++    /// nothing.
+     pub(crate) fn gguf_selection(&self) -> Option<&TranscriptionSelection> {
+         match &self.active {
+             Some(Transcriber::Gguf(model)) => model.selection(),
++            Some(Transcriber::Gemini(model)) => Some(model.selection()),
+             _ => None,
+         }
+     }
+@@ -212,6 +228,7 @@ impl WarmTranscriber {
+     pub(crate) fn stream_trailing_silence(&self) -> usize {
+         match &self.active {
+             Some(Transcriber::Gguf(model)) => trailing_silence_samples(model.model_id()),
++            Some(Transcriber::Gemini(_)) => gemini::LIVE_TRAILING_SILENCE_SAMPLES,
+             _ => 0,
+         }
+     }
+@@ -220,6 +237,7 @@ impl WarmTranscriber {
+     pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
+         match &self.active {
+             Some(Transcriber::Gguf(model)) => model.stream_options(),
++            Some(Transcriber::Gemini(_)) => Some(&gemini::STREAM_OPTIONS),
+             _ => None,
+         }
+     }
+@@ -228,10 +246,11 @@ impl WarmTranscriber {
+         &mut self,
+         stream_options: &transcribe_cpp::StreamOptions,
+         cancel: &transcribe_cpp::CancelToken,
+-        drive: impl FnOnce(&mut transcribe_cpp::Stream<'_>) -> R,
++        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
+     ) -> transcribe_cpp::Result<R> {
+         match &mut self.active {
+             Some(Transcriber::Gguf(model)) => model.with_stream(stream_options, cancel, drive),
++            Some(Transcriber::Gemini(model)) => model.with_stream(stream_options, cancel, drive),
+             _ => Err(transcribe_cpp::Error::NotImplemented(
+                 "the active transcriber cannot stream".into(),
+             )),
+diff --git a/src/transcription/custom_models.rs b/src/transcription/custom_models.rs
+index c29b63ec..13bca623 100644
+--- a/src/transcription/custom_models.rs
++++ b/src/transcription/custom_models.rs
+@@ -427,7 +427,7 @@ pub fn imported() -> Vec<Imported> {
+             definition: entry.definition,
+             architecture: match entry.definition.runtime {
+                 ModelRuntime::Gguf(artifact) => artifact.architecture,
+-                ModelRuntime::AppleSpeech => "",
++                ModelRuntime::AppleSpeech | ModelRuntime::Gemini => "",
+             },
+             sha256: entry.manifest.sha256.clone(),
+             source: entry.manifest.source.clone(),
+diff --git a/src/transcription/engine.rs b/src/transcription/engine.rs
+index ff731670..eec8e6dd 100644
+--- a/src/transcription/engine.rs
++++ b/src/transcription/engine.rs
+@@ -1377,6 +1377,7 @@ impl Worker {
+ 
+ #[cfg(test)]
+ mod tests {
++    use super::super::stream_feed::StreamFeed;
+     use super::*;
+ 
+     #[test]
+diff --git a/src/transcription/engine/streaming.rs b/src/transcription/engine/streaming.rs
+index c2373ec5..303747af 100644
+--- a/src/transcription/engine/streaming.rs
++++ b/src/transcription/engine/streaming.rs
+@@ -1,29 +1,8 @@
+ use super::*;
+ 
+-/// Feeds whatever part of the clip the stream has not seen, then finalizes.
+-/// The clip is authoritative: a stream fed well past its trimmed end, or one
+-/// that produced nothing, is reported unusable so the caller falls back.
+-/// The live stream as the worker drives it.
+-pub(super) trait StreamFeed {
+-    fn feed(&mut self, samples: &[f32]) -> Result<(), String>;
+-    fn finalize(&mut self) -> Result<String, String>;
+-    fn partial(&self) -> Partial;
+-    /// Where the stream's text starts in the audio it heard, in milliseconds,
+-    /// once it has finalized; `None` when the model gives no timing.
+-    fn text_start_ms(&self) -> Option<u64> {
+-        None
+-    }
+-    /// Where the stream's text ends in the audio it heard, in milliseconds,
+-    /// once it has finalized; `None` when the model gives no timing.
+-    fn text_end_ms(&self) -> Option<u64> {
+-        None
+-    }
+-    /// The distinct language tags the model's raw decode carries, in order of
+-    /// first appearance, once it has finalized; empty when it emits none.
+-    fn language_tags(&self) -> Vec<String> {
+-        Vec::new()
+-    }
+-}
++/// The live stream as the worker drives it. The GGUF stream implements the
++/// engine's one seam ([`crate::transcription::stream_feed::StreamFeed`]).
++use crate::transcription::stream_feed::StreamFeed;
+ 
+ impl StreamFeed for transcribe_cpp::Stream<'_> {
+     fn feed(&mut self, samples: &[f32]) -> Result<(), String> {
+@@ -176,8 +155,8 @@ pub(super) const UNTRANSCRIBED_SPEECH_SAMPLES: usize = 4_800;
+ /// speech well past its end means it dropped a phrase (#1101), and the whole
+ /// clip decides. A raw decode carrying two different language tags means it
+ /// changed language mid-clip, so the whole clip decides too.
+-pub(super) struct PauseCap<'a, S> {
+-    stream: &'a mut S,
++pub(super) struct PauseCap<'a> {
++    stream: &'a mut dyn StreamFeed,
+     speech: crate::transcription::pause_segmenter::SpeechFrames,
+     /// Samples not yet a whole 20 ms frame.
+     frame: Vec<f32>,
+@@ -196,8 +175,8 @@ pub(super) struct PauseCap<'a, S> {
+     trailing_silence: usize,
+ }
+ 
+-impl<'a, S: StreamFeed> PauseCap<'a, S> {
+-    pub(super) fn new(stream: &'a mut S, trailing_silence: usize) -> Self {
++impl<'a> PauseCap<'a> {
++    pub(super) fn new(stream: &'a mut dyn StreamFeed, trailing_silence: usize) -> Self {
+         Self {
+             stream,
+             speech: Default::default(),
+@@ -239,7 +218,7 @@ impl<'a, S: StreamFeed> PauseCap<'a, S> {
+     }
+ }
+ 
+-impl<S: StreamFeed> StreamFeed for PauseCap<'_, S> {
++impl StreamFeed for PauseCap<'_> {
+     fn feed(&mut self, mut samples: &[f32]) -> Result<(), String> {
+         let mut out = Vec::with_capacity(samples.len() + self.tail.len());
+         while !samples.is_empty() {
+@@ -405,7 +384,7 @@ pub(super) struct FeedStats {
+ /// command interrupts the stream.
+ pub(super) fn drive_stream(
+     id: u64,
+-    stream: &mut impl StreamFeed,
++    stream: &mut dyn StreamFeed,
+     commands: &Receiver<Command>,
+     stalled: &AtomicBool,
+     partials: Option<&Partials>,
+@@ -486,7 +465,7 @@ pub(super) fn drive_stream(
+ /// begin or finish, model work, shutdown) closes it and is returned.
+ pub(super) fn drive_yielding(
+     id: u64,
+-    stream: &mut impl StreamFeed,
++    stream: &mut dyn StreamFeed,
+     commands: &Receiver<Command>,
+     yielding: &Yielding,
+     deferred: &mut VecDeque<Command>,
+@@ -528,7 +507,7 @@ pub(super) fn drive_yielding(
+ }
+ 
+ pub(super) fn finish_stream(
+-    stream: &mut impl StreamFeed,
++    stream: &mut dyn StreamFeed,
+     clip: &[f32],
+     fed: usize,
+ ) -> Result<String, String> {
+diff --git a/src/transcription/found_models.rs b/src/transcription/found_models.rs
+index d79a58bd..c660b9fd 100644
+--- a/src/transcription/found_models.rs
++++ b/src/transcription/found_models.rs
+@@ -327,7 +327,7 @@ fn catalog_found(
+     let definition = super::models::definition(model);
+     let (architecture, variant) = match definition.runtime {
+         ModelRuntime::Gguf(artifact) => (artifact.architecture, artifact.variant),
+-        ModelRuntime::AppleSpeech => ("", ""),
++        ModelRuntime::AppleSpeech | ModelRuntime::Gemini => ("", ""),
+     };
+     Found {
+         path: path.to_path_buf(),
+@@ -737,7 +737,7 @@ mod tests {
+             .filter(|model| !model.id.is_custom())
+             .filter_map(|model| match model.runtime {
+                 ModelRuntime::Gguf(artifact) => Some((model, artifact)),
+-                ModelRuntime::AppleSpeech => None,
++                ModelRuntime::AppleSpeech | ModelRuntime::Gemini => None,
+             })
+             .min_by_key(|(_, artifact)| artifact.bytes)
+             .unwrap();
+@@ -795,7 +795,7 @@ mod tests {
+             .filter(|model| !model.id.is_custom())
+             .filter_map(|model| match model.runtime {
+                 ModelRuntime::Gguf(artifact) => Some((model, artifact)),
+-                ModelRuntime::AppleSpeech => None,
++                ModelRuntime::AppleSpeech | ModelRuntime::Gemini => None,
+             })
+             .min_by_key(|(_, artifact)| artifact.bytes)
+             .unwrap();
+diff --git a/src/transcription/gemini.rs b/src/transcription/gemini.rs
+new file mode 100644
+index 00000000..395cd50c
+--- /dev/null
++++ b/src/transcription/gemini.rs
+@@ -0,0 +1,386 @@
++//! Google Transcribe: Gemini's speech-to-text over the Gemini API.
++//!
++//! Two ways to hear it:
++//!
++//! - [`batch`] transcribes a complete clip over the Interactions REST API
++//!   (inline base64 WAV): dictation fallbacks, meeting chunks, and
++//!   `voinc transcribe` files. Long clips are split at Google's 30-minute
++//!   segment limit, because audio past it is silently truncated while the
++//!   answer still reports `completed`.
++//! - [`live`] holds one Live API WebSocket session for a dictation's interim
++//!   text. Any stream failure falls back to the whole clip, which [`batch`]
++//!   then transcribes.
++//!
++//! Auth is the person's Gemini API key: the saved setting first, else
++//! `VOINC_GOOGLE_API_KEY`. Requests and WebSockets go out like every other
++//! Voinc request: the platform's TLS and roots, and the proxy the computer
++//! uses. Errors are named for a person.
++//!
++//! The free tier keeps some content to improve Google products and bounds
++//! requests (per minute and per day), the Live API allows a few sessions at
++//! once and caps one at 10 minutes; every `store` is false, so nothing is
++//! kept in Google's interactions history on Voinc's behalf.
++
++pub(crate) mod batch;
++pub(crate) mod live;
++
++use std::sync::{Arc, OnceLock, RwLock};
++
++use color_eyre::eyre::{Result, WrapErr, eyre};
++use serde::Deserialize;
++
++use crate::transcription::models::{TranscriptionModelId, TranscriptionSelection, validate};
++use crate::transcription::stream_feed::StreamFeed;
++use crate::transcription::transcript::Transcript;
++
++/// The batch model, as the Interactions API names it.
++pub(crate) const BATCH_MODEL: &str = "gemini-3.5-transcribe";
++/// The Live API's streaming model, under `models/`.
++pub(crate) const LIVE_MODEL: &str = "models/gemini-3.5-transcribe-live";
++/// The API's origin; its host is also where the WebSocket connects.
++pub(crate) const API_HOST: &str = "generativelanguage.googleapis.com";
++/// The Interactions endpoint a whole clip goes to.
++pub(crate) const INTERACTIONS_URL: &str =
++    "https://generativelanguage.googleapis.com/v1beta/interactions";
++/// The Live API's WebSocket endpoint, authenticated by an `x-goog-api-key`
++/// header on the handshake.
++pub(crate) const WS_URL: &str = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
++/// The custom vocabulary a request biases toward, at most 1000 terms.
++pub(crate) const MAX_VOCABULARY: usize = 1000;
++/// A batch request carries at most 30 minutes of audio. Audio past the limit
++/// is silently truncated while the answer still reports `completed`, so a
++/// longer clip is split client-side before anything is sent.
++pub(crate) const MAX_SEGMENT_SAMPLES: usize = 30 * 60 * 16_000;
++
++/// A live dictation stream hears silence after its clip, as a GGUF stream
++/// does: a final turn's last word must land.
++pub(crate) const LIVE_TRAILING_SILENCE_SAMPLES: usize = 6_400;
++
++/// The streaming capability `stream_options` reports for this runtime: the
++/// engine's stream machinery is what a Live session rides. The options
++/// themselves are a GGUF artifact a Live session ignores.
++pub(crate) static STREAM_OPTIONS: std::sync::LazyLock<transcribe_cpp::StreamOptions> =
++    std::sync::LazyLock::new(transcribe_cpp::StreamOptions::default);
++
++/// The API key the running settings hold, set on every save and load.
++static API_KEY: OnceLock<RwLock<Option<Arc<str>>>> = OnceLock::new();
++
++/// The Gemini API key for Google Transcribe: `VOINC_GOOGLE_API_KEY` first,
++/// then the saved setting. `None` means Google Transcribe cannot run.
++pub(crate) fn api_key() -> Option<String> {
++    let from_env = std::env::var("VOINC_GOOGLE_API_KEY")
++        .ok()
++        .map(|key| key.trim().to_owned())
++        .filter(|key| !key.is_empty());
++    from_env.or_else(|| {
++        API_KEY
++            .get_or_init(Default::default)
++            .read()
++            .unwrap_or_else(|error| error.into_inner())
++            .as_ref()
++            .map(|key| key.to_string())
++    })
++}
++
++/// Records the saved key for [`api_key`]; called on every settings load and
++/// save, so a change applies to the next request.
++pub(crate) fn set_api_key(key: Option<String>) {
++    let key = key
++        .map(|key| key.trim().to_owned())
++        .filter(|key| !key.is_empty())
++        .map(Arc::from);
++    *API_KEY
++        .get_or_init(Default::default)
++        .write()
++        .unwrap_or_else(|error| error.into_inner()) = key;
++}
++
++/// What one transcription asks Google for: the key, the language hint, and
++/// the vocabulary.
++#[derive(Clone, Debug, Eq, PartialEq)]
++pub(crate) struct Config {
++    key: String,
++    /// The BCP-47 hint the selection names; `None` lets Google detect the
++    /// language.
++    language: Option<String>,
++    /// The saved vocabulary, at most [`MAX_VOCABULARY`] terms.
++    vocabulary: Vec<String>,
++}
++
++impl Config {
++    /// Reads the key and vocabulary as the run starts, so a settings change
++    /// applies to the next transcription.
++    fn for_selection(selection: &TranscriptionSelection) -> Result<Self> {
++        let key = api_key().ok_or_else(|| eyre!("{}", GeminiError::NoKey.to_string()))?;
++        let language = (selection.language != crate::transcription::models::AUTO_LANGUAGE)
++            .then(|| selection.language.clone());
++        // Labs › Vocabulary biasing gates the list, as it does for Parakeet;
++        // Google's customVocabulary carries at most MAX_VOCABULARY terms.
++        let mut vocabulary = crate::dictation::vocabulary::transcription_terms();
++        vocabulary.truncate(MAX_VOCABULARY);
++        Ok(Self {
++            key,
++            language,
++            vocabulary,
++        })
++    }
++}
++
++/// Why Google Transcribe could not answer, named for a person.
++#[derive(Debug, Eq, PartialEq)]
++pub(crate) enum GeminiError {
++    /// No key is saved or set.
++    NoKey,
++    /// The key was refused.
++    Auth,
++    /// The model name was refused: this build predates it, or it left the API.
++    UnknownModel,
++    /// The request was rejected: audio or options Google wouldn't take.
++    Invalid(String),
++    /// The free tier's limits were hit.
++    RateLimited(String),
++    /// Google's service failed.
++    Server(String),
++    /// The network failed before an answer.
++    Unreachable(String),
++}
++
++impl GeminiError {
++    /// A person-named reason for a failed request.
++    fn reason(&self) -> String {
++        match self {
++            Self::NoKey => "Google Transcribe has no API key. Paste one in Settings › \
++                            Labs › Google Transcribe."
++                .into(),
++            Self::Auth => {
++                "Google rejected the API key. Check it in Settings › Labs › Google Transcribe."
++                    .into()
++            }
++            Self::UnknownModel => {
++                "Google doesn't know the speech model this build asks for; check for an update."
++                    .into()
++            }
++            Self::Invalid(detail) => format!("Google rejected the audio or options: {detail}"),
++            Self::RateLimited(detail) => {
++                format!(
++                    "Google Transcribe is rate-limited ({detail}); its free tier allows only a \
++                     few transcriptions per minute. Try again shortly."
++                )
++            }
++            Self::Server(detail) => format!("Google's transcription service failed: {detail}"),
++            Self::Unreachable(detail) => {
++                format!("Couldn't reach {API_HOST}: {detail}")
++            }
++        }
++    }
++
++    /// The failure for the engine's whole-clip fallback, named for a person.
++    pub(crate) fn fallback_reason(&self) -> String {
++        self.reason()
++    }
++}
++
++impl std::fmt::Display for GeminiError {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        f.write_str(&self.reason())
++    }
++}
++
++impl std::error::Error for GeminiError {}
++
++/// The Google Transcribe runtime a listener or the macOS engine holds: a
++/// selection plus what each request reads afresh. There are no weights, so
++/// loading is cheap and prewarming does nothing.
++pub(crate) struct Gemini {
++    selection: TranscriptionSelection,
++}
++
++impl Gemini {
++    pub(crate) fn load_selection(selection: &TranscriptionSelection) -> Result<Self> {
++        validate(selection)?;
++        Config::for_selection(selection)?;
++        Ok(Self {
++            selection: selection.clone(),
++        })
++    }
++
++    pub(crate) fn selection(&self) -> &TranscriptionSelection {
++        &self.selection
++    }
++
++    pub(crate) fn model_id(&self) -> TranscriptionModelId {
++        self.selection.model
++    }
++
++    pub(crate) fn matches_selection(&self, selection: &TranscriptionSelection) -> bool {
++        &self.selection == selection
++    }
++
++    /// Nothing to warm: every request reads its key and vocabulary afresh.
++    pub(crate) fn prewarm(&mut self) -> Result<()> {
++        Ok(())
++    }
++
++    fn config(&self) -> Result<Config> {
++        Config::for_selection(&self.selection).wrap_err("Google Transcribe is not ready")
++    }
++
++    /// Transcribes a complete 16 kHz clip.
++    pub(crate) fn transcribe(&mut self, samples: &[f32]) -> Result<String> {
++        let config = self.config()?;
++        batch::transcribe_text(samples, &config).map_err(|error| eyre!("{}", error.reason()))
++    }
++
++    /// A complete clip with Google's word times, chunked at the 30-minute
++    /// segment limit exactly as the untimed run chunks it, so the text
++    /// matches.
++    pub(crate) fn transcribe_timed(&mut self, samples: &[f32]) -> Result<Transcript> {
++        let config = self.config()?;
++        batch::transcribe_timed(samples, &config).map_err(|error| eyre!("{}", error.reason()))
++    }
++
++    /// One meeting chunk with Google's word times.
++    pub(crate) fn transcribe_segments(&mut self, samples: &[f32]) -> Result<Transcript> {
++        self.transcribe_timed(samples)
++    }
++
++    /// Opens a Live session and drives it. A session Google won't start is a
++    /// logged backend error; the engine's queued finish then takes the whole
++    /// clip, which `transcribe` answers with a batch request.
++    pub(crate) fn with_stream<R>(
++        &mut self,
++        _stream_options: &transcribe_cpp::StreamOptions,
++        cancel: &transcribe_cpp::CancelToken,
++        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
++    ) -> transcribe_cpp::Result<R> {
++        let config = self
++            .config()
++            .map_err(|error| transcribe_cpp::Error::Backend(format!("{error:#}")))?;
++        let mut stream = live::GeminiLiveStream::open(&config, cancel)
++            .map_err(|error| transcribe_cpp::Error::Backend(error.fallback_reason()))?;
++        Ok(drive(&mut stream))
++    }
++
++    /// One word or segment's start and end (ms from the clip's start) and
++    /// text, as `transcribe_words` and the capture path read them.
++    pub(crate) fn transcribe_words(&mut self, samples: &[f32]) -> Result<(String, Vec<TimedSpan>)> {
++        let transcript = self.transcribe_timed(samples)?;
++        let spans = if transcript.words.is_empty() {
++            transcript.segments.clone()
++        } else {
++            transcript.words.clone()
++        };
++        let words = spans
++            .into_iter()
++            .map(|word| (word.start_ms, word.end_ms, word.text))
++            .collect();
++        Ok((transcript.text, words))
++    }
++}
++
++/// A word or segment's start and end (ms from the clip's start) and text.
++pub(crate) type TimedSpan = (i64, i64, String);
++
++/// The Google error body a failed request answers.
++#[derive(Deserialize)]
++struct ErrorBody {
++    error: Option<ErrorDetail>,
++}
++
++#[derive(Deserialize)]
++struct ErrorDetail {
++    message: Option<String>,
++}
++
++/// The failure detail a non-2xx answer carries, as a person-named
++/// [`GeminiError`].
++pub(crate) fn error_for_status(status: u16, body: &str) -> GeminiError {
++    let detail = serde_json::from_str::<ErrorBody>(body)
++        .ok()
++        .and_then(|body| body.error)
++        .and_then(|error| error.message)
++        .unwrap_or_else(|| body.trim().chars().take(200).collect());
++    match status {
++        401 | 403 => GeminiError::Auth,
++        404 => GeminiError::UnknownModel,
++        400 => GeminiError::Invalid(detail),
++        429 => GeminiError::RateLimited(detail),
++        500..=599 => GeminiError::Server(format!("HTTP {status}: {detail}")),
++        _ => GeminiError::Server(format!("HTTP {status}: {detail}")),
++    }
++}
++
++/// Encodes 16 kHz mono f32 samples as the WAV bytes a request carries.
++pub(crate) fn wav_bytes(samples: &[f32]) -> Vec<u8> {
++    let mut bytes = Vec::with_capacity(44 + samples.len() * 2);
++    bytes.extend_from_slice(b"RIFF");
++    bytes.extend_from_slice(&(36 + samples.len() as u32 * 2).to_le_bytes());
++    bytes.extend_from_slice(b"WAVE");
++    bytes.extend_from_slice(b"fmt ");
++    bytes.extend_from_slice(&16_u32.to_le_bytes());
++    bytes.extend_from_slice(&1_u16.to_le_bytes()); // PCM
++    bytes.extend_from_slice(&1_u16.to_le_bytes()); // mono
++    bytes.extend_from_slice(&16_000_u32.to_le_bytes());
++    bytes.extend_from_slice(&32_000_u32.to_le_bytes()); // byte rate
++    bytes.extend_from_slice(&2_u16.to_le_bytes()); // block align
++    bytes.extend_from_slice(&16_u16.to_le_bytes()); // bits
++    bytes.extend_from_slice(b"data");
++    bytes.extend_from_slice(&(samples.len() as u32 * 2).to_le_bytes());
++    for sample in samples {
++        bytes.extend_from_slice(&f32_to_i16(*sample).to_le_bytes());
++    }
++    bytes
++}
++
++fn f32_to_i16(sample: f32) -> i16 {
++    (sample.clamp(-1.0, 1.0) * i16::MAX as f32) as i16
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn wav_bytes_is_a_well_formed_mono_wav() {
++        let bytes = wav_bytes(&[0.0, 1.0, -1.0, 0.5]);
++        let mut reader = hound::WavReader::new(std::io::Cursor::new(bytes)).unwrap();
++        let spec = reader.spec();
++        assert_eq!(spec.sample_format, hound::SampleFormat::Int);
++        assert_eq!(spec.sample_rate, 16_000);
++        assert_eq!(spec.channels, 1);
++        let samples: Vec<f32> = reader
++            .samples::<i16>()
++            .map(|sample| sample.unwrap() as f32 / i16::MAX as f32)
++            .collect();
++        assert_eq!(samples.len(), 4);
++        assert!(samples[0] < 0.001);
++        assert!(samples[1] > 0.99);
++        assert!(samples[2] < -0.99);
++    }
++
++    #[test]
++    fn a_refused_key_is_named_for_a_person() {
++        let error = error_for_status(403, r#"{"error":{"message":"API key not valid"}}"#);
++        assert!(matches!(error, GeminiError::Auth));
++        assert!(error.reason().contains("API key"));
++    }
++
++    #[test]
++    fn a_rate_limit_says_what_to_do() {
++        let error = error_for_status(429, r#"{"error":{"message":"resource exhausted"}}"#);
++        let reason = error.reason();
++        assert!(reason.contains("rate-limited"), "{reason}");
++    }
++
++    #[test]
++    fn an_html_error_page_still_names_a_reason() {
++        let error = error_for_status(502, "<html>Bad Gateway</html>");
++        let reason = error.reason();
++        assert!(reason.contains("service failed"), "{reason}");
++    }
++
++    #[test]
++    fn missing_key_is_reported_without_a_request() {
++        assert!(!GeminiError::NoKey.reason().is_empty());
++    }
++}
+diff --git a/src/transcription/gemini/batch.rs b/src/transcription/gemini/batch.rs
+new file mode 100644
+index 00000000..8003db81
+--- /dev/null
++++ b/src/transcription/gemini/batch.rs
+@@ -0,0 +1,368 @@
++//! The batch Interactions path: a complete clip to `POST /v1beta/interactions`
++//! as inline base64 WAV, transcript out.
++//!
++//! Audio past the API's 30-minute segment limit is silently truncated while
++//! the answer still reports `completed`, so a longer clip is split client-side
++//! and the segments joined: one transcript the caller sees as one clip.
++//! `store` is false, so nothing is kept in Google's interactions history on
++//! Voinc's behalf. A smart mode asks Google to punctuate and tidy; a verbatim
++//! mode answers word times, which meetings and `voinc transcribe` use.
++
++use std::time::Duration;
++
++use base64::Engine;
++use serde::Deserialize;
++
++use super::{BATCH_MODEL, Config, GeminiError, INTERACTIONS_URL, MAX_SEGMENT_SAMPLES};
++use crate::net;
++use crate::transcription::transcript::{Transcript, TranscriptSegment};
++
++/// A request waits at most half its audio again plus 20 s, at least a minute,
++/// at most five: a slow answer fails cleanly into the whole-clip fallback
++/// instead of holding a paste, and a long file still has room to finish.
++fn timeout(samples: usize) -> Duration {
++    let seconds = samples as f64 / 16_000.0 * 0.5 + 20.0;
++    Duration::from_secs(seconds.clamp(60.0, 300.0) as u64)
++}
++
++/// Transcribes a complete clip for its text: smart mode, no timestamps.
++pub(crate) fn transcribe_text(samples: &[f32], config: &Config) -> Result<String, GeminiError> {
++    if samples.len() <= MAX_SEGMENT_SAMPLES {
++        return one_segment(samples, config, false).map(|segment| segment.text);
++    }
++    let mut text = String::new();
++    for chunk in chunks(samples) {
++        let segment = one_segment(chunk, config, false)?;
++        let piece = segment.text.trim().to_owned();
++        if !piece.is_empty() {
++            if !text.is_empty() {
++                text.push(' ');
++            }
++            text.push_str(&piece);
++        }
++    }
++    Ok(text)
++}
++
++/// A complete clip with Google's word times, chunked at the segment limit
++/// exactly as [`transcribe_text`] chunks it, so the text matches and each
++/// chunk's times sit on the clip's own timeline.
++pub(crate) fn transcribe_timed(
++    samples: &[f32],
++    config: &Config,
++) -> Result<Transcript, GeminiError> {
++    if samples.len() <= MAX_SEGMENT_SAMPLES {
++        return one_segment(samples, config, true);
++    }
++    let mut text = String::new();
++    let mut words: Vec<TranscriptSegment> = Vec::new();
++    for (index, chunk) in chunks(samples).enumerate() {
++        let offset_ms = index as i64 * MAX_SEGMENT_SAMPLES as i64 * 1000 / 16_000;
++        let segment = one_segment(chunk, config, true)?;
++        let piece = segment.text.trim().to_owned();
++        if !piece.is_empty() {
++            if !text.is_empty() {
++                text.push(' ');
++            }
++            text.push_str(&piece);
++        }
++        words.extend(segment.words.into_iter().map(|mut word| {
++            word.start_ms += offset_ms;
++            word.end_ms += offset_ms;
++            word
++        }));
++    }
++    Ok(Transcript {
++        text,
++        segments: Vec::new(),
++        words,
++    })
++}
++
++/// The clip's pieces, each at most the API's segment limit.
++fn chunks(samples: &[f32]) -> impl Iterator<Item = &[f32]> {
++    samples.chunks(MAX_SEGMENT_SAMPLES)
++}
++
++/// One whole request under [`MAX_SEGMENT_SAMPLES`] samples. A timed request
++/// is verbatim with word times; an untimed one is smart.
++fn one_segment(samples: &[f32], config: &Config, timed: bool) -> Result<Transcript, GeminiError> {
++    let body = serde_json::json!({
++        "model": BATCH_MODEL,
++        "input": [{
++            "type": "audio",
++            "data": base64::engine::general_purpose::STANDARD
++                .encode(super::wav_bytes(samples)),
++            "mime_type": "audio/wav",
++        }],
++        "generation_config": {"transcription_config": transcription_config(config, timed)},
++        "store": false,
++    });
++    let interaction = send(
++        &serde_json::to_vec(&body).unwrap_or_default(),
++        config,
++        samples,
++    )?;
++    Ok(interaction.transcript())
++}
++
++/// The transcription options one request carries: the language hint, the
++/// vocabulary, and the mode. A timed request answers word times; an untimed
++/// one asks Google to punctuate and tidy.
++fn transcription_config(config: &Config, timed: bool) -> serde_json::Value {
++    let mut options = serde_json::Map::new();
++    if let Some(language) = &config.language {
++        options.insert("language_codes".into(), serde_json::json!([language]));
++    }
++    if !config.vocabulary.is_empty() {
++        options.insert(
++            "custom_vocabulary".into(),
++            serde_json::json!(config.vocabulary),
++        );
++    }
++    options.insert(
++        "mode".into(),
++        if timed {
++            serde_json::json!({
++                "type": "verbatim",
++                "timestamp_granularities": ["word"],
++            })
++        } else {
++            serde_json::json!({"type": "smart"})
++        },
++    );
++    serde_json::Value::Object(options)
++}
++
++/// One interaction's answer.
++#[derive(Deserialize)]
++struct Interaction {
++    status: Option<String>,
++    #[serde(default)]
++    steps: Vec<Step>,
++    output_text: Option<String>,
++}
++
++#[derive(Deserialize)]
++struct Step {
++    #[serde(default)]
++    content: Vec<Content>,
++}
++
++#[derive(Deserialize)]
++struct Content {
++    #[serde(rename = "type")]
++    kind: Option<String>,
++    text: Option<String>,
++    #[serde(default)]
++    annotations: Vec<Annotation>,
++}
++
++/// A text content's annotations; only a `word_info` one carries what a
++/// timed transcript needs.
++#[derive(Deserialize)]
++struct Annotation {
++    #[serde(rename = "type")]
++    kind: Option<String>,
++    text: Option<String>,
++    start_offset: Option<String>,
++    end_offset: Option<String>,
++}
++
++impl Interaction {
++    /// The clip's text: the answer's `output_text` when the API names one,
++    /// else every text content in step order.
++    fn text(&self) -> String {
++        if let Some(text) = &self.output_text {
++            return text.clone();
++        }
++        let mut text = String::new();
++        for step in &self.steps {
++            for content in &step.content {
++                if content.kind.as_deref() != Some("text") {
++                    continue;
++                }
++                let Some(piece) = content.text.as_deref() else {
++                    continue;
++                };
++                let piece = piece.trim();
++                if piece.is_empty() {
++                    continue;
++                }
++                if !text.is_empty() {
++                    text.push(' ');
++                }
++                text.push_str(piece);
++            }
++        }
++        text
++    }
++
++    /// The answer as a transcript: its text plus every word annotation's
++    /// time, in order.
++    fn transcript(&self) -> Transcript {
++        let mut words = Vec::new();
++        for step in &self.steps {
++            for content in &step.content {
++                for annotation in &content.annotations {
++                    if annotation.kind.as_deref() != Some("word_info") {
++                        continue;
++                    }
++                    let (Some(start), Some(end)) = (annotation.start_ms(), annotation.end_ms())
++                    else {
++                        continue;
++                    };
++                    let Some(word) = annotation.text.as_deref().map(str::to_owned) else {
++                        continue;
++                    };
++                    words.push(TranscriptSegment {
++                        start_ms: start,
++                        end_ms: end,
++                        text: word,
++                    });
++                }
++            }
++        }
++        words.sort_by_key(|word| word.start_ms);
++        Transcript {
++            text: self.text(),
++            segments: Vec::new(),
++            words,
++        }
++    }
++
++    /// Whether the interaction finished.
++    fn completed(&self) -> bool {
++        self.status.as_deref().is_none_or(|status| {
++            matches!(status, "completed" | "incomplete" | "requires_continuation")
++        })
++    }
++}
++
++impl Annotation {
++    /// The word's start, in milliseconds, from a decimal-seconds offset such
++    /// as `10.5s`.
++    fn start_ms(&self) -> Option<i64> {
++        Self::offset_ms(self.start_offset.as_deref())
++    }
++
++    fn end_ms(&self) -> Option<i64> {
++        Self::offset_ms(self.end_offset.as_deref())
++    }
++
++    fn offset_ms(offset: Option<&str>) -> Option<i64> {
++        let seconds: f64 = offset?.trim().trim_end_matches('s').parse().ok()?;
++        if !seconds.is_finite() || seconds < 0.0 {
++            return None;
++        }
++        Some((seconds * 1000.0).round() as i64)
++    }
++}
++
++/// Posts one request and reads its interaction, naming every failure for a
++/// person. The body carries the audio, so the timeout covers a slow upload.
++fn send(body: &[u8], config: &Config, samples: &[f32]) -> Result<Interaction, GeminiError> {
++    let agent = net::agent(INTERACTIONS_URL, |config| {
++        config
++            .http_status_as_error(false)
++            .timeout_global(Some(timeout(samples.len())))
++    });
++    let request = ureq::http::Request::builder()
++        .method("POST")
++        .uri(INTERACTIONS_URL)
++        .header("x-goog-api-key", &config.key)
++        .header("Content-Type", "application/json")
++        .body(body.to_vec())
++        .map_err(|error| GeminiError::Invalid(error.to_string()))?;
++    let mut response = agent
++        .run(request)
++        .map_err(|error| GeminiError::Unreachable(net::reason(&error)))?;
++    let status = response.status().as_u16();
++    let body = response
++        .body_mut()
++        .with_config()
++        .limit(64 * 1024 * 1024)
++        .read_to_vec()
++        .map_err(|error| GeminiError::Unreachable(net::reason(&error)))?;
++    let body = String::from_utf8_lossy(&body);
++    if !(200..300).contains(&status) {
++        return Err(super::error_for_status(status, &body));
++    }
++    let interaction: Interaction = serde_json::from_str(body.trim())
++        .map_err(|error| GeminiError::Server(format!("an unreadable answer ({error})")))?;
++    if !interaction.completed() {
++        let status = interaction.status.clone().unwrap_or_default();
++        return Err(GeminiError::Server(format!(
++            "the transcription did not finish ({status})"
++        )));
++    }
++    Ok(interaction)
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn offsets_carry_milliseconds() {
++        assert_eq!(Annotation::offset_ms(Some("10.5s")), Some(10_500));
++        assert_eq!(Annotation::offset_ms(Some("30s")), Some(30_000));
++        assert_eq!(Annotation::offset_ms(Some("0.01s")), Some(10));
++        assert_eq!(Annotation::offset_ms(Some("-1s")), None);
++        assert_eq!(Annotation::offset_ms(Some("soon")), None);
++        assert_eq!(Annotation::offset_ms(None), None);
++    }
++
++    #[test]
++    fn text_prefers_the_named_output_text() {
++        let interaction: Interaction = serde_json::from_str(
++            r#"{"status":"completed","output_text":"hello there",
++                "steps":[{"content":[{"type":"text","text":"old"}]}]}"#,
++        )
++        .unwrap();
++        assert_eq!(interaction.text(), "hello there");
++    }
++
++    #[test]
++    fn text_joins_step_contents() {
++        let interaction: Interaction = serde_json::from_str(
++            r#"{"status":"completed","steps":[
++                {"content":[{"type":"text","text":"Hello"},{"type":"audio"}]},
++                {"content":[{"type":"text","text":"  "},{"type":"text","text":"there."}]}]}"#,
++        )
++        .unwrap();
++        assert_eq!(interaction.text(), "Hello there.");
++    }
++
++    #[test]
++    fn a_word_annotation_is_a_timed_word() {
++        let interaction: Interaction = serde_json::from_str(
++            r#"{"status":"completed","steps":[{"content":[
++                {"type":"text","text":"Hello",
++                 "annotations":[{"type":"word_info","text":"Hello",
++                                 "start_offset":"0.2s","end_offset":"0.6s"},
++                                {"type":"url_citation","url":"https://example.com"}]}]}]}"#,
++        )
++        .unwrap();
++        let transcript = interaction.transcript();
++        assert_eq!(transcript.words.len(), 1);
++        assert_eq!(transcript.words[0].start_ms, 200);
++        assert_eq!(transcript.words[0].end_ms, 600);
++        assert_eq!(transcript.words[0].text, "Hello");
++    }
++
++    #[test]
++    fn a_non_completed_status_is_a_server_failure() {
++        let interaction: Interaction =
++            serde_json::from_str(r#"{"status":"failed","steps":[]}"#).unwrap();
++        assert!(!interaction.completed());
++    }
++
++    #[test]
++    fn timeout_bounds_hold() {
++        // A 30-minute clip.
++        assert_eq!(timeout(30 * 60 * 16_000), Duration::from_secs(300));
++        // A moment of audio still waits a minute.
++        assert_eq!(timeout(16_000), Duration::from_secs(60));
++    }
++}
+diff --git a/src/transcription/gemini/live.rs b/src/transcription/gemini/live.rs
+new file mode 100644
+index 00000000..7786b0c5
+--- /dev/null
++++ b/src/transcription/gemini/live.rs
+@@ -0,0 +1,796 @@
++//! The Live session: one WebSocket per streaming dictation capture.
++//!
++//! The engine's worker feeds 16 kHz audio while the capture runs and finalizes
++//! at its end; interim text shows beside the HUD, and the finalize answers the
++//! whole capture's text. Any session failure — refused setup, a stalled or
++//! capped connection, a missed finish — is an ordinary stream error, and the
++//! engine's queued finish takes the whole clip, which the batch path
++//! ([`super::batch`]) transcribes. Nothing is lost but latency.
++//!
++//! One thread owns the WebSocket: it writes the audio the feeds queue and
++//! reads Google's events between writes, with a short read timeout as the
++//! loop's pacing. Google's hybrid VAD hears speech starts on its own, and the
++//! stream end (`audioStreamEnd`) asks it to finalize the last turn at once.
++
++use std::io::{Read, Write};
++use std::net::TcpStream;
++use std::sync::Arc;
++use std::sync::Condvar;
++use std::sync::Mutex;
++use std::sync::atomic::{AtomicBool, Ordering};
++use std::sync::mpsc;
++use std::time::{Duration, Instant};
++
++use base64::Engine as _;
++use tungstenite::Message;
++
++use super::{API_HOST, Config, GeminiError, LIVE_MODEL, WS_URL};
++use crate::net;
++use crate::transcription::engine::Partial;
++use crate::transcription::stream_feed::StreamFeed;
++
++/// One session message carries 100 ms of audio (1024–2048 frames, as the
++/// Live transcription guide recommends).
++const CHUNK_SAMPLES: usize = 1_600;
++/// The chunks in flight to the session thread before a feed drops audio: a
++/// stalled connection must never wedge the engine's worker, and the whole
++/// clip decides at the finish.
++const AUDIO_QUEUE: usize = 64;
++/// How long a capture allows the session to connect, authenticate, and
++/// complete its setup before the stream is refused.
++const CONNECT_BUDGET: Duration = Duration::from_secs(10);
++/// How long finalize waits for Google's last turn after the stream ends. The
++/// engine's caller gives a stream finish 1.5 s and takes the whole clip when
++/// it misses, so this fails first and the engine thread is free to run the
++/// whole clip.
++const FINALIZE_WAIT: Duration = Duration::from_millis(1_200);
++/// Google finalizes the last turn right after the stream ends, so quiet this
++/// long after the last event means nothing more is coming.
++const QUIET_AFTER: Duration = Duration::from_millis(500);
++/// A live transcription session caps at 10 minutes at Google. Voinc stops a
++/// little early so the last turn still finalizes; a longer capture's stream
++/// fails, and the whole clip decides.
++const SESSION_CAP: Duration = Duration::from_secs(9 * 60 + 30);
++/// The loop's read timeout: how often it notices an ended capture or a
++/// cancelled stream between events.
++const READ_PACING: Duration = Duration::from_millis(50);
++/// How long a write to Google may take before the session fails; the whole
++/// clip decides.
++const WRITE_BUDGET: Duration = Duration::from_secs(10);
++
++/// The stream under the TLS session to Google: direct TCP, or a tunnel
++/// through the computer's proxy (possibly itself TLS). `ReadWrite` names the
++/// two shapes; the standard `Box` impls carry `Read` and `Write` through.
++type Underlying = Box<dyn ReadWrite>;
++
++trait ReadWrite: Read + Write + Send {
++    /// The TCP socket underneath, when there is one, so a tunnel's timeouts
++    /// reach the socket itself.
++    fn socket(&self) -> Option<&TcpStream> {
++        None
++    }
++}
++
++impl ReadWrite for TcpStream {
++    fn socket(&self) -> Option<&TcpStream> {
++        Some(self)
++    }
++}
++
++impl ReadWrite for native_tls::TlsStream<TcpStream> {
++    fn socket(&self) -> Option<&TcpStream> {
++        self.get_ref().socket()
++    }
++}
++
++/// Sets the socket's timeouts, reached through the tunnel's layers.
++fn set_timeouts(underlying: &Underlying, read: Duration, write: Duration) {
++    let Some(socket) = underlying.socket() else {
++        return;
++    };
++    let _ = socket.set_read_timeout(Some(read));
++    let _ = socket.set_write_timeout(Some(write));
++}
++
++/// One session's WebSocket: TLS over the stream to Google.
++type SessionSocket = tungstenite::WebSocket<native_tls::TlsStream<Underlying>>;
++
++/// One live stream as the engine drives it.
++pub(crate) struct GeminiLiveStream {
++    /// Audio chunks the session thread writes; disconnected once it ended.
++    audio: mpsc::SyncSender<Vec<u8>>,
++    /// What the session thread has heard Google say.
++    shared: Arc<Shared>,
++    /// Set at finalize, so the thread asks Google to finalize the last turn.
++    ended: Arc<AtomicBool>,
++    /// Set at drop, so a cancelled capture's session closes at once.
++    closed: Arc<AtomicBool>,
++    /// The engine's cancellation for this stream: the session stops with it.
++    cancel: transcribe_cpp::CancelToken,
++    /// 16-bit samples not yet a whole 100 ms chunk.
++    pending: Vec<u8>,
++    /// Chunks dropped to a stalled connection, logged once.
++    lost: usize,
++}
++
++impl GeminiLiveStream {
++    /// Opens a session: connects through the computer's proxy, authenticates
++    /// with the key, sends the setup, and waits for Google's `setupComplete`.
++    /// Every refusal names why, so the stream is refused cleanly and the
++    /// whole clip decides.
++    pub(crate) fn open(
++        config: &Config,
++        cancel: &transcribe_cpp::CancelToken,
++    ) -> Result<Self, GeminiError> {
++        let shared = Arc::new(Shared::default());
++        let websocket = connect(config)?;
++        let (audio, queued) = mpsc::sync_channel(AUDIO_QUEUE);
++        let ended = Arc::new(AtomicBool::new(false));
++        let closed = Arc::new(AtomicBool::new(false));
++        let setup = setup_message(config);
++        let worker = {
++            let audio = queued;
++            let shared = shared.clone();
++            let ended = ended.clone();
++            let closed = closed.clone();
++            let cancel = cancel.clone();
++            std::thread::Builder::new()
++                .name("gemini-live".into())
++                .spawn(move || {
++                    // The setup is this thread's first write; the owner wrote
++                    // nothing after the handshake, so there is no race.
++                    session(websocket, setup, audio, shared, ended, closed, cancel)
++                })
++                .map_err(|error| GeminiError::Unreachable(error.to_string()))?
++        };
++        // A session Google won't set up is refused now, so a first dictation
++        // learns of a bad key or model from its own capture.
++        if !shared.wait_for_setup(CONNECT_BUDGET) {
++            // The thread exits within its pacing once `closed` shows.
++            closed.store(true, Ordering::Release);
++            let _ = worker.join();
++            return Err(shared.failure().map_or_else(
++                || {
++                    GeminiError::Unreachable(
++                        "Google's live session did not complete its setup".into(),
++                    )
++                },
++                GeminiError::Unreachable,
++            ));
++        }
++        Ok(Self {
++            audio,
++            shared,
++            ended,
++            closed,
++            cancel: cancel.clone(),
++            pending: Vec::new(),
++            lost: 0,
++        })
++    }
++}
++
++impl Drop for GeminiLiveStream {
++    fn drop(&mut self) {
++        // A cancelled or finished-with capture closes its session at once;
++        // the thread never waits on a finalize nobody reads.
++        self.closed.store(true, Ordering::Release);
++    }
++}
++
++impl StreamFeed for GeminiLiveStream {
++    fn feed(&mut self, samples: &[f32]) -> Result<(), String> {
++        if let Some(failure) = self.shared.failure() {
++            return Err(failure);
++        }
++        self.pending.reserve(samples.len() * 2);
++        for &sample in samples {
++            self.pending
++                .extend_from_slice(&pcm_i16(sample).to_le_bytes());
++        }
++        while self.pending.len() >= CHUNK_SAMPLES * 2 {
++            let chunk: Vec<u8> = self.pending.drain(..CHUNK_SAMPLES * 2).collect();
++            if self.audio.try_send(chunk).is_err() {
++                self.lost += 1;
++                if self.lost == 1 {
++                    tracing::warn!(
++                        "Google's live session fell behind; audio it missed is covered by the whole clip"
++                    );
++                }
++            }
++        }
++        Ok(())
++    }
++
++    fn finalize(&mut self) -> Result<String, String> {
++        // The last sub-chunk is audio too: a capture's end is rarely a whole
++        // 100 ms boundary.
++        if !self.pending.is_empty() {
++            let chunk = std::mem::take(&mut self.pending);
++            let _ = self.audio.try_send(chunk);
++        }
++        self.ended.store(true, Ordering::Release);
++        self.shared.wait_for_final(FINALIZE_WAIT, &self.cancel)
++    }
++
++    fn partial(&self) -> Partial {
++        self.shared.partial()
++    }
++}
++
++fn pcm_i16(sample: f32) -> i16 {
++    (sample.clamp(-1.0, 1.0) * i16::MAX as f32) as i16
++}
++
++/// The setup one session asks Google for: the transcription model, text
++/// answers, and the person's language, vocabulary, and smart formatting.
++fn setup_message(config: &Config) -> String {
++    let mut transcription = serde_json::Map::new();
++    transcription.insert(
++        "languageCodes".into(),
++        serde_json::json!(config.language.iter().collect::<Vec<_>>()),
++    );
++    if !config.vocabulary.is_empty() {
++        transcription.insert(
++            "customVocabulary".into(),
++            serde_json::json!(config.vocabulary),
++        );
++    }
++    transcription.insert("mode".into(), serde_json::json!("SMART"));
++    serde_json::json!({
++        "setup": {
++            "model": LIVE_MODEL,
++            "generationConfig": {"responseModalities": ["TEXT"]},
++            "inputAudioTranscription": transcription,
++        }
++    })
++    .to_string()
++}
++
++/// Connects and completes the WebSocket handshake, inside [`CONNECT_BUDGET`].
++fn connect(config: &Config) -> Result<SessionSocket, GeminiError> {
++    let deadline = Instant::now() + CONNECT_BUDGET;
++    let tcp = tcp_stream(&deadline)?;
++    let left = || {
++        deadline
++            .saturating_duration_since(Instant::now())
++            .max(Duration::from_millis(1))
++    };
++    let connector = native_tls::TlsConnector::builder()
++        .build()
++        .map_err(|error| GeminiError::Unreachable(format!("TLS failed ({error})")))?;
++    // A handshake interrupted (the timeouts make WouldBlock likely) is a
++    // failure here: the budget is the session's one chance.
++    let tls = match connector.connect(API_HOST, tcp) {
++        Ok(tls) => tls,
++        Err(native_tls::HandshakeError::Failure(error)) => {
++            return Err(GeminiError::Unreachable(format!("TLS failed ({error})")));
++        }
++        Err(_) => {
++            return Err(GeminiError::Unreachable("TLS failed".into()));
++        }
++    };
++    set_timeouts(tls.get_ref(), left(), left());
++    let request = ureq::http::Request::builder()
++        .method("GET")
++        .uri(WS_URL)
++        .header("Host", API_HOST)
++        .header("Connection", "Upgrade")
++        .header("Upgrade", "websocket")
++        .header("Sec-WebSocket-Version", "13")
++        .header(
++            "Sec-WebSocket-Key",
++            tungstenite::handshake::client::generate_key(),
++        )
++        .header("x-goog-api-key", &config.key)
++        .body(())
++        .map_err(|error| GeminiError::Invalid(error.to_string()))?;
++    match tungstenite::client(request, tls) {
++        Ok((websocket, _)) => Ok(websocket),
++        Err(tungstenite::HandshakeError::Failure(tungstenite::Error::Http(response))) => {
++            let status = response.status().as_u16();
++            let body = response
++                .body()
++                .as_deref()
++                .map(|bytes| String::from_utf8_lossy(bytes).into_owned())
++                .unwrap_or_default();
++            Err(super::error_for_status(status, &body))
++        }
++        Err(_) => Err(GeminiError::Unreachable(
++            "Google's live session could not be established".into(),
++        )),
++    }
++}
++
++/// The socket to Google: through the computer's proxy when it is a CONNECT
++/// proxy, direct otherwise. A SOCKS proxy cannot carry the handshake here;
++/// its batch path still can, so the stream is refused and the clip decides.
++fn tcp_stream(deadline: &Instant) -> Result<Underlying, GeminiError> {
++    let left = || deadline.saturating_duration_since(Instant::now());
++    let Some(proxy) = net::proxy_for(WS_URL) else {
++        let address = first_address(API_HOST, 443)?;
++        let socket = TcpStream::connect_timeout(&address, left())
++            .map_err(|error| GeminiError::Unreachable(unreachable(&error)))?;
++        return Ok(Box::new(socket));
++    };
++    match proxy.protocol() {
++        ureq::ProxyProtocol::Http | ureq::ProxyProtocol::Https => {
++            let address = first_address(proxy.host(), proxy.port())?;
++            let socket = TcpStream::connect_timeout(&address, left()).map_err(|error| {
++                GeminiError::Unreachable(format!("the proxy refused ({error})"))
++            })?;
++            let _ = socket.set_read_timeout(Some(left()));
++            let _ = socket.set_write_timeout(Some(left()));
++            // A CONNECT proxy over HTTPS wants its own TLS before the tunnel.
++            let socket: Underlying = if proxy.protocol() == ureq::ProxyProtocol::Https {
++                let connector = native_tls::TlsConnector::builder()
++                    .build()
++                    .map_err(|error| GeminiError::Unreachable(format!("TLS failed ({error})")))?;
++                let tls = match connector.connect(proxy.host(), socket) {
++                    Ok(tls) => tls,
++                    Err(native_tls::HandshakeError::Failure(error)) => {
++                        return Err(GeminiError::Unreachable(format!(
++                            "the proxy refused ({error})"
++                        )));
++                    }
++                    Err(_) => {
++                        return Err(GeminiError::Unreachable("the proxy refused".into()));
++                    }
++                };
++                Box::new(tls)
++            } else {
++                Box::new(socket)
++            };
++            let socket = tunnel(socket, &proxy, deadline)?;
++            Ok(socket)
++        }
++        _ => Err(GeminiError::Unreachable(
++            "the computer's proxy is of a kind the live stream can't use; its batch \
++             transcription still works"
++                .into(),
++        )),
++    }
++}
++
++/// Why a connection to Google failed, named for a person.
++fn unreachable(error: &std::io::Error) -> String {
++    if matches!(
++        error.kind(),
++        std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock
++    ) {
++        "the connection timed out".into()
++    } else {
++        format!("the connection failed ({error})")
++    }
++}
++
++fn first_address(host: &str, port: u16) -> Result<std::net::SocketAddr, GeminiError> {
++    use std::net::ToSocketAddrs as _;
++    (host, port)
++        .to_socket_addrs()
++        .map_err(|error| GeminiError::Unreachable(unreachable(&error)))?
++        .next()
++        .ok_or_else(|| GeminiError::Unreachable("the name couldn't be looked up".into()))
++}
++
++/// Asks a CONNECT proxy to carry the stream to Google, and waits for its
++/// assent.
++fn tunnel(
++    mut socket: Underlying,
++    proxy: &ureq::Proxy,
++    deadline: &Instant,
++) -> Result<Underlying, GeminiError> {
++    let mut request = format!("CONNECT {API_HOST}:443 HTTP/1.1\r\nHost: {API_HOST}:443\r\n");
++    if let (Some(user), Some(password)) = (proxy.username(), proxy.password()) {
++        let joined = format!("{user}:{password}");
++        request.push_str(&format!(
++            "Proxy-Authorization: Basic {}\r\n",
++            base64::engine::general_purpose::STANDARD.encode(joined)
++        ));
++    }
++    request.push_str("\r\n");
++    socket
++        .write_all(request.as_bytes())
++        .map_err(|error| GeminiError::Unreachable(format!("the proxy refused ({error})")))?;
++    let mut response = vec![0_u8; 4096];
++    let mut filled = 0;
++    let answer = loop {
++        let read = socket
++            .read(&mut response[filled..])
++            .map_err(|error| GeminiError::Unreachable(format!("the proxy refused ({error})")))?;
++        if read == 0 {
++            return Err(GeminiError::Unreachable("the proxy refused".into()));
++        }
++        filled += read;
++        if let Some(position) = response[..filled]
++            .windows(4)
++            .position(|window| window == b"\r\n\r\n")
++        {
++            break String::from_utf8_lossy(&response[..position]).into_owned();
++        }
++        if filled == response.len() || Instant::now() >= *deadline {
++            return Err(GeminiError::Unreachable("the proxy refused".into()));
++        }
++    };
++    if !answer.contains(" 2") {
++        return Err(GeminiError::Unreachable(format!(
++            "the proxy refused ({})",
++            answer.lines().next().unwrap_or_default()
++        )));
++    }
++    Ok(socket)
++}
++
++/// What the session thread has heard Google say, shared with the stream.
++#[derive(Default)]
++struct Shared {
++    state: Mutex<State>,
++    ready: Condvar,
++}
++
++#[derive(Default)]
++struct State {
++    /// Google accepted the setup.
++    setup: bool,
++    /// Every finalized turn, in order, joined.
++    turns: String,
++    /// The current utterance's speculative text.
++    interim: String,
++    /// When Google last spoke: the quiet rule ends a finalize without a
++    /// turn end.
++    last_event: Option<Instant>,
++    /// The session's answer once it has one: its text, or why it failed.
++    result: Option<Result<String, String>>,
++}
++
++impl Shared {
++    /// Waits until Google accepts the setup, the session fails, or `budget`
++    /// passes.
++    fn wait_for_setup(&self, budget: Duration) -> bool {
++        let deadline = Instant::now() + budget;
++        let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
++        loop {
++            if state.setup || state.result.is_some() {
++                return state.setup;
++            }
++            let Some(left) = deadline.checked_duration_since(Instant::now()) else {
++                return false;
++            };
++            let (guard, _timeout) = self
++                .ready
++                .wait_timeout(state, left.min(READ_PACING))
++                .unwrap_or_else(|error| error.into_inner());
++            state = guard;
++        }
++    }
++
++    /// Waits for the session's answer: its text, or why it failed. The
++    /// session thread settles on its own [`FINALIZE_WAIT`]; this is the
++    /// owner's safety net.
++    fn wait_for_final(
++        &self,
++        budget: Duration,
++        cancel: &transcribe_cpp::CancelToken,
++    ) -> Result<String, String> {
++        let deadline = Instant::now() + budget;
++        let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
++        loop {
++            if let Some(result) = &state.result {
++                return result.clone();
++            }
++            if cancel.is_cancelled() {
++                return Err("the live stream was cancelled".into());
++            }
++            let Some(left) = deadline.checked_duration_since(Instant::now()) else {
++                // Google's own turn end already settled the last utterance:
++                // its text is the answer, and nothing is coming for the rest.
++                if state
++                    .last_event
++                    .is_none_or(|at| at.elapsed() >= QUIET_AFTER)
++                {
++                    return Ok(state.turns.clone());
++                }
++                return Err("Google's live session missed its finish deadline".into());
++            };
++            let (guard, _timeout) = self
++                .ready
++                .wait_timeout(state, left.min(READ_PACING))
++                .unwrap_or_else(|error| error.into_inner());
++            state = guard;
++        }
++    }
++
++    /// The stream's text so far: finalized turns, then the current
++    /// utterance's speculative text.
++    fn partial(&self) -> Partial {
++        let state = self.state.lock().unwrap_or_else(|error| error.into_inner());
++        Partial {
++            stable: state.turns.clone(),
++            tentative: state.interim.clone(),
++        }
++    }
++
++    /// Why the session failed, once it has.
++    fn failure(&self) -> Option<String> {
++        self.state
++            .lock()
++            .unwrap_or_else(|error| error.into_inner())
++            .result
++            .as_ref()
++            .and_then(|result| result.as_ref().err().cloned())
++    }
++}
++
++impl State {
++    /// Google finalized one utterance: its text joins the turns.
++    fn hear(&mut self, text: &str, shared: &Shared) {
++        let piece = text.trim();
++        if piece.is_empty() {
++            return;
++        }
++        if !self.turns.is_empty() {
++            self.turns.push(' ');
++        }
++        self.turns.push_str(piece);
++        self.interim.clear();
++        self.spoke(shared);
++    }
++
++    /// Google's speculative text for the utterance in progress, replacing
++    /// whatever it speculated before.
++    fn speculate(&mut self, text: &str, shared: &Shared) {
++        self.interim = text.to_owned();
++        self.spoke(shared);
++    }
++
++    /// A turn completed. After the stream end this settles the session.
++    fn turn_complete(&mut self, shared: &Shared) {
++        self.interim.clear();
++        self.spoke(shared);
++    }
++
++    fn spoke(&mut self, shared: &Shared) {
++        self.last_event = Some(Instant::now());
++        shared.ready.notify_all();
++    }
++
++    /// The session answers: its text, or why it failed.
++    fn complete(&mut self, result: Result<String, String>, shared: &Shared) {
++        if self.result.is_none() {
++            self.result = Some(result);
++        }
++        shared.ready.notify_all();
++    }
++}
++
++/// Answers the session's failure once and for all.
++fn fail(shared: &Shared, reason: String) {
++    shared
++        .state
++        .lock()
++        .unwrap_or_else(|error| error.into_inner())
++        .complete(Err(reason), shared);
++}
++
++/// Answers the session with its text so far.
++fn settle(shared: &Shared) {
++    let turns = {
++        let state = shared
++            .state
++            .lock()
++            .unwrap_or_else(|error| error.into_inner());
++        state.turns.clone()
++    };
++    shared
++        .state
++        .lock()
++        .unwrap_or_else(|error| error.into_inner())
++        .complete(Ok(turns), shared);
++}
++
++/// Writes one audio chunk: 16-bit PCM at 16 kHz, base64 in a `realtimeInput`.
++fn write_audio(websocket: &mut SessionSocket, pcm: &[u8]) -> tungstenite::Result<()> {
++    let data = base64::engine::general_purpose::STANDARD.encode(pcm);
++    let message = serde_json::json!({
++        "realtimeInput": {
++            "audio": {"data": data, "mimeType": "audio/pcm;rate=16000"},
++        }
++    })
++    .to_string();
++    websocket.write(Message::text(message))?;
++    websocket.flush()
++}
++
++/// Handles one event from Google, answering whether the session is over.
++fn handle(
++    websocket: &mut SessionSocket,
++    message: Message,
++    shared: &Shared,
++    sent_end: bool,
++) -> bool {
++    match message {
++        Message::Text(text) => {
++            let Ok(event) = serde_json::from_str::<serde_json::Value>(text.as_str()) else {
++                return false;
++            };
++            if event.get("setupComplete").is_some() {
++                let mut state = shared
++                    .state
++                    .lock()
++                    .unwrap_or_else(|error| error.into_inner());
++                state.setup = true;
++                shared.ready.notify_all();
++                return false;
++            }
++            if let Some(content) = event.get("serverContent") {
++                if let Some(text) = content
++                    .get("interimInputTranscription")
++                    .and_then(|interim| interim.get("text"))
++                    .and_then(|text| text.as_str())
++                {
++                    let mut state = shared
++                        .state
++                        .lock()
++                        .unwrap_or_else(|error| error.into_inner());
++                    state.speculate(text, shared);
++                }
++                if let Some(text) = content
++                    .get("inputTranscription")
++                    .and_then(|finalized| finalized.get("text"))
++                    .and_then(|text| text.as_str())
++                {
++                    let mut state = shared
++                        .state
++                        .lock()
++                        .unwrap_or_else(|error| error.into_inner());
++                    state.hear(text, shared);
++                }
++                if content.get("turnComplete").is_some() {
++                    let mut state = shared
++                        .state
++                        .lock()
++                        .unwrap_or_else(|error| error.into_inner());
++                    state.turn_complete(shared);
++                    if sent_end {
++                        // The last turn is over: the whole capture's text is
++                        // the answer.
++                        drop(state);
++                        settle(shared);
++                        return true;
++                    }
++                }
++            }
++            if let Some(error) = event
++                .get("error")
++                .and_then(|error| error.get("message"))
++                .and_then(|message| message.as_str())
++            {
++                fail(
++                    shared,
++                    format!("Google's live session failed: {}", error.trim()),
++                );
++                return true;
++            }
++            false
++        }
++        // The server closed: whatever turns it finalized are the answer.
++        Message::Close(_) => {
++            if sent_end {
++                settle(shared);
++            } else {
++                fail(shared, "Google closed the live session".into());
++            }
++            true
++        }
++        // A ping's queued pong goes out with the next flush.
++        Message::Ping(_) => {
++            let _ = websocket.flush();
++            false
++        }
++        _ => false,
++    }
++}
++
++/// The session thread: writes the audio queued to it, reads Google's events
++/// between writes, and answers once its final turn settles.
++fn session(
++    mut websocket: SessionSocket,
++    setup: String,
++    audio: mpsc::Receiver<Vec<u8>>,
++    shared: Arc<Shared>,
++    ended: Arc<AtomicBool>,
++    closed: Arc<AtomicBool>,
++    cancel: transcribe_cpp::CancelToken,
++) {
++    // The connect budget's short timeouts are over: the loop's pacing reads,
++    // and a stalled write fails the session within its budget.
++    set_timeouts(websocket.get_ref().get_ref(), READ_PACING, WRITE_BUDGET);
++    let begun = Instant::now();
++    if let Err(error) = websocket.write(Message::text(setup)) {
++        fail(&shared, format!("the live session failed: {error}"));
++        return;
++    }
++    let _ = websocket.flush();
++    let mut sent_end = false;
++    let mut finalize_at: Option<Instant> = None;
++    loop {
++        if closed.load(Ordering::Acquire) || cancel.is_cancelled() {
++            return;
++        }
++        // The audio queued so far, then whatever else arrives before the
++        // next read.
++        while let Ok(pcm) = audio.try_recv() {
++            if let Err(error) = write_audio(&mut websocket, &pcm) {
++                fail(&shared, format!("the live session failed: {error}"));
++                return;
++            }
++        }
++        if ended.load(Ordering::Acquire) && !sent_end {
++            let end = serde_json::json!({"realtimeInput": {"audioStreamEnd": true}}).to_string();
++            if let Err(error) = websocket.write(Message::text(end)) {
++                fail(&shared, format!("the live session failed: {error}"));
++                return;
++            }
++            let _ = websocket.flush();
++            sent_end = true;
++            finalize_at = Some(Instant::now());
++        }
++        // Google's events, with the loop's pacing when nothing comes.
++        match websocket.read() {
++            Ok(message) => {
++                if handle(&mut websocket, message, &shared, sent_end) {
++                    return;
++                }
++            }
++            Err(tungstenite::Error::Io(error))
++                if error.kind() == std::io::ErrorKind::WouldBlock =>
++            {
++                // The pacing passed; the loop notices ends and cancels.
++            }
++            Err(tungstenite::Error::ConnectionClosed) => {
++                if sent_end {
++                    // The server closed after the stream end; whatever turns
++                    // it finalized are the answer.
++                    settle(&shared);
++                } else {
++                    fail(&shared, "Google closed the live session".into());
++                }
++                return;
++            }
++            Err(error) => {
++                fail(&shared, format!("the live session failed: {error}"));
++                return;
++            }
++        }
++        if sent_end {
++            let elapsed = finalize_at.is_some_and(|at| at.elapsed() >= FINALIZE_WAIT);
++            if elapsed {
++                fail(
++                    &shared,
++                    "Google's live session missed its finish deadline".into(),
++                );
++                return;
++            }
++            let quiet = {
++                let state = shared
++                    .state
++                    .lock()
++                    .unwrap_or_else(|error| error.into_inner());
++                state.result.is_some()
++                    || state
++                        .last_event
++                        .is_some_and(|at| at.elapsed() >= QUIET_AFTER)
++            };
++            if quiet {
++                settle(&shared);
++                return;
++            }
++        } else if begun.elapsed() >= SESSION_CAP {
++            fail(
++                &shared,
++                "the live session reached Google's limit for one capture".into(),
++            );
++            return;
++        }
++    }
++}
+diff --git a/src/transcription/gguf_session.rs b/src/transcription/gguf_session.rs
+index 1880210f..37bbc6af 100644
+--- a/src/transcription/gguf_session.rs
++++ b/src/transcription/gguf_session.rs
+@@ -10,6 +10,8 @@ use std::time::{Duration, Instant};
+ 
+ use color_eyre::eyre::{Result, WrapErr, eyre};
+ 
++use crate::transcription::stream_feed::StreamFeed;
++
+ use crate::transcription::models::{
+     AUTO_LANGUAGE, ModelDefinition, ModelRuntime, TranscriptionSelection,
+ };
+@@ -291,8 +293,13 @@ impl OfflineGgufSession {
+                 stream.finalize().map(|_| ())
+             },
+         );
+-        match probe {
+-            Ok(Ok(())) => {
++        // The stream's own errors are strings; the session's are typed.
++        let probed = match probe {
++            Ok(probed) => probed,
++            Err(error) => Err(error.to_string()),
++        };
++        match probed {
++            Ok(()) => {
+                 tracing::info!(
+                     ?device_type,
+                     chunk_ms,
+@@ -301,7 +308,7 @@ impl OfflineGgufSession {
+                 );
+                 Some(stream_options)
+             }
+-            Ok(Err(error)) | Err(error) => {
++            Err(error) => {
+                 tracing::warn!(%error, "model advertises streaming but could not stream");
+                 None
+             }
+@@ -316,7 +323,7 @@ impl OfflineGgufSession {
+         options: &transcribe_cpp::RunOptions,
+         stream_options: &transcribe_cpp::StreamOptions,
+         cancel: &transcribe_cpp::CancelToken,
+-        drive: impl FnOnce(&mut transcribe_cpp::Stream<'_>) -> R,
++        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
+     ) -> transcribe_cpp::Result<R> {
+         let mut session = match self.session.take() {
+             Some(session) => session,
+diff --git a/src/transcription/local_transcriber.rs b/src/transcription/local_transcriber.rs
+index a3e6a71b..3d075b86 100644
+--- a/src/transcription/local_transcriber.rs
++++ b/src/transcription/local_transcriber.rs
+@@ -6,17 +6,34 @@ use color_eyre::eyre::{Result, WrapErr, eyre};
+ use transcribe_cpp::{Backend, Model, ModelOptions, RunOptions, TimestampKind};
+ 
+ use crate::app_settings::TranscriptionDevice;
++use crate::transcription::gemini;
+ use crate::transcription::gguf_session::{OfflineGgufSession, output_truncated};
+ use crate::transcription::gpu_health;
+ use crate::transcription::models::{
+-    TranscriptionModelId, TranscriptionSelection, download_with_progress, model_path, validate,
++    ModelRuntime, TranscriptionModelId, TranscriptionSelection, download_with_progress, model_path,
++    validate,
+ };
++use crate::transcription::stream_feed::StreamFeed;
+ use crate::transcription::{pad_gguf_samples, trailing_silence_samples};
+ 
+ /// A word or segment's start and end (ms from the clip's start) and text.
+ pub type TimedSpan = (i64, i64, String);
+ 
+ pub struct LocalTranscriber {
++    runtime: Runtime,
++}
++
++/// What this transcriber runs: a GGUF model's session on this computer's GPU
++/// or CPU, or Google Transcribe's cloud runtime, which holds no weights.
++// One is made per model load, so the GGUF runtime's size doesn't matter.
++#[allow(clippy::large_enum_variant)]
++enum Runtime {
++    Gguf(Gguf),
++    Gemini(gemini::Gemini),
++}
++
++/// A loaded GGUF model: its session, device, and what its metadata said.
++struct Gguf {
+     session: OfflineGgufSession,
+     selection: TranscriptionSelection,
+     options: RunOptions,
+@@ -63,6 +80,13 @@ pub(crate) fn device() -> TranscriptionDevice {
+ 
+ pub fn install(selection: &TranscriptionSelection, canceled: &AtomicBool) -> Result<()> {
+     let model = validate(selection)?;
++    if model.runtime == ModelRuntime::Gemini {
++        println!(
++            "{} needs no download; it runs with a Google API key (Settings › Labs).",
++            model.name
++        );
++        return Ok(());
++    }
+     let downloaded = AtomicU64::new(0);
+     println!("Installing {} ({})...", model.name, model.size_label());
+     let path = download_with_progress(model, canceled, &downloaded)?;
+@@ -254,12 +278,32 @@ fn read_wav(reader: impl std::io::Read + std::io::Seek) -> Result<Vec<f32>> {
+ }
+ 
+ impl LocalTranscriber {
++    /// Loads and prewarms `selection` for its runtime: a GGUF model where
++    /// Settings › Speech engine says ([`Gguf::load`]), or Google Transcribe,
++    /// which has no weights to load — it needs the person's API key instead.
++    pub fn load(selection: &TranscriptionSelection) -> Result<Self> {
++        let definition = validate(selection)?;
++        match definition.runtime {
++            ModelRuntime::Gemini => {
++                let model = gemini::Gemini::load_selection(selection)?;
++                Ok(Self {
++                    runtime: Runtime::Gemini(model),
++                })
++            }
++            _ => Gguf::load(selection).map(|gguf| Self {
++                runtime: Runtime::Gguf(gguf),
++            }),
++        }
++    }
++}
++
++impl Gguf {
+     /// Loads and prewarms `selection` where Settings › Speech engine says:
+     /// on Auto a GPU unless it failed before under its current driver
+     /// ([`gpu_health`], #856), on GPU the best GPU, on CPU the CPU. A GPU load
+     /// or prewarm that fails retries on the CPU, and when the CPU works the
+     /// GPU is remembered as failed.
+-    pub fn load(selection: &TranscriptionSelection) -> Result<Self> {
++    fn load(selection: &TranscriptionSelection) -> Result<Self> {
+         let loaded = Self::load_where(selection)?;
+         gpu_health::set_auto_on_cpu(
+             loaded.preference == TranscriptionDevice::Auto && loaded.gpu.is_none(),
+@@ -456,44 +500,19 @@ impl LocalTranscriber {
+         }
+     }
+ 
+-    pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
+-        self.stream.as_ref()
+-    }
+-
+-    /// Silence a live stream of this model hears before it finalizes, the
+-    /// same trailing silence its whole-clip runs get.
+-    pub(crate) fn stream_trailing_silence(&self) -> usize {
+-        trailing_silence_samples(Some(self.model_id()))
+-    }
+-
+-    /// The model this transcriber was loaded for.
+-    pub(crate) fn model_id(&self) -> TranscriptionModelId {
+-        self.selection.model
+-    }
+-
+     pub(crate) fn with_stream<R>(
+         &mut self,
+         stream_options: &transcribe_cpp::StreamOptions,
+         cancel: &transcribe_cpp::CancelToken,
+-        drive: impl FnOnce(&mut transcribe_cpp::Stream<'_>) -> R,
++        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
+     ) -> transcribe_cpp::Result<R> {
+         self.session
+             .with_stream(&self.options, stream_options, cancel, drive)
+     }
+ 
+-    /// The selection this model was loaded for, so the transcription engine
+-    /// can say which model it holds.
+-    pub(crate) fn gguf_selection(&self) -> Option<&TranscriptionSelection> {
+-        Some(&self.selection)
+-    }
+-
+-    pub(crate) fn matches_selection(&self, selection: &TranscriptionSelection) -> bool {
+-        &self.selection == selection
+-    }
+-
+     /// Brings an idle model's weights back before audio arrives, as loading
+     /// does; a model that ran recently is already warm.
+-    pub(crate) fn prewarm(&mut self) -> Result<()> {
++    fn prewarm(&mut self) -> Result<()> {
+         if self.session.ran_recently() {
+             return Ok(());
+         }
+@@ -503,19 +522,19 @@ impl LocalTranscriber {
+ 
+     /// Transcribes a complete 16 kHz clip, padded as a dictation's clip is:
+     /// the minimum duration, then Unified English's trailing silence.
+-    pub(crate) fn transcribe_clip(&mut self, mut samples: Vec<f32>) -> Result<String> {
+-        pad_gguf_samples(&mut samples, Some(self.model_id()));
++    fn transcribe_clip(&mut self, mut samples: Vec<f32>) -> Result<String> {
++        pad_gguf_samples(&mut samples, Some(self.selection.model));
+         self.transcribe(&samples)
+     }
+ 
+     /// [`Self::transcribe_clip`] with the model's own segment and word times,
+     /// chunked and padded exactly as the untimed run chunks and pads it, so
+     /// the text matches and each chunk's times sit on the clip's timeline.
+-    pub(crate) fn transcribe_timed(
++    fn transcribe_timed(
+         &mut self,
+         mut samples: Vec<f32>,
+     ) -> Result<crate::transcription::transcript::Transcript> {
+-        pad_gguf_samples(&mut samples, Some(self.model_id()));
++        pad_gguf_samples(&mut samples, Some(self.selection.model));
+         let options = RunOptions {
+             timestamps: self.finest_timestamps,
+             ..self.options.clone()
+@@ -533,20 +552,10 @@ impl LocalTranscriber {
+         }
+     }
+ 
+-    /// The finest native timings this model gives, as a timed request needs
+-    /// them. Never the level a caller asked for.
+-    pub(crate) fn timestamps(&self) -> crate::transcription::transcript::TimestampLevel {
+-        crate::transcription::gguf_session::timestamp_level(self.finest_timestamps)
+-    }
+-
+-    pub fn device_label(&self) -> &str {
+-        &self.device_label
+-    }
+-
+     /// Text and word times (ms from the clip's start) for a capture, in
+     /// chunks the model takes whole. A model without word times gives its
+     /// segments instead.
+-    pub fn transcribe_words(&mut self, samples: &[f32]) -> Result<(String, Vec<TimedSpan>)> {
++    fn transcribe_words(&mut self, samples: &[f32]) -> Result<(String, Vec<TimedSpan>)> {
+         let transcript = self.timed(samples)?;
+         let spans = if transcript.words.is_empty() {
+             transcript.segments
+@@ -562,7 +571,7 @@ impl LocalTranscriber {
+ 
+     /// One meeting chunk with segment and word timings, padded as dictation
+     /// pads a clip.
+-    pub(crate) fn transcribe_segments(
++    fn transcribe_segments(
+         &mut self,
+         mut samples: Vec<f32>,
+     ) -> Result<crate::transcription::transcript::Transcript> {
+@@ -698,7 +707,7 @@ impl LocalTranscriber {
+         Ok(timed)
+     }
+ 
+-    pub fn transcribe(&mut self, samples: &[f32]) -> Result<String> {
++    pub(crate) fn transcribe(&mut self, samples: &[f32]) -> Result<String> {
+         let run = |this: &mut Self| {
+             this.session
+                 .transcribe_chunked(samples, &this.options, this.max_audio_samples)
+@@ -713,6 +722,157 @@ impl LocalTranscriber {
+     }
+ }
+ 
++impl LocalTranscriber {
++    /// The stream options of this model, when it can stream: a GGUF model's
++    /// probed session, or the constant options a Live session ignores.
++    pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => gguf.stream.as_ref(),
++            Runtime::Gemini(_) => Some(&gemini::STREAM_OPTIONS),
++        }
++    }
++
++    /// Silence a live stream of this model hears before it finalizes, the
++    /// same trailing silence its whole-clip runs get.
++    pub(crate) fn stream_trailing_silence(&self) -> usize {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => trailing_silence_samples(Some(gguf.selection.model)),
++            Runtime::Gemini(_) => gemini::LIVE_TRAILING_SILENCE_SAMPLES,
++        }
++    }
++
++    /// The model this transcriber was loaded for.
++    pub(crate) fn model_id(&self) -> TranscriptionModelId {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => gguf.selection.model,
++            Runtime::Gemini(model) => model.model_id(),
++        }
++    }
++
++    pub(crate) fn with_stream<R>(
++        &mut self,
++        stream_options: &transcribe_cpp::StreamOptions,
++        cancel: &transcribe_cpp::CancelToken,
++        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
++    ) -> transcribe_cpp::Result<R> {
++        match &mut self.runtime {
++            Runtime::Gguf(gguf) => gguf.with_stream(stream_options, cancel, drive),
++            Runtime::Gemini(model) => model.with_stream(stream_options, cancel, drive),
++        }
++    }
++
++    /// The selection this model was loaded for, so the transcription engine
++    /// can say which model it holds.
++    pub(crate) fn gguf_selection(&self) -> Option<&TranscriptionSelection> {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => Some(&gguf.selection),
++            Runtime::Gemini(model) => Some(model.selection()),
++        }
++    }
++
++    pub(crate) fn matches_selection(&self, selection: &TranscriptionSelection) -> bool {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => &gguf.selection == selection,
++            Runtime::Gemini(model) => model.matches_selection(selection),
++        }
++    }
++
++    /// Brings an idle model's weights back before audio arrives; Google
++    /// Transcribe has none and reads its key afresh.
++    pub(crate) fn prewarm(&mut self) -> Result<()> {
++        match &mut self.runtime {
++            Runtime::Gguf(gguf) => gguf.prewarm(),
++            Runtime::Gemini(model) => model.prewarm(),
++        }
++    }
++
++    /// Transcribes a complete 16 kHz clip as a dictation does: a GGUF model
++    /// padded, Google Transcribe the clip as it is.
++    pub(crate) fn transcribe_clip(&mut self, samples: Vec<f32>) -> Result<String> {
++        match &mut self.runtime {
++            Runtime::Gguf(gguf) => gguf.transcribe_clip(samples),
++            Runtime::Gemini(model) => model.transcribe(&samples),
++        }
++    }
++
++    /// [`Self::transcribe_clip`] with the model's own timings.
++    pub(crate) fn transcribe_timed(
++        &mut self,
++        samples: Vec<f32>,
++    ) -> Result<crate::transcription::transcript::Transcript> {
++        match &mut self.runtime {
++            Runtime::Gguf(gguf) => gguf.transcribe_timed(samples),
++            Runtime::Gemini(model) => model.transcribe_timed(&samples),
++        }
++    }
++
++    /// The finest native timings this model gives, as a timed request needs
++    /// them. Never the level a caller asked for.
++    pub(crate) fn timestamps(&self) -> crate::transcription::transcript::TimestampLevel {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => {
++                crate::transcription::gguf_session::timestamp_level(gguf.finest_timestamps)
++            }
++            Runtime::Gemini(_) => crate::transcription::transcript::TimestampLevel::Word,
++        }
++    }
++
++    /// Where this model runs, for status: the device a GGUF model loaded on,
++    /// or Google's service.
++    pub fn device_label(&self) -> &str {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => &gguf.device_label,
++            Runtime::Gemini(_) => "Google Transcribe (cloud)",
++        }
++    }
++
++    /// The device setting this load ran for; Google Transcribe has no device
++    /// and answers the setting as it stands.
++    pub(crate) fn preference(&self) -> TranscriptionDevice {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => gguf.preference,
++            Runtime::Gemini(_) => device(),
++        }
++    }
++
++    /// Whether this load fell back to the CPU only because another model
++    /// filled the GPU; Google Transcribe has no GPU.
++    pub(crate) fn gpu_full(&self) -> bool {
++        match &self.runtime {
++            Runtime::Gguf(gguf) => gguf.gpu_full,
++            Runtime::Gemini(_) => false,
++        }
++    }
++
++    /// Text and word times (ms from the clip's start) for a capture, in
++    /// chunks the model takes whole.
++    pub fn transcribe_words(&mut self, samples: &[f32]) -> Result<(String, Vec<TimedSpan>)> {
++        match &mut self.runtime {
++            Runtime::Gguf(gguf) => gguf.transcribe_words(samples),
++            Runtime::Gemini(model) => model.transcribe_words(samples),
++        }
++    }
++
++    /// One meeting chunk with segment and word timings, padded as dictation
++    /// pads a clip.
++    pub(crate) fn transcribe_segments(
++        &mut self,
++        samples: Vec<f32>,
++    ) -> Result<crate::transcription::transcript::Transcript> {
++        match &mut self.runtime {
++            Runtime::Gguf(gguf) => gguf.transcribe_segments(samples),
++            Runtime::Gemini(model) => model.transcribe_segments(&samples),
++        }
++    }
++
++    pub fn transcribe(&mut self, samples: &[f32]) -> Result<String> {
++        match &mut self.runtime {
++            Runtime::Gguf(gguf) => gguf.transcribe(samples),
++            Runtime::Gemini(model) => model.transcribe(samples),
++        }
++    }
++}
++
+ /// The local API's own model, loaded for the selection a host asks for
+ /// when the dictation engine holds another one.
+ #[derive(Default)]
+@@ -779,7 +939,7 @@ impl ModelSwap {
+     fn target(&self) -> (&TranscriptionSelection, TranscriptionDevice) {
+         self.ready
+             .as_ref()
+-            .map(|(selection, model)| (selection, model.preference))
++            .map(|(selection, model)| (selection, model.preference()))
+             .or(self
+                 .reload
+                 .as_ref()
+@@ -807,11 +967,11 @@ impl ModelSwap {
+     /// because the running model fills the GPU: then it is dropped, and the
+     /// engine reloads the selection once its own model is gone.
+     fn place(&mut self, selection: TranscriptionSelection, transcriber: LocalTranscriber) {
+-        if transcriber.gpu_full {
++        if transcriber.gpu_full() {
+             tracing::info!(
+                 "the GPU has no room for the new model beside the running one; loading it in its place"
+             );
+-            let device = transcriber.preference;
++            let device = transcriber.preference();
+             drop(transcriber);
+             self.ready = None;
+             self.reload = Some((selection, device));
+@@ -879,7 +1039,7 @@ impl ModelSwap {
+     pub(crate) fn take_ready(&mut self) -> Option<LocalTranscriber> {
+         let (selection, transcriber) = self.ready.take()?;
+         self.loaded = selection;
+-        self.device = transcriber.preference;
++        self.device = transcriber.preference();
+         Some(transcriber)
+     }
+ 
+diff --git a/src/transcription/models.rs b/src/transcription/models.rs
+index 0535c854..77f4fdeb 100644
+--- a/src/transcription/models.rs
++++ b/src/transcription/models.rs
+@@ -51,6 +51,7 @@ pub enum TranscriptionModelId {
+     NbWhisperMedium,
+     GraniteSpeech5,
+     AppleSpeech,
++    GeminiTranscribe,
+     Custom(CustomModelId),
+ }
+ 
+@@ -88,6 +89,7 @@ impl TranscriptionModelId {
+             Self::NbWhisperMedium => "nb_whisper_medium",
+             Self::GraniteSpeech5 => "granite_speech_5",
+             Self::AppleSpeech => "apple_speech",
++            Self::GeminiTranscribe => "gemini_transcribe",
+             Self::Custom(id) => id.as_str(),
+         }
+     }
+@@ -96,11 +98,14 @@ impl TranscriptionModelId {
+         matches!(self, Self::Custom(_))
+     }
+ 
+-    /// A model behind its own Labs toggle: an import, or Parakeet Ultra. A
+-    /// saved choice of one stays saved while it can't run, and the listener
+-    /// runs a fallback (`custom_models::runnable`).
++    /// A model behind its own Labs toggle: an import, Parakeet Ultra, or
++    /// Google Transcribe. A saved choice of one stays saved while it can't
++    /// run, and the listener runs a fallback (`custom_models::runnable`).
+     pub const fn is_labs_gated(self) -> bool {
+-        matches!(self, Self::Custom(_) | Self::ParakeetUltra)
++        matches!(
++            self,
++            Self::Custom(_) | Self::ParakeetUltra | Self::GeminiTranscribe
++        )
+     }
+ }
+ 
+@@ -127,6 +132,7 @@ impl FromStr for TranscriptionModelId {
+             "nb_whisper_medium" => Ok(Self::NbWhisperMedium),
+             "granite_speech_5" => Ok(Self::GraniteSpeech5),
+             "apple_speech" => Ok(Self::AppleSpeech),
++            "gemini_transcribe" => Ok(Self::GeminiTranscribe),
+             _ => CustomModelId::parse(value)
+                 .map(Self::Custom)
+                 .ok_or_else(|| eyre!("unknown transcription model: {value}")),
+@@ -222,12 +228,16 @@ pub enum VocabularyUse {
+     None,
+ }
+ 
+-#[derive(Clone, Copy)]
++#[derive(Clone, Copy, PartialEq)]
+ pub enum ModelRuntime {
+     Gguf(&'static GgufArtifact),
+     AppleSpeech,
++    /// Google Transcribe: a cloud runtime with no weights of Voinc's, which
++    /// runs with the person's Gemini API key (Labs › Google Transcribe).
++    Gemini,
+ }
+ 
++#[derive(PartialEq)]
+ pub struct GgufArtifact {
+     pub filename: &'static str,
+     pub revision: &'static str,
+@@ -252,6 +262,10 @@ impl ModelDefinition {
+     pub fn available(&self) -> bool {
+         match (self.runtime, self.id) {
+             (ModelRuntime::AppleSpeech, _) => false,
++            (ModelRuntime::Gemini, _) => {
++                crate::labs::google_transcribe()
++                    && crate::transcription::gemini::api_key().is_some()
++            }
+             (ModelRuntime::Gguf(_), TranscriptionModelId::Custom(id)) => {
+                 super::custom_models::usable(id)
+             }
+@@ -335,6 +349,7 @@ impl ModelDefinition {
+     pub fn size_label(&self) -> String {
+         match self.runtime {
+             ModelRuntime::AppleSpeech => "Managed".into(),
++            ModelRuntime::Gemini => "Cloud".into(),
+             ModelRuntime::Gguf(artifact) if artifact.bytes >= 1_000_000_000 => {
+                 format!("{:.1} GB", artifact.bytes as f64 / 1_000_000_000.0)
+             }
+@@ -355,6 +370,9 @@ impl ModelDefinition {
+             {
+                 VocabularyUse::Prompt
+             }
++            // Google's customVocabulary biases its decode toward the terms,
++            // like Parakeet's heads do.
++            ModelRuntime::Gemini => VocabularyUse::Bias,
+             _ => VocabularyUse::None,
+         }
+     }
+@@ -369,6 +387,10 @@ impl ModelDefinition {
+             ModelRuntime::Gguf(artifact) => {
+                 crate::dictation::vocabulary::terms_read(entries, artifact.architecture)
+             }
++            // Google takes the first terms in list order, at most 1000.
++            ModelRuntime::Gemini => entries
++                .len()
++                .min(crate::transcription::gemini::MAX_VOCABULARY),
+             _ => 0,
+         }
+     }
+@@ -380,7 +402,7 @@ impl ModelDefinition {
+     pub const fn download_bytes(&self) -> Option<u64> {
+         match self.runtime {
+             ModelRuntime::Gguf(artifact) => Some(artifact.bytes),
+-            ModelRuntime::AppleSpeech => None,
++            ModelRuntime::AppleSpeech | ModelRuntime::Gemini => None,
+         }
+     }
+ }
+@@ -646,6 +668,18 @@ pub const MODELS: &[ModelDefinition] = &[
+         accepts_language_hint: true,
+         supports_language_detection: false,
+     },
++    ModelDefinition {
++        id: TranscriptionModelId::GeminiTranscribe,
++        name: "Google Transcribe (Gemini)",
++        realtime: "Cloud",
++        // Google's published accuracy, never measured in Voinc.
++        word_error_rate: None,
++        streams: true,
++        runtime: ModelRuntime::Gemini,
++        languages: &["*"],
++        accepts_language_hint: true,
++        supports_language_detection: true,
++    },
+ ];
+ 
+ pub const AUTO_LANGUAGE: &str = "auto";
+@@ -871,7 +905,7 @@ pub fn max_audio_chunk_samples(architecture: &str, max_audio_ms: i64) -> Option<
+ 
+ pub fn model_path(model: &ModelDefinition) -> Result<PathBuf> {
+     let ModelRuntime::Gguf(artifact) = model.runtime else {
+-        bail!("{} is managed by macOS and has no model path", model.name);
++        bail!("{} has no model file", model.name);
+     };
+     let managed = models_dir()?.join(artifact.filename);
+     // A catalog model another app downloaded (one already in use, or an
+@@ -907,6 +941,8 @@ pub fn is_installed(model: &ModelDefinition, language: &str) -> bool {
+         ModelRuntime::AppleSpeech => crate::apple_speech::AppleSpeech::is_ready(language),
+         #[cfg(not(target_os = "macos"))]
+         ModelRuntime::AppleSpeech => false,
++        // Google Transcribe installs with the person's API key.
++        ModelRuntime::Gemini => crate::transcription::gemini::api_key().is_some(),
+     }
+ }
+ 
+@@ -914,6 +950,10 @@ pub fn is_verified(model: &ModelDefinition) -> bool {
+     if let TranscriptionModelId::Custom(id) = model.id {
+         return super::custom_models::status(id) == super::custom_models::Status::Ready;
+     }
++    if model.runtime == ModelRuntime::Gemini {
++        // Nothing to verify against a file: the key is the install.
++        return crate::transcription::gemini::api_key().is_some();
++    }
+     let Ok(path) = model_path(model) else {
+         return false;
+     };
+@@ -1507,6 +1547,50 @@ mod tests {
+         );
+     }
+ 
++    #[test]
++    fn gemini_transcribe_is_offered_only_with_its_lab_and_key() {
++        let gemini = definition(TranscriptionModelId::GeminiTranscribe);
++        assert_eq!(
++            gemini.available(),
++            crate::labs::google_transcribe() && crate::transcription::gemini::api_key().is_some()
++        );
++        assert!(gemini.streams && gemini.accepts_language_hint);
++        assert_eq!(gemini.languages, &["*"]);
++        for language in [AUTO_LANGUAGE, "en", "de"] {
++            assert!(
++                choices_for_runtime(language)
++                    .iter()
++                    .all(|choice| choice.model.id != gemini.id),
++                "Google Transcribe is never recommended ({language})"
++            );
++        }
++        let saved = TranscriptionSelection {
++            model: gemini.id,
++            language: "de".into(),
++        };
++        assert!(validate_saved(&saved).is_ok());
++        if !gemini.available() {
++            assert!(validate(&saved).is_err());
++            assert_eq!(
++                super::super::custom_models::runnable(&saved),
++                super::super::custom_models::fallback()
++            );
++        }
++        let mut settings = crate::app_settings::AppSettings::default();
++        settings.transcription = saved.clone();
++        assert!(
++            crate::labs::Feature::GoogleTranscribe
++                .off_refusal(&settings)
++                .is_none(),
++            "turning it off while selected is allowed; the listener falls back"
++        );
++        assert!(
++            crate::labs::Feature::BenchmarkDetails
++                .off_refusal(&settings)
++                .is_none()
++        );
++    }
++
+     #[test]
+     fn hebrew_recommends_the_ivrit_fine_tune_with_its_hint() {
+         use Recommendation::{Recommended, Vocabulary};
+@@ -1706,9 +1790,11 @@ mod tests {
+         let streaming = MODELS
+             .iter()
+             .filter(|model| model.streams)
+-            .map(|model| match model.runtime {
+-                ModelRuntime::Gguf(artifact) => artifact.variant,
+-                ModelRuntime::AppleSpeech => panic!("a streaming model has a GGUF artifact"),
++            .filter_map(|model| match model.runtime {
++                ModelRuntime::Gguf(artifact) => Some(artifact.variant),
++                // Google Transcribe streams over its Live WebSocket, with no
++                // local artifact.
++                ModelRuntime::Gemini | ModelRuntime::AppleSpeech => None,
+             })
+             .collect::<Vec<_>>();
+         assert_eq!(
+@@ -1775,6 +1861,7 @@ mod tests {
+             (TranscriptionModelId::GigaAmV3, "gigaam_v3"),
+             (TranscriptionModelId::NbWhisperMedium, "nb_whisper_medium"),
+             (TranscriptionModelId::AppleSpeech, "apple_speech"),
++            (TranscriptionModelId::GeminiTranscribe, "gemini_transcribe"),
+         ] {
+             assert_eq!(id.as_str(), name);
+             assert_eq!(name.parse::<TranscriptionModelId>().unwrap(), id);
+@@ -2135,6 +2222,7 @@ mod tests {
+                 UnderdogBark3Clean,
+                 ParakeetUltra,
+                 Nemotron35Asr,
++                GeminiTranscribe,
+             ]
+         );
+     }
+diff --git a/src/transcription/stream_feed.rs b/src/transcription/stream_feed.rs
+new file mode 100644
+index 00000000..2d76ec75
+--- /dev/null
++++ b/src/transcription/stream_feed.rs
+@@ -0,0 +1,40 @@
++//! The one live-stream seam a transcription engine drives: whatever a
++//! capture feeds samples to and polls interim text from, then finalizes.
++//!
++//! The engine's worker owns the stream's lifecycle (begin, feeds, finish,
++//! whole-clip fallback); the runtime behind the trait only answers those
++//! calls. The GGUF stream ([`transcribe_cpp::Stream`]) implements it in
++//! [`crate::transcription::engine::streaming`], and Google Transcribe's Live
++//! session in [`crate::transcription::gemini::live`].
++
++use crate::transcription::engine::Partial;
++
++/// A live stream as the engine's worker drives it.
++pub(crate) trait StreamFeed {
++    /// Feeds one block of the clip's 16 kHz mono samples.
++    fn feed(&mut self, samples: &[f32]) -> Result<(), String>;
++
++    /// Finalizes the stream and answers its whole text.
++    fn finalize(&mut self) -> Result<String, String>;
++
++    /// The stream's text so far, for live text.
++    fn partial(&self) -> Partial;
++
++    /// Where the stream's text starts in the audio it heard, in milliseconds,
++    /// once it has finalized; `None` when the model gives no timing.
++    fn text_start_ms(&self) -> Option<u64> {
++        None
++    }
++
++    /// Where the stream's text ends in the audio it heard, in milliseconds,
++    /// once it has finalized; `None` when the model gives no timing.
++    fn text_end_ms(&self) -> Option<u64> {
++        None
++    }
++
++    /// The distinct language tags the model's raw decode carries, in order of
++    /// first appearance, once it has finalized; empty when it emits none.
++    fn language_tags(&self) -> Vec<String> {
++        Vec::new()
++    }
++}

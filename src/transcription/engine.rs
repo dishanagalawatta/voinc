@@ -1377,6 +1377,7 @@ impl Worker {
 
 #[cfg(test)]
 mod tests {
+    use super::super::stream_feed::StreamFeed;
     use super::*;
 
     #[test]

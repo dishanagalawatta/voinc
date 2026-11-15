@@ -616,6 +616,18 @@ pub(super) const KEYS: &[Key] = &[
          in a transcript, as the speech model heard them (timestamps=segment|word)",
     ),
     key(
+        "labs.google_transcribe",
+        Kind::Bool,
+        "Labs: transcribe with Google's Gemini models in the cloud, using the Gemini API key saved \
+         under google_transcribe.api_key (or VOINC_GOOGLE_API_KEY); audio is sent to Google",
+    ),
+    optional(
+        "google_transcribe.api_key",
+        Kind::Text,
+        "The Gemini API key Google Transcribe uses; none asks VOINC_GOOGLE_API_KEY first and \
+         otherwise leaves Google Transcribe unavailable",
+    ),
+    key(
         "labs.speakers_only",
         Kind::Bool,
         "Labs: While dictating applies only while the default output is speakers; headphones are \

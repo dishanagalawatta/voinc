@@ -830,6 +830,10 @@ fn transcription_action(
         crate::transcription::models::ModelRuntime::Gguf(_) => {
             crate::transcription::models::is_verified(model)
         }
+        // Google Transcribe is prepared when its key answers.
+        crate::transcription::models::ModelRuntime::Gemini => {
+            crate::transcription::models::is_installed(model, &selection.language)
+        }
         crate::transcription::models::ModelRuntime::AppleSpeech => {
             crate::transcription::models::is_installed(model, &selection.language)
         }

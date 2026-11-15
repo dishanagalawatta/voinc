@@ -51,6 +51,7 @@ pub enum TranscriptionModelId {
     NbWhisperMedium,
     GraniteSpeech5,
     AppleSpeech,
+    GeminiTranscribe,
     Custom(CustomModelId),
 }
 
@@ -88,6 +89,7 @@ impl TranscriptionModelId {
             Self::NbWhisperMedium => "nb_whisper_medium",
             Self::GraniteSpeech5 => "granite_speech_5",
             Self::AppleSpeech => "apple_speech",
+            Self::GeminiTranscribe => "gemini_transcribe",
             Self::Custom(id) => id.as_str(),
         }
     }
@@ -96,11 +98,14 @@ impl TranscriptionModelId {
         matches!(self, Self::Custom(_))
     }
 
-    /// A model behind its own Labs toggle: an import, or Parakeet Ultra. A
-    /// saved choice of one stays saved while it can't run, and the listener
-    /// runs a fallback (`custom_models::runnable`).
+    /// A model behind its own Labs toggle: an import, Parakeet Ultra, or
+    /// Google Transcribe. A saved choice of one stays saved while it can't
+    /// run, and the listener runs a fallback (`custom_models::runnable`).
     pub const fn is_labs_gated(self) -> bool {
-        matches!(self, Self::Custom(_) | Self::ParakeetUltra)
+        matches!(
+            self,
+            Self::Custom(_) | Self::ParakeetUltra | Self::GeminiTranscribe
+        )
     }
 }
 
@@ -127,6 +132,7 @@ impl FromStr for TranscriptionModelId {
             "nb_whisper_medium" => Ok(Self::NbWhisperMedium),
             "granite_speech_5" => Ok(Self::GraniteSpeech5),
             "apple_speech" => Ok(Self::AppleSpeech),
+            "gemini_transcribe" => Ok(Self::GeminiTranscribe),
             _ => CustomModelId::parse(value)
                 .map(Self::Custom)
                 .ok_or_else(|| eyre!("unknown transcription model: {value}")),
@@ -222,12 +228,16 @@ pub enum VocabularyUse {
     None,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum ModelRuntime {
     Gguf(&'static GgufArtifact),
     AppleSpeech,
+    /// Google Transcribe: a cloud runtime with no weights of Voinc's, which
+    /// runs with the person's Gemini API key (Labs › Google Transcribe).
+    Gemini,
 }
 
+#[derive(PartialEq)]
 pub struct GgufArtifact {
     pub filename: &'static str,
     pub revision: &'static str,
@@ -252,6 +262,10 @@ impl ModelDefinition {
     pub fn available(&self) -> bool {
         match (self.runtime, self.id) {
             (ModelRuntime::AppleSpeech, _) => false,
+            (ModelRuntime::Gemini, _) => {
+                crate::labs::google_transcribe()
+                    && crate::transcription::gemini::api_key().is_some()
+            }
             (ModelRuntime::Gguf(_), TranscriptionModelId::Custom(id)) => {
                 super::custom_models::usable(id)
             }
@@ -335,6 +349,7 @@ impl ModelDefinition {
     pub fn size_label(&self) -> String {
         match self.runtime {
             ModelRuntime::AppleSpeech => "Managed".into(),
+            ModelRuntime::Gemini => "Cloud".into(),
             ModelRuntime::Gguf(artifact) if artifact.bytes >= 1_000_000_000 => {
                 format!("{:.1} GB", artifact.bytes as f64 / 1_000_000_000.0)
             }
@@ -355,6 +370,9 @@ impl ModelDefinition {
             {
                 VocabularyUse::Prompt
             }
+            // Google's customVocabulary biases its decode toward the terms,
+            // like Parakeet's heads do.
+            ModelRuntime::Gemini => VocabularyUse::Bias,
             _ => VocabularyUse::None,
         }
     }
@@ -369,6 +387,10 @@ impl ModelDefinition {
             ModelRuntime::Gguf(artifact) => {
                 crate::dictation::vocabulary::terms_read(entries, artifact.architecture)
             }
+            // Google takes the first terms in list order, at most 1000.
+            ModelRuntime::Gemini => entries
+                .len()
+                .min(crate::transcription::gemini::MAX_VOCABULARY),
             _ => 0,
         }
     }
@@ -380,7 +402,7 @@ impl ModelDefinition {
     pub const fn download_bytes(&self) -> Option<u64> {
         match self.runtime {
             ModelRuntime::Gguf(artifact) => Some(artifact.bytes),
-            ModelRuntime::AppleSpeech => None,
+            ModelRuntime::AppleSpeech | ModelRuntime::Gemini => None,
         }
     }
 }
@@ -646,6 +668,18 @@ pub const MODELS: &[ModelDefinition] = &[
         accepts_language_hint: true,
         supports_language_detection: false,
     },
+    ModelDefinition {
+        id: TranscriptionModelId::GeminiTranscribe,
+        name: "Google Transcribe (Gemini)",
+        realtime: "Cloud",
+        // Google's published accuracy, never measured in Voinc.
+        word_error_rate: None,
+        streams: true,
+        runtime: ModelRuntime::Gemini,
+        languages: &["*"],
+        accepts_language_hint: true,
+        supports_language_detection: true,
+    },
 ];
 
 pub const AUTO_LANGUAGE: &str = "auto";
@@ -871,7 +905,7 @@ pub fn max_audio_chunk_samples(architecture: &str, max_audio_ms: i64) -> Option<
 
 pub fn model_path(model: &ModelDefinition) -> Result<PathBuf> {
     let ModelRuntime::Gguf(artifact) = model.runtime else {
-        bail!("{} is managed by macOS and has no model path", model.name);
+        bail!("{} has no model file", model.name);
     };
     let managed = models_dir()?.join(artifact.filename);
     // A catalog model another app downloaded (one already in use, or an
@@ -907,12 +941,18 @@ pub fn is_installed(model: &ModelDefinition, language: &str) -> bool {
         ModelRuntime::AppleSpeech => crate::apple_speech::AppleSpeech::is_ready(language),
         #[cfg(not(target_os = "macos"))]
         ModelRuntime::AppleSpeech => false,
+        // Google Transcribe installs with the person's API key.
+        ModelRuntime::Gemini => crate::transcription::gemini::api_key().is_some(),
     }
 }
 
 pub fn is_verified(model: &ModelDefinition) -> bool {
     if let TranscriptionModelId::Custom(id) = model.id {
         return super::custom_models::status(id) == super::custom_models::Status::Ready;
+    }
+    if model.runtime == ModelRuntime::Gemini {
+        // Nothing to verify against a file: the key is the install.
+        return crate::transcription::gemini::api_key().is_some();
     }
     let Ok(path) = model_path(model) else {
         return false;
@@ -1508,6 +1548,50 @@ mod tests {
     }
 
     #[test]
+    fn gemini_transcribe_is_offered_only_with_its_lab_and_key() {
+        let gemini = definition(TranscriptionModelId::GeminiTranscribe);
+        assert_eq!(
+            gemini.available(),
+            crate::labs::google_transcribe() && crate::transcription::gemini::api_key().is_some()
+        );
+        assert!(gemini.streams && gemini.accepts_language_hint);
+        assert_eq!(gemini.languages, &["*"]);
+        for language in [AUTO_LANGUAGE, "en", "de"] {
+            assert!(
+                choices_for_runtime(language)
+                    .iter()
+                    .all(|choice| choice.model.id != gemini.id),
+                "Google Transcribe is never recommended ({language})"
+            );
+        }
+        let saved = TranscriptionSelection {
+            model: gemini.id,
+            language: "de".into(),
+        };
+        assert!(validate_saved(&saved).is_ok());
+        if !gemini.available() {
+            assert!(validate(&saved).is_err());
+            assert_eq!(
+                super::super::custom_models::runnable(&saved),
+                super::super::custom_models::fallback()
+            );
+        }
+        let mut settings = crate::app_settings::AppSettings::default();
+        settings.transcription = saved.clone();
+        assert!(
+            crate::labs::Feature::GoogleTranscribe
+                .off_refusal(&settings)
+                .is_none(),
+            "turning it off while selected is allowed; the listener falls back"
+        );
+        assert!(
+            crate::labs::Feature::BenchmarkDetails
+                .off_refusal(&settings)
+                .is_none()
+        );
+    }
+
+    #[test]
     fn hebrew_recommends_the_ivrit_fine_tune_with_its_hint() {
         use Recommendation::{Recommended, Vocabulary};
         use TranscriptionModelId::{IvritWhisperLargeV3Turbo, WhisperLargeV3Turbo};
@@ -1706,9 +1790,11 @@ mod tests {
         let streaming = MODELS
             .iter()
             .filter(|model| model.streams)
-            .map(|model| match model.runtime {
-                ModelRuntime::Gguf(artifact) => artifact.variant,
-                ModelRuntime::AppleSpeech => panic!("a streaming model has a GGUF artifact"),
+            .filter_map(|model| match model.runtime {
+                ModelRuntime::Gguf(artifact) => Some(artifact.variant),
+                // Google Transcribe streams over its Live WebSocket, with no
+                // local artifact.
+                ModelRuntime::Gemini | ModelRuntime::AppleSpeech => None,
             })
             .collect::<Vec<_>>();
         assert_eq!(
@@ -1775,6 +1861,7 @@ mod tests {
             (TranscriptionModelId::GigaAmV3, "gigaam_v3"),
             (TranscriptionModelId::NbWhisperMedium, "nb_whisper_medium"),
             (TranscriptionModelId::AppleSpeech, "apple_speech"),
+            (TranscriptionModelId::GeminiTranscribe, "gemini_transcribe"),
         ] {
             assert_eq!(id.as_str(), name);
             assert_eq!(name.parse::<TranscriptionModelId>().unwrap(), id);
@@ -2135,6 +2222,7 @@ mod tests {
                 UnderdogBark3Clean,
                 ParakeetUltra,
                 Nemotron35Asr,
+                GeminiTranscribe,
             ]
         );
     }

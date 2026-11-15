@@ -6,17 +6,34 @@ use color_eyre::eyre::{Result, WrapErr, eyre};
 use transcribe_cpp::{Backend, Model, ModelOptions, RunOptions, TimestampKind};
 
 use crate::app_settings::TranscriptionDevice;
+use crate::transcription::gemini;
 use crate::transcription::gguf_session::{OfflineGgufSession, output_truncated};
 use crate::transcription::gpu_health;
 use crate::transcription::models::{
-    TranscriptionModelId, TranscriptionSelection, download_with_progress, model_path, validate,
+    ModelRuntime, TranscriptionModelId, TranscriptionSelection, download_with_progress, model_path,
+    validate,
 };
+use crate::transcription::stream_feed::StreamFeed;
 use crate::transcription::{pad_gguf_samples, trailing_silence_samples};
 
 /// A word or segment's start and end (ms from the clip's start) and text.
 pub type TimedSpan = (i64, i64, String);
 
 pub struct LocalTranscriber {
+    runtime: Runtime,
+}
+
+/// What this transcriber runs: a GGUF model's session on this computer's GPU
+/// or CPU, or Google Transcribe's cloud runtime, which holds no weights.
+// One is made per model load, so the GGUF runtime's size doesn't matter.
+#[allow(clippy::large_enum_variant)]
+enum Runtime {
+    Gguf(Gguf),
+    Gemini(gemini::Gemini),
+}
+
+/// A loaded GGUF model: its session, device, and what its metadata said.
+struct Gguf {
     session: OfflineGgufSession,
     selection: TranscriptionSelection,
     options: RunOptions,
@@ -63,6 +80,13 @@ pub(crate) fn device() -> TranscriptionDevice {
 
 pub fn install(selection: &TranscriptionSelection, canceled: &AtomicBool) -> Result<()> {
     let model = validate(selection)?;
+    if model.runtime == ModelRuntime::Gemini {
+        println!(
+            "{} needs no download; it runs with a Google API key (Settings › Labs).",
+            model.name
+        );
+        return Ok(());
+    }
     let downloaded = AtomicU64::new(0);
     println!("Installing {} ({})...", model.name, model.size_label());
     let path = download_with_progress(model, canceled, &downloaded)?;
@@ -254,12 +278,32 @@ fn read_wav(reader: impl std::io::Read + std::io::Seek) -> Result<Vec<f32>> {
 }
 
 impl LocalTranscriber {
+    /// Loads and prewarms `selection` for its runtime: a GGUF model where
+    /// Settings › Speech engine says ([`Gguf::load`]), or Google Transcribe,
+    /// which has no weights to load — it needs the person's API key instead.
+    pub fn load(selection: &TranscriptionSelection) -> Result<Self> {
+        let definition = validate(selection)?;
+        match definition.runtime {
+            ModelRuntime::Gemini => {
+                let model = gemini::Gemini::load_selection(selection)?;
+                Ok(Self {
+                    runtime: Runtime::Gemini(model),
+                })
+            }
+            _ => Gguf::load(selection).map(|gguf| Self {
+                runtime: Runtime::Gguf(gguf),
+            }),
+        }
+    }
+}
+
+impl Gguf {
     /// Loads and prewarms `selection` where Settings › Speech engine says:
     /// on Auto a GPU unless it failed before under its current driver
     /// ([`gpu_health`], #856), on GPU the best GPU, on CPU the CPU. A GPU load
     /// or prewarm that fails retries on the CPU, and when the CPU works the
     /// GPU is remembered as failed.
-    pub fn load(selection: &TranscriptionSelection) -> Result<Self> {
+    fn load(selection: &TranscriptionSelection) -> Result<Self> {
         let loaded = Self::load_where(selection)?;
         gpu_health::set_auto_on_cpu(
             loaded.preference == TranscriptionDevice::Auto && loaded.gpu.is_none(),
@@ -456,44 +500,19 @@ impl LocalTranscriber {
         }
     }
 
-    pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
-        self.stream.as_ref()
-    }
-
-    /// Silence a live stream of this model hears before it finalizes, the
-    /// same trailing silence its whole-clip runs get.
-    pub(crate) fn stream_trailing_silence(&self) -> usize {
-        trailing_silence_samples(Some(self.model_id()))
-    }
-
-    /// The model this transcriber was loaded for.
-    pub(crate) fn model_id(&self) -> TranscriptionModelId {
-        self.selection.model
-    }
-
     pub(crate) fn with_stream<R>(
         &mut self,
         stream_options: &transcribe_cpp::StreamOptions,
         cancel: &transcribe_cpp::CancelToken,
-        drive: impl FnOnce(&mut transcribe_cpp::Stream<'_>) -> R,
+        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
     ) -> transcribe_cpp::Result<R> {
         self.session
             .with_stream(&self.options, stream_options, cancel, drive)
     }
 
-    /// The selection this model was loaded for, so the transcription engine
-    /// can say which model it holds.
-    pub(crate) fn gguf_selection(&self) -> Option<&TranscriptionSelection> {
-        Some(&self.selection)
-    }
-
-    pub(crate) fn matches_selection(&self, selection: &TranscriptionSelection) -> bool {
-        &self.selection == selection
-    }
-
     /// Brings an idle model's weights back before audio arrives, as loading
     /// does; a model that ran recently is already warm.
-    pub(crate) fn prewarm(&mut self) -> Result<()> {
+    fn prewarm(&mut self) -> Result<()> {
         if self.session.ran_recently() {
             return Ok(());
         }
@@ -503,19 +522,19 @@ impl LocalTranscriber {
 
     /// Transcribes a complete 16 kHz clip, padded as a dictation's clip is:
     /// the minimum duration, then Unified English's trailing silence.
-    pub(crate) fn transcribe_clip(&mut self, mut samples: Vec<f32>) -> Result<String> {
-        pad_gguf_samples(&mut samples, Some(self.model_id()));
+    fn transcribe_clip(&mut self, mut samples: Vec<f32>) -> Result<String> {
+        pad_gguf_samples(&mut samples, Some(self.selection.model));
         self.transcribe(&samples)
     }
 
     /// [`Self::transcribe_clip`] with the model's own segment and word times,
     /// chunked and padded exactly as the untimed run chunks and pads it, so
     /// the text matches and each chunk's times sit on the clip's timeline.
-    pub(crate) fn transcribe_timed(
+    fn transcribe_timed(
         &mut self,
         mut samples: Vec<f32>,
     ) -> Result<crate::transcription::transcript::Transcript> {
-        pad_gguf_samples(&mut samples, Some(self.model_id()));
+        pad_gguf_samples(&mut samples, Some(self.selection.model));
         let options = RunOptions {
             timestamps: self.finest_timestamps,
             ..self.options.clone()
@@ -533,20 +552,10 @@ impl LocalTranscriber {
         }
     }
 
-    /// The finest native timings this model gives, as a timed request needs
-    /// them. Never the level a caller asked for.
-    pub(crate) fn timestamps(&self) -> crate::transcription::transcript::TimestampLevel {
-        crate::transcription::gguf_session::timestamp_level(self.finest_timestamps)
-    }
-
-    pub fn device_label(&self) -> &str {
-        &self.device_label
-    }
-
     /// Text and word times (ms from the clip's start) for a capture, in
     /// chunks the model takes whole. A model without word times gives its
     /// segments instead.
-    pub fn transcribe_words(&mut self, samples: &[f32]) -> Result<(String, Vec<TimedSpan>)> {
+    fn transcribe_words(&mut self, samples: &[f32]) -> Result<(String, Vec<TimedSpan>)> {
         let transcript = self.timed(samples)?;
         let spans = if transcript.words.is_empty() {
             transcript.segments
@@ -562,7 +571,7 @@ impl LocalTranscriber {
 
     /// One meeting chunk with segment and word timings, padded as dictation
     /// pads a clip.
-    pub(crate) fn transcribe_segments(
+    fn transcribe_segments(
         &mut self,
         mut samples: Vec<f32>,
     ) -> Result<crate::transcription::transcript::Transcript> {
@@ -698,7 +707,7 @@ impl LocalTranscriber {
         Ok(timed)
     }
 
-    pub fn transcribe(&mut self, samples: &[f32]) -> Result<String> {
+    pub(crate) fn transcribe(&mut self, samples: &[f32]) -> Result<String> {
         let run = |this: &mut Self| {
             this.session
                 .transcribe_chunked(samples, &this.options, this.max_audio_samples)
@@ -709,6 +718,157 @@ impl LocalTranscriber {
                 run(self)
             }
             result => result,
+        }
+    }
+}
+
+impl LocalTranscriber {
+    /// The stream options of this model, when it can stream: a GGUF model's
+    /// probed session, or the constant options a Live session ignores.
+    pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => gguf.stream.as_ref(),
+            Runtime::Gemini(_) => Some(&gemini::STREAM_OPTIONS),
+        }
+    }
+
+    /// Silence a live stream of this model hears before it finalizes, the
+    /// same trailing silence its whole-clip runs get.
+    pub(crate) fn stream_trailing_silence(&self) -> usize {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => trailing_silence_samples(Some(gguf.selection.model)),
+            Runtime::Gemini(_) => gemini::LIVE_TRAILING_SILENCE_SAMPLES,
+        }
+    }
+
+    /// The model this transcriber was loaded for.
+    pub(crate) fn model_id(&self) -> TranscriptionModelId {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => gguf.selection.model,
+            Runtime::Gemini(model) => model.model_id(),
+        }
+    }
+
+    pub(crate) fn with_stream<R>(
+        &mut self,
+        stream_options: &transcribe_cpp::StreamOptions,
+        cancel: &transcribe_cpp::CancelToken,
+        drive: impl FnOnce(&mut dyn StreamFeed) -> R,
+    ) -> transcribe_cpp::Result<R> {
+        match &mut self.runtime {
+            Runtime::Gguf(gguf) => gguf.with_stream(stream_options, cancel, drive),
+            Runtime::Gemini(model) => model.with_stream(stream_options, cancel, drive),
+        }
+    }
+
+    /// The selection this model was loaded for, so the transcription engine
+    /// can say which model it holds.
+    pub(crate) fn gguf_selection(&self) -> Option<&TranscriptionSelection> {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => Some(&gguf.selection),
+            Runtime::Gemini(model) => Some(model.selection()),
+        }
+    }
+
+    pub(crate) fn matches_selection(&self, selection: &TranscriptionSelection) -> bool {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => &gguf.selection == selection,
+            Runtime::Gemini(model) => model.matches_selection(selection),
+        }
+    }
+
+    /// Brings an idle model's weights back before audio arrives; Google
+    /// Transcribe has none and reads its key afresh.
+    pub(crate) fn prewarm(&mut self) -> Result<()> {
+        match &mut self.runtime {
+            Runtime::Gguf(gguf) => gguf.prewarm(),
+            Runtime::Gemini(model) => model.prewarm(),
+        }
+    }
+
+    /// Transcribes a complete 16 kHz clip as a dictation does: a GGUF model
+    /// padded, Google Transcribe the clip as it is.
+    pub(crate) fn transcribe_clip(&mut self, samples: Vec<f32>) -> Result<String> {
+        match &mut self.runtime {
+            Runtime::Gguf(gguf) => gguf.transcribe_clip(samples),
+            Runtime::Gemini(model) => model.transcribe(&samples),
+        }
+    }
+
+    /// [`Self::transcribe_clip`] with the model's own timings.
+    pub(crate) fn transcribe_timed(
+        &mut self,
+        samples: Vec<f32>,
+    ) -> Result<crate::transcription::transcript::Transcript> {
+        match &mut self.runtime {
+            Runtime::Gguf(gguf) => gguf.transcribe_timed(samples),
+            Runtime::Gemini(model) => model.transcribe_timed(&samples),
+        }
+    }
+
+    /// The finest native timings this model gives, as a timed request needs
+    /// them. Never the level a caller asked for.
+    pub(crate) fn timestamps(&self) -> crate::transcription::transcript::TimestampLevel {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => {
+                crate::transcription::gguf_session::timestamp_level(gguf.finest_timestamps)
+            }
+            Runtime::Gemini(_) => crate::transcription::transcript::TimestampLevel::Word,
+        }
+    }
+
+    /// Where this model runs, for status: the device a GGUF model loaded on,
+    /// or Google's service.
+    pub fn device_label(&self) -> &str {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => &gguf.device_label,
+            Runtime::Gemini(_) => "Google Transcribe (cloud)",
+        }
+    }
+
+    /// The device setting this load ran for; Google Transcribe has no device
+    /// and answers the setting as it stands.
+    pub(crate) fn preference(&self) -> TranscriptionDevice {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => gguf.preference,
+            Runtime::Gemini(_) => device(),
+        }
+    }
+
+    /// Whether this load fell back to the CPU only because another model
+    /// filled the GPU; Google Transcribe has no GPU.
+    pub(crate) fn gpu_full(&self) -> bool {
+        match &self.runtime {
+            Runtime::Gguf(gguf) => gguf.gpu_full,
+            Runtime::Gemini(_) => false,
+        }
+    }
+
+    /// Text and word times (ms from the clip's start) for a capture, in
+    /// chunks the model takes whole.
+    pub fn transcribe_words(&mut self, samples: &[f32]) -> Result<(String, Vec<TimedSpan>)> {
+        match &mut self.runtime {
+            Runtime::Gguf(gguf) => gguf.transcribe_words(samples),
+            Runtime::Gemini(model) => model.transcribe_words(samples),
+        }
+    }
+
+    /// One meeting chunk with segment and word timings, padded as dictation
+    /// pads a clip.
+    pub(crate) fn transcribe_segments(
+        &mut self,
+        samples: Vec<f32>,
+    ) -> Result<crate::transcription::transcript::Transcript> {
+        match &mut self.runtime {
+            Runtime::Gguf(gguf) => gguf.transcribe_segments(samples),
+            Runtime::Gemini(model) => model.transcribe_segments(&samples),
+        }
+    }
+
+    pub fn transcribe(&mut self, samples: &[f32]) -> Result<String> {
+        match &mut self.runtime {
+            Runtime::Gguf(gguf) => gguf.transcribe(samples),
+            Runtime::Gemini(model) => model.transcribe(samples),
         }
     }
 }
@@ -779,7 +939,7 @@ impl ModelSwap {
     fn target(&self) -> (&TranscriptionSelection, TranscriptionDevice) {
         self.ready
             .as_ref()
-            .map(|(selection, model)| (selection, model.preference))
+            .map(|(selection, model)| (selection, model.preference()))
             .or(self
                 .reload
                 .as_ref()
@@ -807,11 +967,11 @@ impl ModelSwap {
     /// because the running model fills the GPU: then it is dropped, and the
     /// engine reloads the selection once its own model is gone.
     fn place(&mut self, selection: TranscriptionSelection, transcriber: LocalTranscriber) {
-        if transcriber.gpu_full {
+        if transcriber.gpu_full() {
             tracing::info!(
                 "the GPU has no room for the new model beside the running one; loading it in its place"
             );
-            let device = transcriber.preference;
+            let device = transcriber.preference();
             drop(transcriber);
             self.ready = None;
             self.reload = Some((selection, device));
@@ -879,7 +1039,7 @@ impl ModelSwap {
     pub(crate) fn take_ready(&mut self) -> Option<LocalTranscriber> {
         let (selection, transcriber) = self.ready.take()?;
         self.loaded = selection;
-        self.device = transcriber.preference;
+        self.device = transcriber.preference();
         Some(transcriber)
     }
 

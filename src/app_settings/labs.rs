@@ -201,6 +201,9 @@ pub struct LabsSettings {
     /// The local API's `timestamps=segment|word` returns the speech model's
     /// own segment and word times.
     pub api_timestamps: bool,
+    /// Google Transcribe's cloud runtime transcribes with the person's
+    /// Gemini API key (GoogleTranscribeSettings' api_key).
+    pub google_transcribe: bool,
     /// "While dictating" applies only while the default output is speakers;
     /// headphones are left alone.
     pub speakers_only: bool,
@@ -280,6 +283,7 @@ impl Default for LabsSettings {
             transcribe_files: false,
             api_processing: false,
             api_timestamps: false,
+            google_transcribe: false,
             speakers_only: false,
             app_model_switching: false,
             pause_menu: false,

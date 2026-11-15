@@ -201,6 +201,8 @@ pub(super) fn reads_vocabulary(ui: &Ui, def: &ModelDefinition) -> bool {
 pub(super) fn size_text(def: &ModelDefinition) -> String {
     match def.runtime {
         ModelRuntime::AppleSpeech => tr("Managed by macOS").into(),
+        // Google Transcribe has no weights of Voinc's to measure.
+        ModelRuntime::Gemini => tr("Runs in Google's cloud").into(),
         ModelRuntime::Gguf(_) => def.size_label(),
     }
 }
@@ -234,6 +236,7 @@ pub(super) fn blurb(def: &ModelDefinition) -> &'static str {
         M::NbWhisperMedium => tr("Whisper, tuned for Norwegian by its National Library"),
         M::GraniteSpeech5 => tr("IBM's model for seven languages, with punctuation"),
         M::AppleSpeech => tr("Apple's speech recognition, kept up to date by macOS"),
+        M::GeminiTranscribe => tr("Google's Gemini, transcribing in the cloud with your API key"),
         M::Custom(_) => "",
     }
 }

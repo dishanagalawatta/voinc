@@ -329,6 +329,12 @@ pub fn api_timestamps() -> bool {
     on(API_TIMESTAMPS) && Feature::ApiTimestamps.on_this_os()
 }
 
+/// Google Transcribe's cloud runtime may transcribe (read where each
+/// transcription starts; the catalog also checks its API key).
+pub fn google_transcribe() -> bool {
+    on(GOOGLE_TRANSCRIBE) && Feature::GoogleTranscribe.on_this_os()
+}
+
 /// Finished meetings may drop their WAV tracks on `meetings.audio_retention`
 /// (read by the meeting controller's expiry pass and the window's Settings
 /// row).

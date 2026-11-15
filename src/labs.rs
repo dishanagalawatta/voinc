@@ -160,6 +160,7 @@ impl Feature {
             | Self::TranscribeFiles
             | Self::ApiProcessing
             | Self::ApiTimestamps
+            | Self::GoogleTranscribe
             | Self::SpeakersOnly
             | Self::PauseMenu
             | Self::MoreDictationShortcuts => Audience::Everyone,
@@ -237,6 +238,7 @@ impl Feature {
             | Self::MeetingNotesFile
             | Self::MoreDictationShortcuts => 20261109,
             Self::AppModelSwitching | Self::ApiTimestamps | Self::PauseMenu => 20261110,
+            Self::GoogleTranscribe => 20261115,
         }
     }
 
@@ -355,6 +357,7 @@ impl Feature {
             | Self::TranscribeFiles
             | Self::ApiProcessing
             | Self::ApiTimestamps
+            | Self::GoogleTranscribe
             | Self::SpeakersOnly => true,
         }
     }
@@ -431,6 +434,7 @@ impl Feature {
             Self::TranscribeFiles => "transcribe-files",
             Self::ApiProcessing => "api-processing",
             Self::ApiTimestamps => "api-timestamps",
+            Self::GoogleTranscribe => "google-transcribe",
             Self::SpeakersOnly => "speakers-only",
             Self::PauseMenu => "pause-menu",
             Self::MoreDictationShortcuts => "more-dictation-shortcuts",
@@ -509,6 +513,7 @@ impl Feature {
             Self::TranscribeFiles => "labs.transcribe_files",
             Self::ApiProcessing => "labs.api_processing",
             Self::ApiTimestamps => "labs.api_timestamps",
+            Self::GoogleTranscribe => "labs.google_transcribe",
             Self::SpeakersOnly => "labs.speakers_only",
             Self::PauseMenu => "labs.pause_menu",
             Self::MoreDictationShortcuts => "labs.more_dictation_shortcuts",
@@ -591,6 +596,7 @@ impl Feature {
             Self::TranscribeFiles => settings.labs.transcribe_files,
             Self::ApiProcessing => settings.labs.api_processing,
             Self::ApiTimestamps => settings.labs.api_timestamps,
+            Self::GoogleTranscribe => settings.labs.google_transcribe,
             Self::SpeakersOnly => settings.labs.speakers_only,
             Self::PauseMenu => settings.labs.pause_menu,
             Self::MoreDictationShortcuts => settings.labs.more_dictation_shortcuts,
@@ -670,6 +676,7 @@ impl Feature {
             &mut labs.transcribe_files,
             &mut labs.api_processing,
             &mut labs.api_timestamps,
+            &mut labs.google_transcribe,
             &mut labs.speakers_only,
             &mut labs.app_model_switching,
             &mut labs.pause_menu,
@@ -756,6 +763,7 @@ impl Feature {
             Self::TranscribeFiles => settings.labs.transcribe_files = on,
             Self::ApiProcessing => settings.labs.api_processing = on,
             Self::ApiTimestamps => settings.labs.api_timestamps = on,
+            Self::GoogleTranscribe => settings.labs.google_transcribe = on,
             Self::SpeakersOnly => settings.labs.speakers_only = on,
             Self::PauseMenu => settings.labs.pause_menu = on,
             Self::MoreDictationShortcuts => settings.labs.more_dictation_shortcuts = on,
@@ -858,6 +866,9 @@ const PAUSE_MENU: u64 = APP_MODEL_SWITCHING << 1;
 /// The next bit above Pause from menu bar: the local API's
 /// `timestamps=segment|word` returns native timings.
 const API_TIMESTAMPS: u64 = PAUSE_MENU << 1;
+/// The next bit above the API's timestamps: Google Transcribe's runtime (the
+/// model reads it, the catalog lists it only while its key answers).
+const GOOGLE_TRANSCRIBE: u64 = API_TIMESTAMPS << 1;
 
 /// This process's `labs` switches: unknown until settings load or one is
 /// first read.
@@ -1080,6 +1091,11 @@ fn encode_where(settings: &LabsSettings, reaches: impl Fn(Feature) -> bool) -> u
             Feature::ApiTimestamps,
             settings.api_timestamps,
             API_TIMESTAMPS,
+        ),
+        (
+            Feature::GoogleTranscribe,
+            settings.google_transcribe,
+            GOOGLE_TRANSCRIBE,
         ),
         (Feature::SpeakersOnly, settings.speakers_only, SPEAKERS_ONLY),
         (Feature::PauseMenu, settings.pause_menu, PAUSE_MENU),
