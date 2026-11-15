@@ -1,0 +1,33 @@
+diff --git a/src/updater.rs b/src/updater.rs
+index 55b8410a..d219c30e 100644
+--- a/src/updater.rs
++++ b/src/updater.rs
+@@ -253,7 +253,9 @@ pub struct Updater {
+ impl Updater {
+     pub fn start() -> Self {
+         let method = platform::method();
+-        let disabled = if option_env!("VOINC_TEST_BUILD") == Some("1") || updates_off_by_env() {
++        let disabled = if !update_origin_configured() {
++            Some(DesktopUpdateStatus::Unavailable)
++        } else if option_env!("VOINC_TEST_BUILD") == Some("1") || updates_off_by_env() {
+             Some(DesktopUpdateStatus::Unavailable)
+         } else if crate::app_paths::is_local_build() {
+             Some(DesktopUpdateStatus::SourceBuild)
+@@ -479,6 +481,17 @@ impl Updater {
+     }
+ }
+ 
++/// Voinc is a fork without a release service of its own: the inherited
++/// updater's default manifest origin serves upstream Hex, not Voinc, so its
++/// update checks stay off until `VOINC_RELEASE_BASE_URL` (HTTPS only) names
++/// an origin that serves a Voinc manifest. Without it the app reports
++/// updates unavailable and people update through GitHub releases.
++fn update_origin_configured() -> bool {
++    std::env::var("VOINC_RELEASE_BASE_URL")
++        .ok()
++        .is_some_and(|origin| origin.starts_with("https://"))
++}
++
+ /// `VOINC_DISABLE_UPDATES=1` turns this launch's updater off, as a test build
+ /// has it: no checks, no network, nothing offered. For copies of Voinc that
+ /// must stay quiet, such as benchmarks (docs/perf.md).
