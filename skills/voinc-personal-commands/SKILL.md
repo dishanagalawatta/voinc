@@ -24,7 +24,7 @@ engine. There is no package to install and no build step.
    npm packages, Effect, or Node APIs, and they have no filesystem, network,
    or timer access. Enums, namespaces, and constructor parameter properties are
    rejected.
-4. Use `defineHexConfig` from `@voinc/commands` and declare pure `transformations`
+4. Use `defineVoincConfig` from `@voinc/commands` and declare pure `transformations`
    entries (`{ id, name, description?, transform(text, context) }`).
 5. Transformations must be selected in the mode's Transformations section.
    They run after mode corrections and optional AI rewriting, not for meetings.
