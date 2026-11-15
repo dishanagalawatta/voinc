@@ -265,6 +265,9 @@ fn model_row(ui: &Ui, p: Paint, entry: &Entry, language: &str) -> El {
             p.warning(),
         ));
     }
+    if let Some(note) = super::key_note(def, crate::labs::google_transcribe_in(&ui.settings)) {
+        copy = copy.child(line("key-note", note, p.warning()));
+    }
     if matches!(
         def.id,
         TranscriptionModelId::ParakeetV3
@@ -388,7 +391,7 @@ mod tests {
     use super::*;
 
     fn entries(language: &str) -> Vec<Entry> {
-        transcription_models::picker_models(language)
+        transcription_models::picker_models(language, false)
             .into_iter()
             .map(|(def, recommendation)| Entry {
                 def,

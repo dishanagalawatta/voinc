@@ -335,6 +335,20 @@ pub fn google_transcribe() -> bool {
     on(GOOGLE_TRANSCRIBE) && Feature::GoogleTranscribe.on_this_os()
 }
 
+/// Google Transcribe's lab as `settings` hold it: the switch the picker's
+/// rows and cards read, through the OS, the build, and the policy — the
+/// same gate [`google_transcribe`] reads from the applied state, without
+/// touching it, so fixture scenes can name the lab without moving what
+/// other scenes render.
+pub fn google_transcribe_in(settings: &AppSettings) -> bool {
+    Feature::GoogleTranscribe.on(settings)
+        && Feature::GoogleTranscribe.on_this_os()
+        && Feature::GoogleTranscribe.shipped()
+        && crate::policy::Policy::current()
+            .labs_lock(Feature::GoogleTranscribe)
+            .is_none()
+}
+
 /// Finished meetings may drop their WAV tracks on `meetings.audio_retention`
 /// (read by the meeting controller's expiry pass and the window's Settings
 /// row).

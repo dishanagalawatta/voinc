@@ -204,6 +204,30 @@ pub(super) const SCENES: &[Scene] = &[
         *ui = portal_fixture();
         picker::all_fixture(ui);
     }),
+    // Labs › Google Transcribe before its key: the full list's cloud row
+    // names the key instead of hiding the model (Maltese saved, so the
+    // list is short and the row is on screen). The render reads the lab
+    // from the scene's own settings, so no applied state moves for the
+    // scenes the golden and accessibility tests run beside.
+    ("picker-google", |ui| {
+        *ui = portal_fixture();
+        ui.settings.labs.google_transcribe = true;
+        ui.settings.transcription = crate::transcription::models::TranscriptionSelection {
+            model: TranscriptionModelId::ParakeetV3,
+            language: "mt".into(),
+        };
+        picker::all_fixture(ui);
+    }),
+    // Google Transcribe selected before its key: the Speech model row names
+    // the key instead of offering a download.
+    ("google-settings", |ui| {
+        *ui = portal_fixture();
+        ui.settings.labs.google_transcribe = true;
+        ui.settings.transcription = crate::transcription::models::TranscriptionSelection {
+            model: TranscriptionModelId::GeminiTranscribe,
+            language: "en".into(),
+        };
+    }),
     // Found on this computer: Parakeet v3's exact file and an untested Whisper.
     ("picker-found", |ui| {
         *ui = portal_fixture();

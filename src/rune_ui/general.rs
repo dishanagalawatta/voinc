@@ -139,55 +139,65 @@ pub(super) fn basics(ui: &Ui, p: Paint, layer: &mut Vec<El>, query: &str) -> Opt
         &rune_theme_opencode::icons::CHEVRON_RIGHT,
         super::picker::open,
     );
-    let (description, control) = match missing_model(ui) {
-        // Voinc can't listen without the selected model: say so, with the
-        // download's progress, or Download and Add model file… when none
-        // runs, as after Continue without a model (#894).
-        Some(progress) => {
-            let description = match (
-                progress.downloading,
-                super::model_import::download_failure(ui),
-            ) {
-                (Some(_), _) => (
-                    tr("Voinc can't listen until the speech model has downloaded").to_string(),
-                    p.muted(),
-                ),
-                (None, Some(error)) => {
-                    (tr_fill("No speech model installed: {}", &error), p.danger())
-                }
-                (None, None) => (
-                    tr("No speech model installed. Download one or add a model file.").to_string(),
-                    p.danger(),
-                ),
-            };
-            let controls = row().key("transcription-controls").gap(8.0).center_y();
-            let controls = match progress.downloading {
-                Some(fraction) => controls.child(
-                    rune_kit::Progress::new(Some(fraction))
-                        .show_value()
-                        .build(p.k)
-                        .key("transcription-progress")
-                        .w(120.0),
-                ),
-                None => controls
-                    .child(button(
-                        p,
-                        "transcription-download",
-                        tr("Download"),
-                        ButtonKind::Secondary,
-                        |ui: &mut Ui, _| {
-                            let selection = ui.settings.transcription.clone();
-                            ui.send(Request::ChooseModel {
-                                model: selection.model,
-                                language: selection.language,
-                            });
-                        },
-                    ))
-                    .child(super::model_import::use_file_button(ui, p)),
-            };
-            (Some(description), controls.child(picker_button))
+    let (description, control) = if let Some(note) = super::picker::key_note(
+        crate::transcription::models::definition(ui.settings.transcription.model),
+        crate::labs::google_transcribe_in(&ui.settings),
+    ) {
+        // Google Transcribe's install is its key: while it hasn't arrived,
+        // the row names it instead of offering a download that can't run.
+        (Some((note, p.danger())), picker_button)
+    } else {
+        match missing_model(ui) {
+            // Voinc can't listen without the selected model: say so, with the
+            // download's progress, or Download and Add model file… when none
+            // runs, as after Continue without a model (#894).
+            Some(progress) => {
+                let description = match (
+                    progress.downloading,
+                    super::model_import::download_failure(ui),
+                ) {
+                    (Some(_), _) => (
+                        tr("Voinc can't listen until the speech model has downloaded").to_string(),
+                        p.muted(),
+                    ),
+                    (None, Some(error)) => {
+                        (tr_fill("No speech model installed: {}", &error), p.danger())
+                    }
+                    (None, None) => (
+                        tr("No speech model installed. Download one or add a model file.")
+                            .to_string(),
+                        p.danger(),
+                    ),
+                };
+                let controls = row().key("transcription-controls").gap(8.0).center_y();
+                let controls = match progress.downloading {
+                    Some(fraction) => controls.child(
+                        rune_kit::Progress::new(Some(fraction))
+                            .show_value()
+                            .build(p.k)
+                            .key("transcription-progress")
+                            .w(120.0),
+                    ),
+                    None => controls
+                        .child(button(
+                            p,
+                            "transcription-download",
+                            tr("Download"),
+                            ButtonKind::Secondary,
+                            |ui: &mut Ui, _| {
+                                let selection = ui.settings.transcription.clone();
+                                ui.send(Request::ChooseModel {
+                                    model: selection.model,
+                                    language: selection.language,
+                                });
+                            },
+                        ))
+                        .child(super::model_import::use_file_button(ui, p)),
+                };
+                (Some(description), controls.child(picker_button))
+            }
+            None => (s::transcription_status(ui, p), picker_button),
         }
-        None => (s::transcription_status(ui, p), picker_button),
     };
     let description_text = description.as_ref().map(|(text, _)| text.clone());
     rows.push_described(

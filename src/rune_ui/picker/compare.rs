@@ -206,7 +206,7 @@ pub(super) fn body(ui: &Ui, p: Paint, entries: &[Entry], language: &str) -> El {
             Some((label, _)) => label,
             None => "",
         };
-        let head = col()
+        let mut head = col()
             .key("head")
             .h(HEAD)
             .px(16.0)
@@ -231,6 +231,17 @@ pub(super) fn body(ui: &Ui, p: Paint, entries: &[Entry], language: &str) -> El {
                     .color(p.muted())
                     .wrap(),
             );
+        if let Some(note) =
+            super::key_note(entry.def, crate::labs::google_transcribe_in(&ui.settings))
+        {
+            head = head.child(
+                text(note)
+                    .key("key-note")
+                    .font(p.k.ty.caption())
+                    .color(p.warning())
+                    .wrap(),
+            );
+        }
         // A group named by its model, so its action reads with it.
         let mut column = col()
             .key(format!("model{index}"))
@@ -330,7 +341,7 @@ mod tests {
     }
 
     fn entries(language: &str) -> Vec<Entry> {
-        crate::transcription::models::picker_models(language)
+        crate::transcription::models::picker_models(language, false)
             .into_iter()
             .map(|(def, recommendation)| Entry {
                 def,

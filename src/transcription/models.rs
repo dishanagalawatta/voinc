@@ -276,6 +276,17 @@ impl ModelDefinition {
         }
     }
 
+    /// Whether the picker lists the model while it can't run yet, so its row
+    /// can say what it needs: Google Transcribe's install is its key, and
+    /// hiding the model would leave its Labs card and any saved choice with
+    /// nowhere to point. Every other reader keeps [`Self::available`]. The
+    /// lab state comes from the caller — the window's render reads
+    /// `labs::google_transcribe_in(&settings)`, so a fixture scene can name
+    /// it without moving what other scenes render.
+    pub(crate) fn listed_without_key_with(&self, google_transcribe_lab: bool) -> bool {
+        self.runtime == ModelRuntime::Gemini && google_transcribe_lab
+    }
+
     pub fn supports_language(&self, language: &str) -> bool {
         if language == AUTO_LANGUAGE {
             self.supports_language_detection
@@ -788,11 +799,12 @@ pub(crate) fn choices_for_runtime(language: &str) -> Vec<ModelChoice> {
 /// support it, then those that would change the language.
 pub(crate) fn picker_models(
     language: &str,
+    google_transcribe_lab: bool,
 ) -> Vec<(&'static ModelDefinition, Option<Recommendation>)> {
     let recommended = choices_for_runtime(language);
     let others = MODELS
         .iter()
-        .filter(|model| model.available())
+        .filter(|model| model.available() || model.listed_without_key_with(google_transcribe_lab))
         .filter(|model| recommended.iter().all(|choice| choice.model.id != model.id));
     let (supporting, switching): (Vec<_>, Vec<_>) =
         others.partition(|model| model.supports_language(language));
@@ -1588,8 +1600,10 @@ mod tests {
                 super::super::custom_models::fallback()
             );
         }
-        let mut settings = crate::app_settings::AppSettings::default();
-        settings.transcription = saved.clone();
+        let settings = crate::app_settings::AppSettings {
+            transcription: saved.clone(),
+            ..Default::default()
+        };
         assert!(
             crate::labs::Feature::GoogleTranscribe
                 .off_refusal(&settings)
@@ -1601,6 +1615,34 @@ mod tests {
                 .off_refusal(&settings)
                 .is_none()
         );
+    }
+
+    /// The picker lists Google Transcribe while its lab is on even before
+    /// its key arrives, so the row can say what it needs instead of leaving
+    /// a saved choice and the Labs card with nowhere to point. The lab off
+    /// hides it, as does a lab the OS lacks.
+    ///
+    /// This reads no process state: the rendered proof is the golden scenes
+    /// `picker-google` and `google-settings`, whose picker and General row
+    /// pass `labs::google_transcribe_in(&settings)` — the wiring itself.
+    #[test]
+    fn gemini_transcribe_is_listed_while_its_lab_is_on_even_without_its_key() {
+        let gemini = definition(TranscriptionModelId::GeminiTranscribe);
+        for model in MODELS {
+            let expected = model.id == gemini.id;
+            assert!(
+                !model.listed_without_key_with(false),
+                "{} lists with its lab off",
+                model.name
+            );
+            assert_eq!(
+                model.listed_without_key_with(true),
+                expected,
+                "{} listed with the lab on",
+                model.name
+            );
+        }
+        assert!(!gemini.available(), "the key is missing, so it can't run");
     }
 
     #[test]
@@ -2065,7 +2107,7 @@ mod tests {
     #[test]
     fn the_picker_lists_every_model_with_the_language_s_recommendations_first() {
         let ids = |language| {
-            picker_models(language)
+            picker_models(language, false)
                 .into_iter()
                 .map(|(model, recommendation)| (model.id, recommendation))
                 .collect::<Vec<_>>()

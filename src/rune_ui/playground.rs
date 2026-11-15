@@ -61,6 +61,10 @@ const PATHS: &[(&str, &str)] = &[
         "mac-microphone-bluetooth",
         "Window/General/Bluetooth default passed over",
     ),
+    (
+        "google-settings",
+        "Window/General/Speech model without its key",
+    ),
     ("mac-settings-vocabulary", "Window/General/Vocabulary"),
     (
         "mac-settings-vocabulary-empty",
@@ -122,6 +126,10 @@ const PATHS: &[(&str, &str)] = &[
     (
         "picker-found",
         "Window/Transcription model/Found on this computer",
+    ),
+    (
+        "picker-google",
+        "Window/Transcription model/Google Transcribe before its key",
     ),
     (
         "picker-japanese",

@@ -4,7 +4,8 @@ Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
 Google's Gemini speech models in the cloud, using the person's own Gemini API
 key. It is a runtime beside the local GGUF models and Apple Speech, not a
 download: the picker offers **Google Transcribe (Gemini)** while the toggle is
-on and a key answers, and a saved choice of it stays saved while it can't run.
+on — even before a key arrives, the row names the key instead of hiding the
+model — and a saved choice of it stays saved while it can't run.
 While Voinc listens, it keeps running its usual fallback
 (`custom_models::runnable`); starting from launch, a Linux pending listen
 holds at Model required and a save that makes the model installed — the key,
@@ -22,7 +23,13 @@ Labs > Google Transcribe (off)                       // labs.google_transcribe
 │   transcribes the whole clip by batch after it ends; nothing shows while
 │   it records
 ├── Picker -> "Google Transcribe (Gemini)" · Cloud · every language · streams;
-│   size reads "Runs in Google's cloud"; no download ever starts
+│   size reads "Runs in Google's cloud"; no download ever starts. While the
+│   toggle is on but no key answers, the row is still listed — it names the
+│   key in amber ("Add your Gemini API key in Labs › Google Transcribe")
+│   and takes no action button
+├── General › Speech model (Google Transcribe selected, no key) -> the row's
+│   description is that same key note, in place of the download offer; the
+│   picker value button stays
 ├── Dictate (hold) -> the capture rides one Gemini Live WebSocket session:
 │   setup (model, language hint, custom vocabulary, SMART mode), then 16 kHz
 │   mono PCM fed as base64; interim text replaces the words so far and each
@@ -119,7 +126,12 @@ and `timeout_bounds_hold` in
 fixture JSON and in-memory sockets; no request ever left the machine.
 `gemini_transcribe_is_offered_only_with_its_lab_and_key` in
 [models.rs](../../src/transcription/models.rs) holds the picker's rule, and
-the engine's stream tests
+`gemini_transcribe_is_listed_while_its_lab_is_on_even_without_its_key` there
+holds the keyless listing: the row is listed while its lab is on and no key
+answers, read through `labs::google_transcribe_in(&settings)` so the render
+consults the window's own settings rather than the applied state (the
+goldens `rune-picker-google-light` and `rune-google-settings-light`, scenes
+`picker-google` and `google-settings`, pin both renders). The engine's stream tests
 (`a_stream_that_dropped_a_phrase_after_a_pause_falls_back_to_the_whole_clip`
 and the rest of
 [engine.rs](../../src/transcription/engine.rs)) drive the same

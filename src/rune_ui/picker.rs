@@ -44,6 +44,19 @@ pub(super) fn transcription_selection_is_active(
     installed && selection.model == model.id
 }
 
+/// The key note a listed Google Transcribe row shows while its key hasn't
+/// arrived: the row is listed to say what it needs, not to be chosen
+/// ([`transcription_models::ModelDefinition::listed_without_key_with`]
+/// lists it; `available` still gates running). The lab state comes from
+/// the caller's settings, so a fixture scene can name it without moving
+/// what other scenes render.
+pub(super) fn key_note(def: &ModelDefinition, google_transcribe_lab: bool) -> Option<String> {
+    (def.runtime == ModelRuntime::Gemini
+        && google_transcribe_lab
+        && crate::transcription::gemini::api_key().is_none())
+    .then(|| tr("Add your Gemini API key in Labs › Google Transcribe").to_string())
+}
+
 /// The language a model choice replaced because the model does not support
 /// it; Settings names the change until the next choice.
 #[derive(Clone, Debug, PartialEq)]
@@ -317,8 +330,13 @@ pub(super) type PickerModel = (
 
 /// The picker's models for `language` in `sort`'s order, only those that
 /// support it when `supported_only`. Recommended keeps the catalog's order.
-fn arranged(language: &str, sort: Sort, supported_only: bool) -> Vec<PickerModel> {
-    let mut models = transcription_models::picker_models(language);
+fn arranged(
+    language: &str,
+    sort: Sort,
+    supported_only: bool,
+    google_transcribe_lab: bool,
+) -> Vec<PickerModel> {
+    let mut models = transcription_models::picker_models(language, google_transcribe_lab);
     if supported_only {
         models.retain(|(model, _)| model.supports_language(language));
     }
@@ -336,10 +354,14 @@ fn arranged(language: &str, sort: Sort, supported_only: bool) -> Vec<PickerModel
 /// The cards the picker shows: the catalog's order, or with the Lab on its
 /// sort and language toggle.
 fn shown_models(ui: &Ui, language: &str) -> Vec<PickerModel> {
+    // The lab as this window's settings hold it: the render reads no
+    // applied state, so a fixture scene can list Google Transcribe without
+    // moving what other scenes render.
+    let lab = crate::labs::google_transcribe_in(&ui.settings);
     let mut models = if sort_filter_on(ui) {
-        arranged(language, ui.picker.sort, ui.picker.supported_only)
+        arranged(language, ui.picker.sort, ui.picker.supported_only, lab)
     } else {
-        transcription_models::picker_models(language)
+        transcription_models::picker_models(language, lab)
     };
     // Labs › Downloaded models only.
     if downloaded_filter(ui) {
@@ -512,7 +534,10 @@ pub(super) fn modal(ui: &Ui, p: Paint) -> Option<[El; 2]> {
             let entries = facts::entries(
                 ui,
                 &language,
-                &transcription_models::picker_models(&language),
+                &transcription_models::picker_models(
+                    &language,
+                    crate::labs::google_transcribe_in(&ui.settings),
+                ),
             );
             header = header.pl(24.0).child(heading(&title));
             compare::body(ui, p, &entries, &language)
@@ -691,7 +716,10 @@ fn sort_filter_row(ui: &Ui, p: Paint, language: &str) -> El {
 /// downloaded models take on disk and the toggle. It saves nothing.
 fn downloaded_row(ui: &Ui, p: Paint, language: &str) -> El {
     let total = downloaded_total(
-        &transcription_models::picker_models(language),
+        &transcription_models::picker_models(
+            language,
+            crate::labs::google_transcribe_in(&ui.settings),
+        ),
         |model| is_downloaded(ui, model, language),
         owned_by_hex,
     );
@@ -864,10 +892,10 @@ mod tests {
     fn recommended_keeps_the_catalogs_order_and_the_others_reorder_it() {
         for language in ["en", "ja", AUTO_LANGUAGE] {
             assert_eq!(
-                ids(&arranged(language, Sort::Recommended, false)),
-                ids(&transcription_models::picker_models(language))
+                ids(&arranged(language, Sort::Recommended, false, false)),
+                ids(&transcription_models::picker_models(language, false))
             );
-            let by_size = arranged(language, Sort::Size, false);
+            let by_size = arranged(language, Sort::Size, false, false);
             let sizes: Vec<_> = by_size
                 .iter()
                 .map(|(model, _)| model.download_bytes())
@@ -878,7 +906,7 @@ mod tests {
                 "unknown sizes last"
             );
             assert!(sizes[..known].windows(2).all(|pair| pair[0] <= pair[1]));
-            let by_name = arranged(language, Sort::Name, false);
+            let by_name = arranged(language, Sort::Name, false, false);
             assert!(
                 by_name
                     .windows(2)
@@ -891,8 +919,8 @@ mod tests {
     #[test]
     fn the_language_toggle_keeps_only_models_for_the_saved_language() {
         for language in ["en", "ja", "mt", AUTO_LANGUAGE] {
-            let all = transcription_models::picker_models(language);
-            let supported = arranged(language, Sort::Recommended, true);
+            let all = transcription_models::picker_models(language, false);
+            let supported = arranged(language, Sort::Recommended, true, false);
             assert!(!supported.is_empty());
             assert_eq!(
                 supported.len(),
@@ -905,7 +933,7 @@ mod tests {
 
     #[test]
     fn a_hidden_preparing_or_active_model_is_named() {
-        let shown = arranged("ja", Sort::Recommended, true);
+        let shown = arranged("ja", Sort::Recommended, true, false);
         let hidden = TranscriptionModelId::ParakeetUnifiedEnglish;
         let visible = shown[0].0.id;
         assert!(!ids(&shown).contains(&hidden));
@@ -1067,7 +1095,7 @@ mod tests {
 
     #[test]
     fn the_downloaded_total_adds_up_hexs_own_files() {
-        let models = transcription_models::picker_models("en");
+        let models = transcription_models::picker_models("en", false);
         let installed = [
             TranscriptionModelId::ParakeetUnifiedEnglish,
             TranscriptionModelId::WhisperLargeV3Turbo,
@@ -1102,7 +1130,10 @@ mod tests {
         ui.picker.downloaded_only = true;
         assert!(!downloaded_filter(&ui));
         assert_eq!(ids(&shown_models(&ui, "en")), ids(&all));
-        assert_eq!(ids(&all), ids(&transcription_models::picker_models("en")));
+        assert_eq!(
+            ids(&all),
+            ids(&transcription_models::picker_models("en", false))
+        );
     }
 
     #[test]

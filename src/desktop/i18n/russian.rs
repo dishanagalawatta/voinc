@@ -1251,6 +1251,7 @@ const TRANSLATIONS: &[(&str, &str)] = &[
     ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Транскрибируйте в облаке моделями Gemini от Google, используя свой ключ API Gemini. Ваше аудио отправляется в Google."),
     ("API key", "Ключ API"),
     ("Paste your Gemini API key", "Вставьте свой ключ API Gemini"),
+    ("Add your Gemini API key in Labs › Google Transcribe", "Добавьте свой ключ API Gemini в Лаборатории › Google Transcribe"),
     ("Skip live streaming", "Пропустить потоковую транскрипцию"),
     ("Appearance", "Внешний вид"),
     ("Use light or dark for the main window instead of the system's", "Используйте светлое или тёмное оформление главного окна вместо системного"),

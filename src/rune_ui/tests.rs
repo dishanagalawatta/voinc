@@ -2934,6 +2934,9 @@ fn goldens() {
     check_golden("output-trust", false, PANE_SIZE);
     check_golden("picker-custom-models", false, PANE_SIZE);
     check_golden("picker-found", false, PANE_SIZE);
+    // Google Transcribe listed, and selected, before its key arrives.
+    check_golden("picker-google", false, PANE_SIZE);
+    check_golden("google-settings", false, PANE_SIZE);
     check_golden("vocabulary-budget", false, PANE_SIZE);
     check_golden("windows-labs", false, PANE_SIZE);
     check_golden("linux-labs", false, PANE_SIZE);
