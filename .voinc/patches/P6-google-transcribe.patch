@@ -217,10 +217,10 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..fb866c41
+index 00000000..8eb41bc0
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,134 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
@@ -236,7 +236,11 @@ index 00000000..fb866c41
 +Labs > Google Transcribe (off)                       // labs.google_transcribe
 +├── Toggle on -> the card shows an "API key" field (drafted while typed,
 +│   saved with Apply; `google_transcribe.api_key`, or the environment's
-+│   VOINC_GOOGLE_API_KEY, read again at every run)
++│   VOINC_GOOGLE_API_KEY, read again at every run) and, while on, a
++│   "Skip live streaming" switch (`google_transcribe.batch_only`)
++├── Skip live streaming (on) -> no live session at all: each dictation
++│   transcribes the whole clip by batch after it ends; nothing shows while
++│   it records
 +├── Picker -> "Google Transcribe (Gemini)" · Cloud · every language · streams;
 +│   size reads "Runs in Google's cloud"; no download ever starts
 +├── Dictate (hold) -> the capture rides one Gemini Live WebSocket session:
@@ -292,6 +296,18 @@ index 00000000..fb866c41
 +Live API does not give word timestamps; interim text replaces and turn text
 +appends, so the fallback's whole clip supplies anything the session dropped.
 +
++## Batch only
++
++The Labs card's **Skip live streaming** switch (`google_transcribe.batch_only`,
++off by default) leaves the live session out of dictation entirely: the engine
++opens no stream, so every capture finishes as a whole clip transcribed by
++batch, and nothing shows while it records. The choice is read again at every
++capture, like the key, and applies without a model reload. Where the live
++session cannot connect — a SOCKS proxy refuses it, and the batch request
++still goes out — this spares every capture the refused attempt before its
++fallback. Meetings, `voinc transcribe`, and the whole-clip fallback already
++run batch and are unaffected; only the dictation capture's stream is.
++
 +## Vocabulary
 +
 +The saved vocabulary list rides along as the request's `customVocabulary`
@@ -328,6 +344,10 @@ index 00000000..fb866c41
 +and the rest of
 +[engine.rs](../../src/transcription/engine.rs)) drive the same
 +`StreamFeed` seam the Live session rides with a fake transport.
++`batch_only_leaves_no_stream_options` in
++[gemini.rs](../../src/transcription/gemini.rs) holds the Skip live streaming
++gate, and `google_transcribe_batch_only_round_trips` in
++[app_settings.rs](../../src/app_settings.rs) its setting.
 +
 +Not yet observed, and not covered by any check: a real request to Google.
 +The Live session's state machine (its reads between writes, tunnel
@@ -336,7 +356,7 @@ index 00000000..fb866c41
 +`voinc transcribe` over a real long file (segment splitting) is untested
 +against Google's truncation behavior.
 diff --git a/docs/features/labs.md b/docs/features/labs.md
-index ab4db808..31224714 100644
+index ab4db808..4cdb12c6 100644
 --- a/docs/features/labs.md
 +++ b/docs/features/labs.md
 @@ -70,6 +70,7 @@ Feature             Pane  Toggle (settings.json, voinc settings)   On: what it d
@@ -347,7 +367,7 @@ index ab4db808..31224714 100644
  ├── Special keys alone no labs.standalone_special_keys (Linux, Windows) Linux: Menu, Pause, Scroll Lock may be a shortcut's key, alone or with modifiers (#767); Windows: Insert, Home, End, Page Up, Page Down may stand alone (#794)
  ├── Section key alone no  labs.section_key_alone       (Linux) the § key, left of 1 on ISO keyboards, may be a shortcut with no modifier (#1050)
  ├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; voinc history stats prints it (#790)
-@@ -2764,6 +2765,27 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
+@@ -2764,6 +2765,31 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
  Bluetooth headphones and the lab on, and the Linux and Windows backends on a
  real desktop.
  
@@ -367,7 +387,11 @@ index ab4db808..31224714 100644
 +  longer than 30 minutes is split client-side because Google truncates past
 +  it silently while still reporting completed. The saved vocabulary rides as
 +  `customVocabulary` only while Labs › Vocabulary biasing is on
-+  (`vocabulary::transcription_terms`). Checks: the fixture-JSON tests named
++  (`vocabulary::transcription_terms`). Skip live streaming
++  (`google_transcribe.batch_only`, off by default, on the card while the
++  feature is on) leaves the live session out of dictation: each capture
++  transcribes the whole clip by batch after it ends. Checks: the
++  fixture-JSON tests named
 +  in [google-transcribe.md](google-transcribe.md); no request to Google has
 +  ever been made, the Live session's own state machine has no tests, and the
 +  Labs page goldens show the new card.
@@ -376,10 +400,10 @@ index ab4db808..31224714 100644
  `contributed_options_are_labs_toggles_off_by_default`,
  `the_browser_labs_toggle_turns_on_and_asks_for_system_audio`,
 diff --git a/src/app_settings.rs b/src/app_settings.rs
-index ada7a094..c5fb223e 100644
+index ada7a094..ae7da803 100644
 --- a/src/app_settings.rs
 +++ b/src/app_settings.rs
-@@ -134,6 +134,17 @@ pub fn env_hex_experimental_mic() -> bool {
+@@ -134,6 +134,22 @@ pub fn env_hex_experimental_mic() -> bool {
          .is_some_and(|v| matches!(v.trim(), "1" | "true" | "TRUE" | "yes"))
  }
  
@@ -392,12 +416,17 @@ index ada7a094..c5fb223e 100644
 +    /// The key saved in Settings › Labs; `None` asks `VOINC_GOOGLE_API_KEY`
 +    /// first and otherwise leaves Google Transcribe unavailable.
 +    pub api_key: Option<String>,
++    /// Whether dictation skips Google's live session: each capture
++    /// transcribes the whole clip over the batch API after it ends. Off by
++    /// default; a live session is how dictation runs unless this says
++    /// otherwise.
++    pub batch_only: bool,
 +}
 +
  /// Where Linux and Windows run the speech model (#856): Auto picks a GPU
  /// unless it failed before under its current driver, then the CPU.
  #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-@@ -322,6 +333,8 @@ pub struct AppSettings {
+@@ -322,6 +338,8 @@ pub struct AppSettings {
      pub capture_from_other_build: Option<serde_json::Value>,
      #[serde(default)]
      pub experimental: ExperimentalSettings,
@@ -406,7 +435,7 @@ index ada7a094..c5fb223e 100644
      /// The Labs features' own switches (`crate::labs`).
      pub labs: LabsSettings,
      /// Labs › Screenshots' shortcut and folder (macOS).
-@@ -452,6 +465,7 @@ impl Default for AppSettings {
+@@ -452,6 +470,7 @@ impl Default for AppSettings {
              #[cfg(not(hex_capture))]
              capture_from_other_build: None,
              experimental: ExperimentalSettings::default(),
@@ -414,7 +443,7 @@ index ada7a094..c5fb223e 100644
              labs: LabsSettings::default(),
              screenshots: ScreenshotSettings::default(),
              enable_on_launch: true,
-@@ -502,6 +516,9 @@ impl KeyboardModelChoice {
+@@ -502,6 +521,9 @@ impl KeyboardModelChoice {
          let model = crate::transcription::models::validate(&selection)?;
          match model.runtime {
              crate::transcription::models::ModelRuntime::Gguf(_) => Ok(()),
@@ -424,15 +453,36 @@ index ada7a094..c5fb223e 100644
              crate::transcription::models::ModelRuntime::AppleSpeech => {
                  Err(eyre!("{} can't be switched to by input source", model.name))
              }
-@@ -779,6 +796,8 @@ impl AppSettings {
+@@ -779,6 +801,9 @@ impl AppSettings {
              Ordering::Release,
          );
          crate::labs::apply(&self.labs);
 +        // set_api_key trims and drops an empty key itself.
 +        crate::transcription::gemini::set_api_key(self.google_transcribe.api_key.clone());
++        crate::transcription::gemini::set_batch_only(self.google_transcribe.batch_only);
          screenshots::apply_screenshots(self);
          #[cfg(hex_capture)]
          {
+@@ -1543,6 +1568,19 @@ mod tests {
+         assert!(AppSettings::default().has_migration(MEETING_SUMMARIES_MIGRATION));
+     }
+ 
++    /// Labs › Skip live streaming: off by default, and a saved choice
++    /// survives the round trip older builds' files take.
++    #[test]
++    fn google_transcribe_batch_only_round_trips() {
++        let settings: AppSettings = serde_json::from_str("{}").unwrap();
++        assert!(!settings.google_transcribe.batch_only, "off by default");
++        let settings: AppSettings =
++            serde_json::from_str(r#"{"google_transcribe":{"batch_only":true}}"#).unwrap();
++        assert!(settings.google_transcribe.batch_only);
++        let written = serde_json::to_value(&settings).unwrap();
++        assert_eq!(written["google_transcribe"]["batch_only"], true);
++    }
++
+     #[test]
+     fn keyboard_model_switching_is_opt_in_and_source_mappings_round_trip() {
+         let mut settings: AppSettings = serde_json::from_str("{}").unwrap();
 diff --git a/src/app_settings/labs.rs b/src/app_settings/labs.rs
 index b88e4224..3a5a2417 100644
 --- a/src/app_settings/labs.rs
@@ -456,10 +506,10 @@ index b88e4224..3a5a2417 100644
              app_model_switching: false,
              pause_menu: false,
 diff --git a/src/control/settings/registry.rs b/src/control/settings/registry.rs
-index e9f833a8..b0f37a5a 100644
+index e9f833a8..5c06bced 100644
 --- a/src/control/settings/registry.rs
 +++ b/src/control/settings/registry.rs
-@@ -615,6 +615,18 @@ pub(super) const KEYS: &[Key] = &[
+@@ -615,6 +615,24 @@ pub(super) const KEYS: &[Key] = &[
          "Labs: apps using Voinc's local API can ask for each segment's or word's start and end times \
           in a transcript, as the speech model heard them (timestamps=segment|word)",
      ),
@@ -474,6 +524,12 @@ index e9f833a8..b0f37a5a 100644
 +        Kind::Text,
 +        "The Gemini API key Google Transcribe uses; none asks VOINC_GOOGLE_API_KEY first and \
 +         otherwise leaves Google Transcribe unavailable",
++    ),
++    key(
++        "google_transcribe.batch_only",
++        Kind::Bool,
++        "Google Transcribe skips its live session: each dictation transcribes the whole clip with \
++         the batch API after you finish (may suit networks that cannot hold a live session)",
 +    ),
      key(
          "labs.speakers_only",
@@ -492,7 +548,7 @@ index 77315831..da4010e3 100644
      ("Download {}", ["Pobierz {}", "下载 {}", "{} をダウンロード", "{} herunterladen", "Descargar {}", "Завантажити {}"]),
      ("of {}", ["z {}", "共 {}", "/ {}", "von {}", "de {}", "з {}"]),
 diff --git a/src/desktop/i18n/french.rs b/src/desktop/i18n/french.rs
-index c414be39..fe51362e 100644
+index c414be39..f234455d 100644
 --- a/src/desktop/i18n/french.rs
 +++ b/src/desktop/i18n/french.rs
 @@ -952,6 +952,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
@@ -504,7 +560,7 @@ index c414be39..fe51362e 100644
      ("Downloaded", "Téléchargé"),
      ("Download {}", "Télécharger {}"),
      ("of {}", "sur {}"),
-@@ -1245,6 +1247,10 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+@@ -1245,6 +1247,11 @@ const TRANSLATIONS: &[(&str, &str)] = &[
      ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", "Les apps peuvent demander à l'API locale de Voinc des transcriptions avec le traitement du mode Global appliqué"),
      ("Timestamps in API transcripts", "Horodatages dans les transcriptions de l'API"),
      ("Apps can ask Voinc's local API for each segment's or word's start and end times.", "Les apps peuvent demander à l'API locale de Voinc l'heure de début et de fin de chaque segment ou mot"),
@@ -512,14 +568,15 @@ index c414be39..fe51362e 100644
 +    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Transcrit avec les modèles Gemini de Google dans le cloud, en utilisant votre clé d'API Gemini. Votre audio est envoyé à Google."),
 +    ("API key", "Clé d'API"),
 +    ("Paste your Gemini API key", "Collez votre clé d'API Gemini"),
++    ("Skip live streaming", "Ignorer le streaming en direct"),
      ("Appearance", "Apparence"),
      ("Use light or dark for the main window instead of the system's", "Utilise le clair ou le sombre pour la fenêtre principale au lieu du système"),
      ("Theme", "Thème"),
 diff --git a/src/desktop/i18n/labs.rs b/src/desktop/i18n/labs.rs
-index 756b4a74..4799a415 100644
+index 756b4a74..6000909a 100644
 --- a/src/desktop/i18n/labs.rs
 +++ b/src/desktop/i18n/labs.rs
-@@ -59,6 +59,10 @@ pub(super) const TRANSLATIONS: &[(&str, [&str; 6])] = &[
+@@ -59,6 +59,11 @@ pub(super) const TRANSLATIONS: &[(&str, [&str; 6])] = &[
      ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", ["Aplikacje mogą prosić lokalne API Voinc o transkrypcje z przetwarzaniem trybu Globalnego", "应用可以向 Voinc 本地 API 请求应用了全局模式处理的转写", "アプリは Voinc のローカル API にグローバルモードの処理を適用した文字起こしを要求できます", "Apps können die lokale API von Voinc um Transkripte mit der Verarbeitung des Global-Modus bitten", "Las apps pueden pedir a la API local de Voinc transcripciones con el procesamiento del modo Global aplicado", "Програми можуть запитувати в локального API Voinc транскрипти із застосованою обробкою Глобального режиму"]),
      ("Timestamps in API transcripts", ["Znaczniki czasu w transkrypcjach API", "API 转写的时间戳", "API の文字起こしのタイムスタンプ", "Zeitstempel in API-Transkripten", "Marcas de tiempo en las transcripciones de la API", "Позначки часу в транскриптах API"]),
      ("Apps can ask Voinc's local API for each segment's or word's start and end times.", ["Aplikacje mogą prosić lokalne API Voinc o czasy początku i końca każdego segmentu lub słowa", "应用可以向 Voinc 本地 API 请求每个片段或单词的开始和结束时间", "アプリは Voinc のローカル API に各セグメントや単語の開始と終了の時刻を要求できます", "Apps können die lokale API von Voinc um Start- und Endzeit jedes Abschnitts oder Worts bitten", "Las apps pueden pedir a la API local de Voinc los tiempos de inicio y fin de cada segmento o palabra", "Програми можуть запитувати в локального API Voinc час початку й кінця кожного сегмента чи слова"]),
@@ -527,11 +584,12 @@ index 756b4a74..4799a415 100644
 +    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", ["Transkrybuj w chmurze modelami Gemini od Google, używając swojego klucza API Gemini. Twój dźwięk trafia do Google.", "使用你的 Gemini API 密钥，通过 Google 的 Gemini 模型在云端转录。你的音频会发送给 Google。", "Gemini API キーを使って、Google の Gemini モデルでクラウド上の文字起こしを行います。音声は Google に送信されます。", "Transkribiert mit Googles Gemini-Modellen in der Cloud, mit deinem Gemini-API-Schlüssel. Dein Audio geht an Google.", "Transcribe con los modelos Gemini de Google en la nube, usando tu clave de API de Gemini. Tu audio va a Google.", "Транскрибуйте в хмарі моделями Gemini від Google, використовуючи свій ключ API Gemini. Ваше аудіо надходить до Google."]),
 +    ("API key", ["Klucz API", "API 密钥", "API キー", "API-Schlüssel", "Clave de API", "Ключ API"]),
 +    ("Paste your Gemini API key", ["Wklej swój klucz API Gemini", "粘贴你的 Gemini API 密钥", "Gemini API キーを貼り付け", "Gemini-API-Schlüssel einfügen", "Pega tu clave de API de Gemini", "Вставте свій ключ API Gemini"]),
++    ("Skip live streaming", ["Pomiń strumieniowanie na żywo", "跳过实时流式转录", "ライブストリーミングをスキップ", "Live-Streaming überspringen", "Omitir la transmisión en vivo", "Пропустити потокову транскрипцію"]),
      ("Appearance", ["Wygląd", "外观", "外観", "Darstellung", "Apariencia", "Вигляд"]),
      ("Use light or dark for the main window instead of the system's", ["Używaj jasnego lub ciemnego wyglądu głównego okna zamiast systemowego", "让主窗口使用浅色或深色，而不是跟随系统", "メインウインドウをシステムの代わりにライトまたはダークで表示します", "Hauptfenster hell oder dunkel statt wie das System anzeigen", "Usa claro u oscuro en la ventana principal en lugar del sistema", "Використовуйте світле або темне оформлення головного вікна замість системного"]),
      ("Theme", ["Motyw", "主题", "テーマ", "Design", "Tema", "Тема"]),
 diff --git a/src/desktop/i18n/portuguese.rs b/src/desktop/i18n/portuguese.rs
-index 573bb1fb..8e138fb6 100644
+index 573bb1fb..c432609c 100644
 --- a/src/desktop/i18n/portuguese.rs
 +++ b/src/desktop/i18n/portuguese.rs
 @@ -955,6 +955,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
@@ -543,7 +601,7 @@ index 573bb1fb..8e138fb6 100644
      ("Downloaded", "Baixado"),
      ("Download {}", "Baixar {}"),
      ("of {}", "de {}"),
-@@ -1242,6 +1244,10 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+@@ -1242,6 +1244,11 @@ const TRANSLATIONS: &[(&str, &str)] = &[
      ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", "Apps podem pedir à API local do Voinc transcrições com o processamento do modo Global aplicado"),
      ("Timestamps in API transcripts", "Marcas de tempo nas transcrições da API"),
      ("Apps can ask Voinc's local API for each segment's or word's start and end times.", "Apps podem pedir à API local do Voinc os horários de início e fim de cada segmento ou palavra"),
@@ -551,11 +609,12 @@ index 573bb1fb..8e138fb6 100644
 +    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Transcreve com os modelos Gemini do Google na nuvem, usando sua chave de API do Gemini. Seu áudio vai para o Google."),
 +    ("API key", "Chave de API"),
 +    ("Paste your Gemini API key", "Cole sua chave de API do Gemini"),
++    ("Skip live streaming", "Ignorar a transmissão ao vivo"),
      ("Appearance", "Aparência"),
      ("Use light or dark for the main window instead of the system's", "Usa claro ou escuro na janela principal em vez do sistema"),
      ("Theme", "Tema"),
 diff --git a/src/desktop/i18n/russian.rs b/src/desktop/i18n/russian.rs
-index 81e1ab9b..cfbe6429 100644
+index 81e1ab9b..4b9b6d19 100644
 --- a/src/desktop/i18n/russian.rs
 +++ b/src/desktop/i18n/russian.rs
 @@ -948,6 +948,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
@@ -567,7 +626,7 @@ index 81e1ab9b..cfbe6429 100644
      ("Downloaded", "Загружено"),
      ("Download {}", "Загрузить {}"),
      ("of {}", "из {}"),
-@@ -1245,6 +1247,10 @@ const TRANSLATIONS: &[(&str, &str)] = &[
+@@ -1245,6 +1247,11 @@ const TRANSLATIONS: &[(&str, &str)] = &[
      ("Apps can ask Voinc's local API for transcripts with Global mode's processing applied.", "Приложения могут запрашивать у локального API Voinc транскрипты с обработкой глобального режима"),
      ("Timestamps in API transcripts", "Метки времени в транскриптах API"),
      ("Apps can ask Voinc's local API for each segment's or word's start and end times.", "Приложения могут запрашивать у локального API Voinc время начала и конца каждого сегмента или слова"),
@@ -575,6 +634,7 @@ index 81e1ab9b..cfbe6429 100644
 +    ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Транскрибируйте в облаке моделями Gemini от Google, используя свой ключ API Gemini. Ваше аудио отправляется в Google."),
 +    ("API key", "Ключ API"),
 +    ("Paste your Gemini API key", "Вставьте свой ключ API Gemini"),
++    ("Skip live streaming", "Пропустить потоковую транскрипцию"),
      ("Appearance", "Внешний вид"),
      ("Use light or dark for the main window instead of the system's", "Используйте светлое или тёмное оформление главного окна вместо системного"),
      ("Theme", "Тема"),
@@ -830,14 +890,16 @@ index 8a7847ca..cbda4d5a 100644
          candidate
      }
 diff --git a/src/rune_ui/labs.rs b/src/rune_ui/labs.rs
-index 6307e29c..42eb13b1 100644
+index 6307e29c..c273d104 100644
 --- a/src/rune_ui/labs.rs
 +++ b/src/rune_ui/labs.rs
-@@ -12,6 +12,7 @@ mod screenshots;
+@@ -11,7 +11,8 @@ mod group;
+ mod screenshots;
  mod store;
  
- use rune::{El, Icon, TextEdit, Tx, row, text};
-+use rune_kit::TextInput;
+-use rune::{El, Icon, TextEdit, Tx, row, text};
++use rune::{El, Icon, TextEdit, Tx, col, row, text};
++use rune_kit::{ControlSize, Switch, TextInput};
  
  pub(super) use self::store::{page, search_field, tabs};
  use super::controls::{self, Paint};
@@ -918,19 +980,27 @@ index 6307e29c..42eb13b1 100644
          Feature::OutputFixes => "lab-output-fixes",
          Feature::PickerActiveFirst => "lab-picker-active-first",
          Feature::ModelInPlace => "lab-model-in-place",
-@@ -997,6 +1033,11 @@ fn flip(ui: &mut Ui, lab: Lab) {
+@@ -997,6 +1033,19 @@ fn flip(ui: &mut Ui, lab: Lab) {
  /// A lab's own settings, on its card while it's on: how long the model sits
  /// unused before it unloads, or the screenshot shortcut and folder.
  fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
 +    // The key shows whether Google Transcribe is on or off: it is what makes
-+    // the runtime available at all.
++    // the runtime available at all. Skip live streaming shows while it is
++    // on: it is how dictation runs then.
 +    if matches!(entry.lab, Lab::Feature(Feature::GoogleTranscribe)) {
-+        return Some(google_api_key(ui, p));
++        let mut google = col()
++            .key("google-extras")
++            .gap(8.0)
++            .child(google_api_key(ui, p));
++        if entry.on {
++            google = google.child(google_batch_only(ui, p));
++        }
++        return Some(google);
 +    }
      if !entry.on {
          return None;
      }
-@@ -1053,6 +1094,32 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
+@@ -1053,6 +1102,61 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
      }
  }
  
@@ -960,6 +1030,35 @@ index 6307e29c..42eb13b1 100644
 +        .child(field)
 +}
 +
++/// Whether dictation skips Google's live session: each capture transcribes
++/// the whole clip with the batch API after it ends, so nothing shows while
++/// it records. For networks that cannot hold a live session.
++fn google_batch_only(ui: &Ui, p: Paint) -> El {
++    let switch = Switch::new(ui.settings.google_transcribe.batch_only)
++        .control_size(ControlSize::Small)
++        .label(tr("Skip live streaming"))
++        .hide_label()
++        .on_toggle(|ui: &mut Ui| {
++            ui.update(|settings| {
++                settings.google_transcribe.batch_only = !settings.google_transcribe.batch_only;
++            });
++        })
++        .build(p.k)
++        .key("google-batch-only");
++    row()
++        .key("google-batch-only-row")
++        .gap(8.0)
++        .center_y()
++        .flex_wrap()
++        .child(
++            text(tr("Skip live streaming"))
++                .key("label")
++                .font(controls::DESCRIPTION)
++                .color(p.muted()),
++        )
++        .child(switch)
++}
++
  /// Whether the Caps Lock light stays solid or blinks slowly while recording.
  fn caps_lock_light(ui: &Ui, p: Paint) -> El {
      use crate::app_settings::CapsLockLight;
@@ -985,7 +1084,7 @@ index a0f44d13..5ee7f1c5 100644
      }
  }
 diff --git a/src/transcription.rs b/src/transcription.rs
-index ea733e8e..563cbf22 100644
+index ea733e8e..b807731d 100644
 --- a/src/transcription.rs
 +++ b/src/transcription.rs
 @@ -11,6 +11,7 @@ pub(crate) mod cpu_floor;
@@ -1101,7 +1200,7 @@ index ea733e8e..563cbf22 100644
      pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
          match &self.active {
              Some(Transcriber::Gguf(model)) => model.stream_options(),
-+            Some(Transcriber::Gemini(_)) => Some(&gemini::STREAM_OPTIONS),
++            Some(Transcriber::Gemini(_)) => gemini::stream_options(),
              _ => None,
          }
      }
@@ -1271,10 +1370,10 @@ index d79a58bd..c660b9fd 100644
              .unwrap();
 diff --git a/src/transcription/gemini.rs b/src/transcription/gemini.rs
 new file mode 100644
-index 00000000..395cd50c
+index 00000000..6ae93483
 --- /dev/null
 +++ b/src/transcription/gemini.rs
-@@ -0,0 +1,386 @@
+@@ -0,0 +1,433 @@
 +//! Google Transcribe: Gemini's speech-to-text over the Gemini API.
 +//!
 +//! Two ways to hear it:
@@ -1370,6 +1469,36 @@ index 00000000..395cd50c
 +        .get_or_init(Default::default)
 +        .write()
 +        .unwrap_or_else(|error| error.into_inner()) = key;
++}
++
++/// Whether dictation skips Google's live session (Labs › Skip live
++/// streaming): every capture transcribes the whole clip over the batch API
++/// instead. Set on every settings load and save, so a change applies to
++/// the next capture without a model reload.
++static BATCH_ONLY: OnceLock<RwLock<bool>> = OnceLock::new();
++
++/// Whether dictation skips Google's live session.
++pub(crate) fn batch_only() -> bool {
++    *BATCH_ONLY
++        .get_or_init(Default::default)
++        .read()
++        .unwrap_or_else(|error| error.into_inner())
++}
++
++/// Records the batch-only choice for [`batch_only`]; called on every
++/// settings load and save, so a change applies to the next capture.
++pub(crate) fn set_batch_only(on: bool) {
++    *BATCH_ONLY
++        .get_or_init(Default::default)
++        .write()
++        .unwrap_or_else(|error| error.into_inner()) = on;
++}
++
++/// The stream options dictation's capture rides, when it streams at all:
++/// the batch-only choice leaves it `None`, so the engine opens no live
++/// session and every capture finishes as a whole clip over the batch API.
++pub(crate) fn stream_options() -> Option<&'static transcribe_cpp::StreamOptions> {
++    (!batch_only()).then_some(&STREAM_OPTIONS)
 +}
 +
 +/// What one transcription asks Google for: the key, the language hint, and
@@ -1659,6 +1788,23 @@ index 00000000..395cd50c
 +    #[test]
 +    fn missing_key_is_reported_without_a_request() {
 +        assert!(!GeminiError::NoKey.reason().is_empty());
++    }
++
++    /// Labs › Skip live streaming: the batch-only choice leaves the engine
++    /// nothing to stream, so every capture finishes as a whole clip over
++    /// the batch API; off, the live session rides again.
++    #[test]
++    fn batch_only_leaves_no_stream_options() {
++        set_batch_only(true);
++        assert!(
++            stream_options().is_none(),
++            "batch only leaves nothing to stream"
++        );
++        set_batch_only(false);
++        assert!(
++            stream_options().is_some(),
++            "live streaming is the default once batch only is off"
++        );
 +    }
 +}
 diff --git a/src/transcription/gemini/batch.rs b/src/transcription/gemini/batch.rs
@@ -2885,7 +3031,7 @@ index 1880210f..37bbc6af 100644
          let mut session = match self.session.take() {
              Some(session) => session,
 diff --git a/src/transcription/local_transcriber.rs b/src/transcription/local_transcriber.rs
-index a3e6a71b..3d075b86 100644
+index a3e6a71b..e6e1c4f2 100644
 --- a/src/transcription/local_transcriber.rs
 +++ b/src/transcription/local_transcriber.rs
 @@ -6,17 +6,34 @@ use color_eyre::eyre::{Result, WrapErr, eyre};
@@ -3093,7 +3239,7 @@ index a3e6a71b..3d075b86 100644
 +    pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
 +        match &self.runtime {
 +            Runtime::Gguf(gguf) => gguf.stream.as_ref(),
-+            Runtime::Gemini(_) => Some(&gemini::STREAM_OPTIONS),
++            Runtime::Gemini(_) => gemini::stream_options(),
 +        }
 +    }
 +

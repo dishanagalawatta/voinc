@@ -728,7 +728,7 @@ impl LocalTranscriber {
     pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
         match &self.runtime {
             Runtime::Gguf(gguf) => gguf.stream.as_ref(),
-            Runtime::Gemini(_) => Some(&gemini::STREAM_OPTIONS),
+            Runtime::Gemini(_) => gemini::stream_options(),
         }
     }
 

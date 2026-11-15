@@ -13,7 +13,11 @@ say so.
 Labs > Google Transcribe (off)                       // labs.google_transcribe
 ├── Toggle on -> the card shows an "API key" field (drafted while typed,
 │   saved with Apply; `google_transcribe.api_key`, or the environment's
-│   VOINC_GOOGLE_API_KEY, read again at every run)
+│   VOINC_GOOGLE_API_KEY, read again at every run) and, while on, a
+│   "Skip live streaming" switch (`google_transcribe.batch_only`)
+├── Skip live streaming (on) -> no live session at all: each dictation
+│   transcribes the whole clip by batch after it ends; nothing shows while
+│   it records
 ├── Picker -> "Google Transcribe (Gemini)" · Cloud · every language · streams;
 │   size reads "Runs in Google's cloud"; no download ever starts
 ├── Dictate (hold) -> the capture rides one Gemini Live WebSocket session:
@@ -69,6 +73,18 @@ because it is the same code with a different transport under it. Google's
 Live API does not give word timestamps; interim text replaces and turn text
 appends, so the fallback's whole clip supplies anything the session dropped.
 
+## Batch only
+
+The Labs card's **Skip live streaming** switch (`google_transcribe.batch_only`,
+off by default) leaves the live session out of dictation entirely: the engine
+opens no stream, so every capture finishes as a whole clip transcribed by
+batch, and nothing shows while it records. The choice is read again at every
+capture, like the key, and applies without a model reload. Where the live
+session cannot connect — a SOCKS proxy refuses it, and the batch request
+still goes out — this spares every capture the refused attempt before its
+fallback. Meetings, `voinc transcribe`, and the whole-clip fallback already
+run batch and are unaffected; only the dictation capture's stream is.
+
 ## Vocabulary
 
 The saved vocabulary list rides along as the request's `customVocabulary`
@@ -105,6 +121,10 @@ the engine's stream tests
 and the rest of
 [engine.rs](../../src/transcription/engine.rs)) drive the same
 `StreamFeed` seam the Live session rides with a fake transport.
+`batch_only_leaves_no_stream_options` in
+[gemini.rs](../../src/transcription/gemini.rs) holds the Skip live streaming
+gate, and `google_transcribe_batch_only_round_trips` in
+[app_settings.rs](../../src/app_settings.rs) its setting.
 
 Not yet observed, and not covered by any check: a real request to Google.
 The Live session's state machine (its reads between writes, tunnel

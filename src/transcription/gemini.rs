@@ -95,6 +95,36 @@ pub(crate) fn set_api_key(key: Option<String>) {
         .unwrap_or_else(|error| error.into_inner()) = key;
 }
 
+/// Whether dictation skips Google's live session (Labs › Skip live
+/// streaming): every capture transcribes the whole clip over the batch API
+/// instead. Set on every settings load and save, so a change applies to
+/// the next capture without a model reload.
+static BATCH_ONLY: OnceLock<RwLock<bool>> = OnceLock::new();
+
+/// Whether dictation skips Google's live session.
+pub(crate) fn batch_only() -> bool {
+    *BATCH_ONLY
+        .get_or_init(Default::default)
+        .read()
+        .unwrap_or_else(|error| error.into_inner())
+}
+
+/// Records the batch-only choice for [`batch_only`]; called on every
+/// settings load and save, so a change applies to the next capture.
+pub(crate) fn set_batch_only(on: bool) {
+    *BATCH_ONLY
+        .get_or_init(Default::default)
+        .write()
+        .unwrap_or_else(|error| error.into_inner()) = on;
+}
+
+/// The stream options dictation's capture rides, when it streams at all:
+/// the batch-only choice leaves it `None`, so the engine opens no live
+/// session and every capture finishes as a whole clip over the batch API.
+pub(crate) fn stream_options() -> Option<&'static transcribe_cpp::StreamOptions> {
+    (!batch_only()).then_some(&STREAM_OPTIONS)
+}
+
 /// What one transcription asks Google for: the key, the language hint, and
 /// the vocabulary.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -382,5 +412,22 @@ mod tests {
     #[test]
     fn missing_key_is_reported_without_a_request() {
         assert!(!GeminiError::NoKey.reason().is_empty());
+    }
+
+    /// Labs › Skip live streaming: the batch-only choice leaves the engine
+    /// nothing to stream, so every capture finishes as a whole clip over
+    /// the batch API; off, the live session rides again.
+    #[test]
+    fn batch_only_leaves_no_stream_options() {
+        set_batch_only(true);
+        assert!(
+            stream_options().is_none(),
+            "batch only leaves nothing to stream"
+        );
+        set_batch_only(false);
+        assert!(
+            stream_options().is_some(),
+            "live streaming is the default once batch only is off"
+        );
     }
 }

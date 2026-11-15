@@ -2781,7 +2781,11 @@ real desktop.
   longer than 30 minutes is split client-side because Google truncates past
   it silently while still reporting completed. The saved vocabulary rides as
   `customVocabulary` only while Labs › Vocabulary biasing is on
-  (`vocabulary::transcription_terms`). Checks: the fixture-JSON tests named
+  (`vocabulary::transcription_terms`). Skip live streaming
+  (`google_transcribe.batch_only`, off by default, on the card while the
+  feature is on) leaves the live session out of dictation: each capture
+  transcribes the whole clip by batch after it ends. Checks: the
+  fixture-JSON tests named
   in [google-transcribe.md](google-transcribe.md); no request to Google has
   ever been made, the Live session's own state machine has no tests, and the
   Labs page goldens show the new card.

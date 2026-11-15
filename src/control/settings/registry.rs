@@ -628,6 +628,12 @@ pub(super) const KEYS: &[Key] = &[
          otherwise leaves Google Transcribe unavailable",
     ),
     key(
+        "google_transcribe.batch_only",
+        Kind::Bool,
+        "Google Transcribe skips its live session: each dictation transcribes the whole clip with \
+         the batch API after you finish (may suit networks that cannot hold a live session)",
+    ),
+    key(
         "labs.speakers_only",
         Kind::Bool,
         "Labs: While dictating applies only while the default output is speakers; headphones are \

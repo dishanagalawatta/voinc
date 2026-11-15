@@ -143,6 +143,11 @@ pub struct GoogleTranscribeSettings {
     /// The key saved in Settings › Labs; `None` asks `VOINC_GOOGLE_API_KEY`
     /// first and otherwise leaves Google Transcribe unavailable.
     pub api_key: Option<String>,
+    /// Whether dictation skips Google's live session: each capture
+    /// transcribes the whole clip over the batch API after it ends. Off by
+    /// default; a live session is how dictation runs unless this says
+    /// otherwise.
+    pub batch_only: bool,
 }
 
 /// Where Linux and Windows run the speech model (#856): Auto picks a GPU
@@ -798,6 +803,7 @@ impl AppSettings {
         crate::labs::apply(&self.labs);
         // set_api_key trims and drops an empty key itself.
         crate::transcription::gemini::set_api_key(self.google_transcribe.api_key.clone());
+        crate::transcription::gemini::set_batch_only(self.google_transcribe.batch_only);
         screenshots::apply_screenshots(self);
         #[cfg(hex_capture)]
         {
@@ -1560,6 +1566,19 @@ mod tests {
         settings.apply_one_time_migrations_with(|_| true);
         assert_eq!(settings.meetings.summaries, Off);
         assert!(AppSettings::default().has_migration(MEETING_SUMMARIES_MIGRATION));
+    }
+
+    /// Labs › Skip live streaming: off by default, and a saved choice
+    /// survives the round trip older builds' files take.
+    #[test]
+    fn google_transcribe_batch_only_round_trips() {
+        let settings: AppSettings = serde_json::from_str("{}").unwrap();
+        assert!(!settings.google_transcribe.batch_only, "off by default");
+        let settings: AppSettings =
+            serde_json::from_str(r#"{"google_transcribe":{"batch_only":true}}"#).unwrap();
+        assert!(settings.google_transcribe.batch_only);
+        let written = serde_json::to_value(&settings).unwrap();
+        assert_eq!(written["google_transcribe"]["batch_only"], true);
     }
 
     #[test]

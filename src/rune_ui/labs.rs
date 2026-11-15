@@ -11,8 +11,8 @@ mod group;
 mod screenshots;
 mod store;
 
-use rune::{El, Icon, TextEdit, Tx, row, text};
-use rune_kit::TextInput;
+use rune::{El, Icon, TextEdit, Tx, col, row, text};
+use rune_kit::{ControlSize, Switch, TextInput};
 
 pub(super) use self::store::{page, search_field, tabs};
 use super::controls::{self, Paint};
@@ -1034,9 +1034,17 @@ fn flip(ui: &mut Ui, lab: Lab) {
 /// unused before it unloads, or the screenshot shortcut and folder.
 fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
     // The key shows whether Google Transcribe is on or off: it is what makes
-    // the runtime available at all.
+    // the runtime available at all. Skip live streaming shows while it is
+    // on: it is how dictation runs then.
     if matches!(entry.lab, Lab::Feature(Feature::GoogleTranscribe)) {
-        return Some(google_api_key(ui, p));
+        let mut google = col()
+            .key("google-extras")
+            .gap(8.0)
+            .child(google_api_key(ui, p));
+        if entry.on {
+            google = google.child(google_batch_only(ui, p));
+        }
+        return Some(google);
     }
     if !entry.on {
         return None;
@@ -1118,6 +1126,35 @@ fn google_api_key(ui: &Ui, p: Paint) -> El {
                 .color(p.muted()),
         )
         .child(field)
+}
+
+/// Whether dictation skips Google's live session: each capture transcribes
+/// the whole clip with the batch API after it ends, so nothing shows while
+/// it records. For networks that cannot hold a live session.
+fn google_batch_only(ui: &Ui, p: Paint) -> El {
+    let switch = Switch::new(ui.settings.google_transcribe.batch_only)
+        .control_size(ControlSize::Small)
+        .label(tr("Skip live streaming"))
+        .hide_label()
+        .on_toggle(|ui: &mut Ui| {
+            ui.update(|settings| {
+                settings.google_transcribe.batch_only = !settings.google_transcribe.batch_only;
+            });
+        })
+        .build(p.k)
+        .key("google-batch-only");
+    row()
+        .key("google-batch-only-row")
+        .gap(8.0)
+        .center_y()
+        .flex_wrap()
+        .child(
+            text(tr("Skip live streaming"))
+                .key("label")
+                .font(controls::DESCRIPTION)
+                .color(p.muted()),
+        )
+        .child(switch)
 }
 
 /// Whether the Caps Lock light stays solid or blinks slowly while recording.

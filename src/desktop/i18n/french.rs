@@ -1251,6 +1251,7 @@ const TRANSLATIONS: &[(&str, &str)] = &[
     ("Transcribe with Google's Gemini models in the cloud, using your Gemini API key. Your audio goes to Google.", "Transcrit avec les modèles Gemini de Google dans le cloud, en utilisant votre clé d'API Gemini. Votre audio est envoyé à Google."),
     ("API key", "Clé d'API"),
     ("Paste your Gemini API key", "Collez votre clé d'API Gemini"),
+    ("Skip live streaming", "Ignorer le streaming en direct"),
     ("Appearance", "Apparence"),
     ("Use light or dark for the main window instead of the system's", "Utilise le clair ou le sombre pour la fenêtre principale au lieu du système"),
     ("Theme", "Thème"),

@@ -237,7 +237,7 @@ impl WarmTranscriber {
     pub(crate) fn stream_options(&self) -> Option<&transcribe_cpp::StreamOptions> {
         match &self.active {
             Some(Transcriber::Gguf(model)) => model.stream_options(),
-            Some(Transcriber::Gemini(_)) => Some(&gemini::STREAM_OPTIONS),
+            Some(Transcriber::Gemini(_)) => gemini::stream_options(),
             _ => None,
         }
     }
