@@ -1,0 +1,280 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+new file mode 100644
+index 00000000..a9709ea9
+--- /dev/null
++++ b/.github/workflows/release.yml
+@@ -0,0 +1,245 @@
++name: Release
++
++# Publishes a voinc release: one GitHub release per tag v<upstream>-voinc.<n>
++# (v3.4.0-voinc.1 is this fork's release of upstream Voinc v3.4.0). Push the
++# tag by hand after a sync lands; this workflow builds the Linux x64 and
++# ARM64 executables with their .deb and .rpm packages, the Windows x64 and
++# ARM64 executables, and the macOS arm64 app, then publishes them as release
++# assets with a SHA256SUMS covering every file.
++#
++# The fork's v1 binaries are unsigned: the macOS app is ad-hoc signed
++# (Gatekeeper needs Right-click > Open or `xattr -cr`), and the Windows
++# executables carry no Authenticode signature (SmartScreen offers
++# "More info > Run anyway"). Installers and signing come later; until then
++# the release notes say so.
++#
++# workflow_dispatch is the rehearsal: it validates the tag name, builds
++# everything from the dispatched commit, and stops before publish unless the
++# publish input is set.
++#
++# Like the jobs it calls (build-desktop.yml, .github/release/upload), the
++# build jobs run repository code and hold no secrets; publish is the only
++# job with contents: write, and it treats the downloaded artifacts as data:
++# it verifies their digests, copies them, and hashes them, never runs them.
++
++on:
++  push:
++    tags:
++      - 'v*-voinc.*'
++  workflow_dispatch:
++    inputs:
++      tag:
++        description: The tag to rehearse (v<upstream>-voinc.<n>, e.g. v3.4.0-voinc.1)
++        required: true
++        type: string
++      publish:
++        description: Publish the GitHub release instead of stopping after the builds
++        type: boolean
++        default: false
++
++run-name: ${{ github.event_name == 'workflow_dispatch' && format('Release rehearsal {0}', inputs.tag) || format('Release {0}', github.ref_name) }}
++
++concurrency:
++  group: release-${{ github.ref_name }}
++
++permissions:
++  contents: read
++
++jobs:
++  plan:
++    runs-on: ubuntu-24.04
++    timeout-minutes: 10
++    outputs:
++      tag: ${{ steps.plan.outputs.tag }}
++      version: ${{ steps.plan.outputs.version }}
++      upstream: ${{ steps.plan.outputs.upstream }}
++      sha: ${{ steps.plan.outputs.sha }}
++    steps:
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          ref: ${{ github.sha }}
++          persist-credentials: false
++      - id: plan
++        env:
++          EVENT: ${{ github.event_name }}
++          REF_NAME: ${{ github.ref_name }}
++          DISPATCH_TAG: ${{ inputs.tag }}
++        run: |
++          set -euo pipefail
++          # A voinc tag is v<upstream>-voinc.<n>: v3.4.0-voinc.1 is this
++          # fork's release of upstream v3.4.0. The push filter already
++          # matched the shape; validate again so a dispatch with a bad name
++          # fails here with the reason.
++          case "$EVENT" in
++            push) tag=$REF_NAME ;;
++            *) tag=${DISPATCH_TAG:-} ;;
++          esac
++          printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-voinc\.(0|[1-9][0-9]*)$' || {
++            echo "::error::The tag must be v<upstream>-voinc.<n> (e.g. v3.4.0-voinc.1), not '$tag'." >&2
++            exit 1
++          }
++          version=${tag#v}
++          upstream=${tag%-voinc.*}
++          # A tag push builds exactly the commit the tag points at, whether
++          # it is lightweight or annotated: fetch it and peel it. A
++          # rehearsal before the tag exists builds the dispatched commit.
++          if [ "$EVENT" = push ]; then
++            git fetch --quiet --no-tags origin "refs/tags/$tag"
++            sha=$(git rev-parse "FETCH_HEAD^{commit}")
++          else
++            sha=$GITHUB_SHA
++          fi
++          {
++            echo "tag=$tag"
++            echo "version=$version"
++            echo "upstream=$upstream"
++            echo "sha=$sha"
++          } >> "$GITHUB_OUTPUT"
++          echo "Rehearsing $tag (upstream v$upstream) from $sha." >&2
++
++  # ---- Build: repository code; no environment, secrets, or id-token ----------
++
++  build:
++    needs: plan
++    uses: ./.github/workflows/build-desktop.yml
++    with:
++      sha: ${{ needs.plan.outputs.sha }}
++      version: ${{ needs.plan.outputs.version }}
++      channel: stable
++      artifact-prefix: build
++
++  # Voinc.app as the release identity (io.voinc.voinc), ad-hoc signed:
++  # VOINC_RELEASE_UNSIGNED=1, since the fork has no Developer ID yet. There
++  # is no sign-macos job, so publish uploads the zip as built. The upstream
++  # job also copies the DMG background and Finder layout for its
++  # sign-macos.sh; the fork builds no DMG and copies neither.
++  build-macos:
++    needs: plan
++    runs-on: macos-26
++    timeout-minutes: 120
++    env:
++      VOINC_VERSION: ${{ needs.plan.outputs.version }}
++      VOINC_BUILD_CHANNEL: stable
++    outputs:
++      digest: ${{ steps.upload.outputs.digest }}
++    steps:
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          ref: ${{ needs.plan.outputs.sha }}
++          persist-credentials: false
++      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
++        with:
++          toolchain: stable
++      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
++      - name: Install the Metal toolchain
++        run: xcrun --sdk macosx metal --version || xcodebuild -downloadComponent MetalToolchain
++      - name: Build Voinc.app
++        run: |
++          scripts/setup.sh
++          scripts/set-crate-version.sh "$PWD" "$VOINC_VERSION"
++          bundle=$(VOINC_RELEASE_UNSIGNED=1 scripts/build-app.sh)
++          mkdir -p "$RUNNER_TEMP/macos"
++          /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$bundle" "$RUNNER_TEMP/macos/Voinc.app.zip"
++      - id: upload
++        uses: ./.github/release/upload
++        with:
++          name: build-macos-arm64
++          path: ${{ runner.temp }}/macos
++
++  # ---- Publish: contents: write; artifacts treated as data -------------------
++
++  publish:
++    needs: [plan, build, build-macos]
++    if: ${{ github.event_name == 'push' || inputs.publish }}
++    runs-on: ubuntu-24.04
++    timeout-minutes: 20
++    permissions:
++      contents: write
++    steps:
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          ref: ${{ github.sha }}
++          sparse-checkout: |
++            /.github/release/
++          sparse-checkout-cone-mode: false
++          persist-credentials: false
++      - uses: ./.github/release/download
++        with:
++          pattern: build-*
++          digests: >-
++            build-linux-x86_64=${{ needs.build.outputs.linux-x64-digest }}
++            build-linux-aarch64=${{ needs.build.outputs.linux-arm64-digest }}
++            build-windows-x86_64=${{ needs.build.outputs.windows-x64-digest }}
++            build-windows-aarch64=${{ needs.build.outputs.windows-arm64-digest }}
++            build-macos-arm64=${{ needs.build-macos.outputs.digest }}
++      - name: Assemble the release assets
++        run: |
++          set -euo pipefail
++          version=${{ needs.plan.outputs.version }}
++          stage=$RUNNER_TEMP/stage
++          mkdir -p "$stage"
++          # The bare executables with their .deb and .rpm packages beside
++          # them, and the app bundle under its release name.
++          cp "$RUNNER_TEMP"/in/*/voinc-"$version"-linux-* "$stage/"
++          cp "$RUNNER_TEMP"/in/*/voinc-"$version"-windows-* "$stage/"
++          mv "$RUNNER_TEMP/in/build-macos-arm64/Voinc.app.zip" \
++            "$stage/voinc-$version-macos-arm64.zip"
++          # One SHA256SUMS over every release asset, written outside the
++          # staging directory so it cannot hash itself.
++          (cd "$stage" && sha256sum * ) > "$RUNNER_TEMP/SHA256SUMS"
++          mv "$RUNNER_TEMP/SHA256SUMS" "$stage/SHA256SUMS"
++          test "$(find "$stage" -type f | wc -l)" -ge 9
++          ls -la "$stage"
++      - name: Create the GitHub release
++        env:
++          GH_TOKEN: ${{ github.token }}
++          TAG: ${{ needs.plan.outputs.tag }}
++          VERSION: ${{ needs.plan.outputs.version }}
++          UPSTREAM: ${{ needs.plan.outputs.upstream }}
++          SHA: ${{ needs.plan.outputs.sha }}
++        run: |
++          set -euo pipefail
++          notes=$RUNNER_TEMP/notes.md
++          cat > "$notes" <<'EOF'
++          Voinc `@VERSION@` — the fork release tracking upstream Voinc `@UPSTREAM@`
++          ([upstream release notes](https://github.com/anomalyco/hex/releases/tag/v@UPSTREAM@)).
++
++          The tag marks pristine upstream `v@UPSTREAM@` after `.voinc/rebrand.sh`
++          and the patches in `.voinc/patches/`, built from commit
++          [@SHA@](https://github.com/dishanagalawatta/voinc/commit/@SHA@).
++
++          ## Downloads
++
++          | File | Platform |
++          | ---- | -------- |
++          | `voinc-@VERSION@-linux-x64` (+ `.deb`, `.rpm`) | Linux x86_64 |
++          | `voinc-@VERSION@-linux-arm64` (+ `.deb`, `.rpm`) | Linux ARM64 |
++          | `voinc-@VERSION@-windows-x64.exe` / `.com` | Windows x86_64 |
++          | `voinc-@VERSION@-windows-arm64.exe` / `.com` | Windows ARM64 |
++          | `voinc-@VERSION@-macos-arm64.zip` (Voinc.app) | macOS Apple Silicon |
++
++          Verify any download against `SHA256SUMS` (`sha256sum -c SHA256SUMS`).
++
++          ## Unsigned builds
++
++          The fork's binaries are not code-signed yet:
++
++          - macOS: Gatekeeper blocks the first launch — right-click Voinc.app,
++            choose Open, or run `xattr -cr /Applications/Voinc.app`.
++          - Windows: SmartScreen shows "Windows protected your PC" — choose
++            More info > Run anyway.
++
++          Speech models download from Hugging Face on first run
++          (Settings > General), as upstream Voinc does.
++          EOF
++          sed -i "s/@VERSION@/$VERSION/g; s/@UPSTREAM@/$UPSTREAM/g; s/@SHA@/$SHA/g" "$notes"
++          # A dispatch rehearsal may publish before the tag is pushed: point
++          # the new tag at the built commit. A tag push finds its tag already
++          # on the remote and creates the release for it.
++          extra=()
++          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
++            extra+=(--target "$SHA")
++          fi
++          gh release create "$TAG" "${extra[@]}" \
++            --latest --title "$TAG" --notes-file "$notes" \
++            "$RUNNER_TEMP"/stage/*
+diff --git a/scripts/set-crate-version.sh b/scripts/set-crate-version.sh
+index e12277c1..d8e29da2 100755
+--- a/scripts/set-crate-version.sh
++++ b/scripts/set-crate-version.sh
+@@ -1,8 +1,10 @@
+ #!/bin/sh
+ # Stamps the version the release service publishes into Cargo.toml and
+ # Cargo.lock, so the binaries report it: a dev build's 0.0.0-dev-<run number>
+-# (as OpenCode numbers its dev builds) or a prerelease X.Y.Z-beta.N of the
+-# checked-out version. Release builds only; the change is never committed.
++# (as OpenCode numbers its dev builds), a prerelease X.Y.Z-beta.N of the
++# checked-out version, or the fork's release X.Y.Z-voinc.N (the
++# v<upstream>-voinc.<n> tag). Release builds only; the change is never
++# committed.
+ #
+ #   set-crate-version.sh <source root> <version>
+ set -eu
+@@ -11,8 +13,9 @@ root=$1
+ version=$2
+ current=$(sed -n 's/^version = "\([^"]*\)"/\1/p' "$root/Cargo.toml" | head -1)
+ [ "$version" = "$current" ] && exit 0
+-printf '%s\n' "$version" | grep -Eq "^(0\.0\.0-dev-[1-9][0-9]*|$(printf '%s' "$current" | sed 's/\./\\./g')-beta\.[0-9]+)\$" || {
+-  echo "Can only stamp 0.0.0-dev-<run> or a $current-beta.N prerelease, not $version." >&2
++current_esc=$(printf '%s' "$current" | sed 's/\./\\./g')
++printf '%s\n' "$version" | grep -Eq "^(0\.0\.0-dev-[1-9][0-9]*|${current_esc}-beta\.(0|[1-9][0-9]*)|${current_esc}-voinc\.(0|[1-9][0-9]*))\$" || {
++  echo "Can only stamp 0.0.0-dev-<run>, a $current-beta.N prerelease, or a $current-voinc.N fork release, not $version." >&2
+   exit 1
+ }
+ # awk, not sed's GNU-only 0,/re/ address: this also runs on the macOS runner.
