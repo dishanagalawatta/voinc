@@ -1,0 +1,127 @@
+diff --git a/.github/ISSUE_TEMPLATE/config.yml b/.github/ISSUE_TEMPLATE/config.yml
+index c8ae31eb..88a8af7a 100644
+--- a/.github/ISSUE_TEMPLATE/config.yml
++++ b/.github/ISSUE_TEMPLATE/config.yml
+@@ -1,11 +1,11 @@
+ blank_issues_enabled: true
+ contact_links:
+   - name: Installation and troubleshooting
+-    url: https://anoma.ly/hex/
+-    about: Download the macOS app, check permissions, and find troubleshooting steps.
++    url: https://github.com/dishanagalawatta/voinc#readme
++    about: Check the fork README for downloads and how the sync works; upstream's docs cover permissions and troubleshooting.
+   - name: Linux beta requirements
+-    url: https://github.com/dishanagalawatta/voinc/blob/dev/docs/linux.md
++    url: https://github.com/dishanagalawatta/voinc/blob/voinc/docs/linux.md
+     about: Check supported X11/Wayland environments and installation requirements.
+   - name: Security vulnerabilities
+-    url: https://github.com/dishanagalawatta/voinc/blob/dev/SECURITY.md
++    url: https://github.com/dishanagalawatta/voinc/blob/voinc/SECURITY.md
+     about: Follow the security reporting instructions rather than opening a public issue.
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index dcd09a35..b89986f4 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -1,10 +1,17 @@
+ # Contributing to Voinc
+ 
+-We don't take pull requests. [Open an issue](https://github.com/anomalyco/hex/issues/new/choose)
+-describing the bug or idea, and our agents usually turn it around fast.
++Voinc is a community fork of [Hex](https://github.com/anomalyco/hex) that
++tracks upstream stable releases: `main` mirrors upstream tags, and the
++`voinc` branch applies `.voinc/rebrand.sh` and `.voinc/patches/` to them
++automatically.
+ 
+-Diagnoses and proposed fixes are welcome in the issue: redacted logs, the code
+-you suspect, or a patch as a diff snippet. If your analysis shapes the fix, we
+-credit you in the pull request that lands it.
++- **Product behavior** — bugs and ideas about the app itself belong
++  upstream: [open an issue with Anomaly](https://github.com/anomalyco/hex/issues/new/choose).
++  Fixes land in Hex and reach Voinc through the automatic sync, so a change
++  made only here would be overwritten by the next release.
++- **Fork mechanics** — the rebrand script, patches, workflows, and packaging:
++  pull requests are welcome against the `voinc` branch.
++- **Diagnoses** — redacted logs, the code you suspect, or a patch as a diff
++  snippet are welcome in either tracker, and credit follows the fix.
+ 
+ To build Voinc yourself, see [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/README.md).
+diff --git a/packaging/aur/PKGBUILD b/packaging/aur/PKGBUILD
+index fafa5f1c..eb28ff19 100644
+--- a/packaging/aur/PKGBUILD
++++ b/packaging/aur/PKGBUILD
+@@ -1,16 +1,16 @@
+-# Maintainer: dax
++# Maintainer: Dishan Agalawatta <dishanagalawatta@gmail.com>
+ #
+-# Not a prebuilt of extra/voinc (the voinc dump tool, which installs /usr/bin/hx):
+-# this is the Voinc voice dictation app, so it neither provides nor conflicts
+-# with it.
++# Not a prebuilt of the AUR "hex" package (a hex dump tool that installs
++# /usr/bin/hx): this is the Voinc voice dictation app, so it neither provides
++# nor conflicts with it.
+ #
+ # Generated from dishanagalawatta/voinc packaging/aur by scripts/release-aur.sh, which
+-# sets pkgver, the release service's linux-x64 and linux-arm64 file URLs, and
++# sets pkgver, the release's linux-x64 and linux-arm64 asset URLs, and
+ # the checksums for each release.
+ pkgname=voinc-bin
+ pkgver=@VERSION@
+ pkgrel=1
+-pkgdesc='Voinc voice dictation app by Anomaly: hold a key, speak, and it types (Linux beta; not the voinc dump tool)'
++pkgdesc="Voinc voice dictation app, a community fork of Anomaly's Hex: hold a key, speak, and it types (Linux beta; not the hex dump tool)"
+ arch=('x86_64' 'aarch64')
+ url='https://github.com/dishanagalawatta/voinc'
+ license=('MIT')
+diff --git a/packaging/linux/nfpm.yaml b/packaging/linux/nfpm.yaml
+index c769eeb5..c7732068 100644
+--- a/packaging/linux/nfpm.yaml
++++ b/packaging/linux/nfpm.yaml
+@@ -2,8 +2,8 @@
+ # release executable, in a directory it stages with voinc, io.voinc.voinc.desktop,
+ # the hicolor icons, voinc.service, LICENSE, and the postinst/postrm scripts. They install what the AUR package voinc-bin does:
+ # /usr/bin/voinc, the desktop entry, and the systemd user unit. Voinc never
+-# replaces a package-managed executable; it shows the update command the
+-# release service lists for the deb-<arch> or rpm-<arch> distribution.
++# replaces a package-managed executable: the fork's self-updater stays off,
++# so package-managed installs update through their package manager.
+ name: voinc
+ arch: ${VOINC_PACKAGE_ARCH}
+ platform: linux
+@@ -12,9 +12,9 @@ version_schema: none
+ release: "1"
+ section: utils
+ priority: optional
+-maintainer: Anomaly <voinc@anoma.ly>
+-vendor: Anomaly
+-homepage: https://anoma.ly/hex
++maintainer: Dishan Agalawatta <dishanagalawatta@gmail.com>
++vendor: Voinc fork
++homepage: https://github.com/dishanagalawatta/voinc
+ license: MIT
+ description: |-
+   Voinc voice dictation: hold a key, speak, and it types.
+diff --git a/packaging/windows/voinc.iss b/packaging/windows/voinc.iss
+index faca99e3..6ffd4192 100644
+--- a/packaging/windows/voinc.iss
++++ b/packaging/windows/voinc.iss
+@@ -41,14 +41,15 @@
+ 
+ [Setup]
+ ; Keep this AppId forever: it names the Apps & Features entry that
+-; src/windows_updater.rs keeps current after self-updates.
+-AppId={{6ED48C92-5177-41F4-B8D6-37B7B02CFDF4}
++; src/windows_updater.rs keeps current after self-updates. The fork mints
++; its own GUID so it never collides with an installed upstream Hex.
++AppId={{C8209E04-1362-40F9-A363-94DAA199B52D}
+ AppName=Voinc
+ AppVersion={#AppVersion}
+ AppVerName=Voinc {#AppVersion}
+-AppPublisher=Anomaly Innovations, Inc.
+-AppPublisherURL=https://anoma.ly/
+-AppSupportURL=https://github.com/anomalyco/hex/issues
++AppPublisher=Voinc fork (Dishan Agalawatta)
++AppPublisherURL=https://github.com/dishanagalawatta/voinc
++AppSupportURL=https://github.com/dishanagalawatta/voinc/issues
+ AppUpdatesURL=https://github.com/dishanagalawatta/voinc/releases
+ PrivilegesRequired=lowest
+ ArchitecturesAllowed={#AllowedArchitectures}
