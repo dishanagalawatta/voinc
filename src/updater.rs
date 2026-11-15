@@ -253,7 +253,9 @@ pub struct Updater {
 impl Updater {
     pub fn start() -> Self {
         let method = platform::method();
-        let disabled = if option_env!("VOINC_TEST_BUILD") == Some("1") || updates_off_by_env() {
+        let disabled = if !update_origin_configured() {
+            Some(DesktopUpdateStatus::Unavailable)
+        } else if option_env!("VOINC_TEST_BUILD") == Some("1") || updates_off_by_env() {
             Some(DesktopUpdateStatus::Unavailable)
         } else if crate::app_paths::is_local_build() {
             Some(DesktopUpdateStatus::SourceBuild)
@@ -477,6 +479,17 @@ impl Updater {
             *state = State::Applied;
         }
     }
+}
+
+/// Voinc is a fork without a release service of its own: the inherited
+/// updater's default manifest origin serves upstream Hex, not Voinc, so its
+/// update checks stay off until `VOINC_RELEASE_BASE_URL` (HTTPS only) names
+/// an origin that serves a Voinc manifest. Without it the app reports
+/// updates unavailable and people update through GitHub releases.
+fn update_origin_configured() -> bool {
+    std::env::var("VOINC_RELEASE_BASE_URL")
+        .ok()
+        .is_some_and(|origin| origin.starts_with("https://"))
 }
 
 /// `VOINC_DISABLE_UPDATES=1` turns this launch's updater off, as a test build
