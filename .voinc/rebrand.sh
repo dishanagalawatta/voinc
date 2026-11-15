@@ -11,8 +11,13 @@
 #   git checkout <previous voinc tip> -- .voinc    # restore this tooling
 #   ./.voinc/rebrand.sh
 #
-# The script is idempotent: on an already-rebranded tree it changes nothing
-# (except the README/NOTICE copies, which are overwritten from .voinc/).
+# The script is idempotent on the tree it itself produces (except the
+# README/NOTICE copies, which are overwritten from .voinc/). It must run
+# BEFORE .voinc/patches/*.patch, as the recipe above does: the content pass
+# cannot tell upstream Hex references inside fork-authored files (the P1-P4
+# updater.rs, workflows, and packaging identity) from mechanical leftovers,
+# so an in-place re-run on a patched tree rewrites them. On a patched tree,
+# restore those files from git before running this script again.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -186,6 +191,32 @@ if [ -f AGENTS.md ] && ! grep -q 'voinc-fork-banner start' AGENTS.md; then
   mv "$tmp" AGENTS.md
   say "== AGENTS.md fork banner added =="
 fi
+
+# ---------------------------------------------------------------------------
+# 3b. Fork brand assets: the logo and every icon asset derived from it.
+# ---------------------------------------------------------------------------
+# The fork's mark (a fountain-pen nib with a voice waveform) lives as canonical
+# copies in .voinc/assets/ and is copied over the tree's image files on every
+# sync, replacing upstream's hexagon artwork wherever it appears. The same
+# bytes are committed on the voinc branch, so an in-place re-run changes
+# nothing. Sizes below 64 px and the tray use the nib subpath alone: at those
+# sizes the waveform bars merge into noise. Derivation rules and the
+# regeneration recipe: .voinc/assets/README.md.
+say "== fork brand assets =="
+mkdir -p assets/logo resources/windows app/AppIcon.icon/Assets .github/assets
+for size in 16x16 24x24 32x32 48x48 64x64 128x128 256x256 512x512; do
+  mkdir -p "packaging/linux/icons/hicolor/$size/apps"
+  cp .voinc/assets/icons/hicolor/$size/apps/io.voinc.voinc.png \
+    "packaging/linux/icons/hicolor/$size/apps/io.voinc.voinc.png"
+done
+for f in voinc.ico icon-32.png icon-64.png icon-128.png tray-32.rgba; do
+  cp .voinc/assets/windows/$f "resources/windows/$f"
+done
+cp .voinc/assets/logo/logo.svg assets/logo/logo.svg
+cp .voinc/assets/logo/logo-transparent.svg assets/logo/logo-transparent.svg
+cp .voinc/assets/macos/AppIcon-Image.png app/AppIcon.icon/Assets/Image.png
+cp .voinc/assets/voinc-icon.png .github/assets/voinc-icon.png
+say "  (copied the logo and icon set from .voinc/assets/)"
 
 # ---------------------------------------------------------------------------
 # 4. Residual report (review input; not a hard gate).
