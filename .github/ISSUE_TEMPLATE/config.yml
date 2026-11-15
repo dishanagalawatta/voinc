@@ -1,11 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: Installation and troubleshooting
-    url: https://anoma.ly/hex/
-    about: Download the macOS app, check permissions, and find troubleshooting steps.
+    url: https://github.com/dishanagalawatta/voinc#readme
+    about: Check the fork README for downloads and how the sync works; upstream's docs cover permissions and troubleshooting.
   - name: Linux beta requirements
-    url: https://github.com/dishanagalawatta/voinc/blob/dev/docs/linux.md
+    url: https://github.com/dishanagalawatta/voinc/blob/voinc/docs/linux.md
     about: Check supported X11/Wayland environments and installation requirements.
   - name: Security vulnerabilities
-    url: https://github.com/dishanagalawatta/voinc/blob/dev/SECURITY.md
+    url: https://github.com/dishanagalawatta/voinc/blob/voinc/SECURITY.md
     about: Follow the security reporting instructions rather than opening a public issue.

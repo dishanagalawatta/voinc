@@ -2,8 +2,8 @@
 # release executable, in a directory it stages with voinc, io.voinc.voinc.desktop,
 # the hicolor icons, voinc.service, LICENSE, and the postinst/postrm scripts. They install what the AUR package voinc-bin does:
 # /usr/bin/voinc, the desktop entry, and the systemd user unit. Voinc never
-# replaces a package-managed executable; it shows the update command the
-# release service lists for the deb-<arch> or rpm-<arch> distribution.
+# replaces a package-managed executable: the fork's self-updater stays off,
+# so package-managed installs update through their package manager.
 name: voinc
 arch: ${VOINC_PACKAGE_ARCH}
 platform: linux
@@ -12,9 +12,9 @@ version_schema: none
 release: "1"
 section: utils
 priority: optional
-maintainer: Anomaly <voinc@anoma.ly>
-vendor: Anomaly
-homepage: https://anoma.ly/hex
+maintainer: Dishan Agalawatta <dishanagalawatta@gmail.com>
+vendor: Voinc fork
+homepage: https://github.com/dishanagalawatta/voinc
 license: MIT
 description: |-
   Voinc voice dictation: hold a key, speak, and it types.

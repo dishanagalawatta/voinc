@@ -41,14 +41,15 @@
 
 [Setup]
 ; Keep this AppId forever: it names the Apps & Features entry that
-; src/windows_updater.rs keeps current after self-updates.
-AppId={{6ED48C92-5177-41F4-B8D6-37B7B02CFDF4}
+; src/windows_updater.rs keeps current after self-updates. The fork mints
+; its own GUID so it never collides with an installed upstream Hex.
+AppId={{C8209E04-1362-40F9-A363-94DAA199B52D}
 AppName=Voinc
 AppVersion={#AppVersion}
 AppVerName=Voinc {#AppVersion}
-AppPublisher=Anomaly Innovations, Inc.
-AppPublisherURL=https://anoma.ly/
-AppSupportURL=https://github.com/anomalyco/hex/issues
+AppPublisher=Voinc fork (Dishan Agalawatta)
+AppPublisherURL=https://github.com/dishanagalawatta/voinc
+AppSupportURL=https://github.com/dishanagalawatta/voinc/issues
 AppUpdatesURL=https://github.com/dishanagalawatta/voinc/releases
 PrivilegesRequired=lowest
 ArchitecturesAllowed={#AllowedArchitectures}
