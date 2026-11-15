@@ -3,7 +3,8 @@
 
 > **VOINC FORK NOTE.** Voinc is a community fork of Anomaly's Hex (MIT).
 > `main` is a pristine mirror of upstream release tags; the `voinc` branch applies
-> `.voinc/rebrand.sh` plus `.voinc/patches/*`. The architecture and invariant
+> `.voinc/rebrand.sh` (which also copies the fork's brand assets from
+> `.voinc/assets/`) plus `.voinc/patches/*`. The architecture and invariant
 > sections below describe the inherited codebase and still apply; sections about
 > Hex's own development process (PRs to `dev`, signing, the release service,
 > goldens policy) describe upstream, not this fork.

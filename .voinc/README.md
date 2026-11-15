@@ -1,5 +1,7 @@
 # Voinc
 
+<p align="center"><img src="assets/logo/logo.svg" alt="The Voinc mark: a fountain-pen nib with a voice waveform" width="128"></p>
+
 Local voice dictation and transcription for macOS, Windows and Linux. Hold a key, speak, and it pastes — or transcribe an existing recording from the command line:
 
 ```
@@ -24,7 +26,11 @@ Voinc is a community fork of [Hex](https://github.com/anomalyco/hex) by Anomaly 
 - the `voinc` branch is regenerated from each new upstream tag by applying `.voinc/rebrand.sh` plus the small patch set in `.voinc/patches/` — a daily GitHub Action opens a pull request with the update.
 - speech models are downloaded from the same sources upstream uses; updates are handled through GitHub releases rather than an in-app updater.
 
-See `.voinc/rebrand.sh` and `NOTICE.md` for details of the fork mechanics and attribution.
+See `.voinc/rebrand.sh`, `.voinc/assets/README.md` and `NOTICE.md` for details of the fork mechanics, branding, and attribution.
+
+## Branding
+
+The fork's mark is a fountain-pen nib with a voice waveform, drawn in `assets/logo/logo.svg` (on a black plate) and `assets/logo/logo-transparent.svg` (white on alpha). Every icon the app shows is derived from it: the Linux hicolor set, the Windows `.ico`, installer and tray rasters, and the macOS Icon Composer layer. Sizes below 64 px and the tray use the nib alone — the waveform's thin bars merge into noise that small. How the assets are derived and regenerated: `.voinc/assets/README.md`.
 
 ## Building from source (Linux)
 
