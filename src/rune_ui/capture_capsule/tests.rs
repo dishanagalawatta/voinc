@@ -1508,9 +1508,9 @@ fn capture_capsule_motion() {
 /// The ink overlay over a plain screen, as a still or a clip shows it.
 fn ink_on_screen(s: &super::ink::InkState, cx: &mut rune::Cx<super::ink::InkState>) -> rune::El {
     let screen = if cx.system_dark() {
-        rune::color::voinc("#1d1e22")
+        rune::color::hex("#1d1e22")
     } else {
-        rune::color::voinc("#ececf0")
+        rune::color::hex("#ececf0")
     };
     let [w, h] = s.scene().size;
     rune::el()

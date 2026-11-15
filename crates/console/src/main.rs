@@ -33,7 +33,7 @@ fn main() {
     let voinc = match std::env::current_exe().map(|path| locate(&path)) {
         Ok(Some(voinc)) => voinc,
         _ => {
-            eprintln!("hex: couldn't find voinc.exe; reinstall Voinc from anoma.ly/hex");
+            eprintln!("voinc: couldn't find voinc.exe; reinstall Voinc from anoma.ly/hex");
             std::process::exit(1);
         }
     };
@@ -48,7 +48,7 @@ fn main() {
     match result {
         Ok(code) => std::process::exit(code),
         Err(error) => {
-            eprintln!("hex: couldn't start {}: {error}", voinc.display());
+            eprintln!("voinc: couldn't start {}: {error}", voinc.display());
             std::process::exit(1);
         }
     }

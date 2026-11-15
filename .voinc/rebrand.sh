@@ -135,6 +135,24 @@ if [ "${#FILES[@]}" -gt 0 ]; then
     s{\bHex\b}{Voinc}g;                                                    # display name
     s{\bHEX\b}{VOINC}g;                                                    # display name caps
     s{(?<![0-9A-Za-z_])hex(?![0-9A-Za-z_:])}{voinc}g;                      # binary name, paths, CLI, dirs
+    # Fork additions. The onboarding scene DSL keyword is `voinc` (its .scene
+    # fixtures and keyword arms follow the general rule above), so finish what
+    # the `:` lookahead keeps in that one file: the struct-field declarations
+    # and initializers it survives on, and the `\nhex` escape inside its Rust
+    # string fixtures (the lookbehind reads the escape `n` as a word
+    # character). The rune colour parser is library API and keeps its own
+    # name: undo the general rule where it appears.
+    if ($ARGV =~ m{/onboarding_kit/scene_script\.rs$}) {
+      s{(?<![0-9A-Za-z_])hex: (?!f64)}{voinc: }g;
+      s{(\\n)hex( )}{${1}voinc${2}}g;
+    }
+    if ($ARGV =~ m{/linux/gnome_shortcuts\.rs$}) {
+      s{(fn install\(settings: &AppSettings, )hex: }{${1}voinc: }g;
+    }
+    if ($ARGV =~ m{/crates/console/src/main\.rs$}) {
+      s{"hex: }{"voinc: }g;    # the console helper's error prefix
+    }
+    s{rune::color::voinc\(}{rune::color::hex(}g;
     # --- restore protected tokens ---
     s{\x01([ABGKPDTPXYHMU])(\d+)\x01}{ $m{$1.$2} }ge;
   '
@@ -142,24 +160,46 @@ fi
 say "  (done: ${#FILES[@]} files)"
 
 # ---------------------------------------------------------------------------
-# 2b. Cargo.lock: rename the workspace's own package entry.
+# 2b. Cargo.lock: rename the workspace's own package entries.
 # ---------------------------------------------------------------------------
 # The lock stays byte-for-byte upstream everywhere else (dependency checksums
-# keep their exact spelling), but its root package is the rebrand. Cargo
-# requires the lock to match the manifest (name = "voinc"), and --locked
-# builds fail otherwise. The registry dependency named hex (0.4.3) carries a
-# `source` line and is never touched: only the root entry (no source, a
-# `dependencies` list next) is renamed. Idempotent: after the rename no such
-# entry remains.
-say "== Cargo.lock root package =="
-# The root entry: name "hex", a version, then a `dependencies` list — the
-# registry dependency named hex has a `source` line there instead.
+# keep their exact spelling), but the workspace's entries are the rebrand.
+# The root package's block is the one named "hex" whose `version` line is
+# followed by a `dependencies` list (the registry hex crate has a `source`
+# line there instead); the console helper crate (crates/console) was renamed
+# by the content pass above, so its entry follows. With a single registry hex
+# crate in the graph, cargo stores its dependency edges without a version
+# qualifier while upstream's lock qualifies them as "hex 0.4.3" — leaving
+# that would make cargo rewrite the lock after every sync. Finally, cargo
+# writes package blocks in ascending name order, so the renamed entries must
+# land where cargo itself would put them, not where they sat upstream.
+# Idempotent: after the renames no such entry remains.
+say "== Cargo.lock workspace entries =="
 if [ -f Cargo.lock ] \
-  && grep -q '^name = "hex"$' Cargo.lock \
-  && grep -A2 '^name = "hex"$' Cargo.lock | grep -q '^dependencies = \['; then
-  perl -0pi -e 's{^name = "hex"\nversion = "([^"]*)"\ndependencies}{name = "voinc"\nversion = "$1"\ndependencies}mg' Cargo.lock
-  grep -q '^name = "voinc"$' Cargo.lock || { echo "Cargo.lock root rename failed" >&2; exit 1; }
-  say "  (renamed the root package entry)"
+  && grep -q '^name = "hex"$\|^name = "hex-console"$' Cargo.lock; then
+  perl -0777 -i -e '
+    $_ = <>;
+    s{^name = "hex"\nversion = "([^"]*)"\ndependencies}{name = "voinc"\nversion = "$1"\ndependencies}mg;
+    s{^name = "hex-console"$}{name = "voinc-console"}mg;
+    my $hex_pkgs = () = /^name = "hex"$/mg;
+    s{"hex 0\.4\.3"}{"hex"}g if $hex_pkgs == 1;
+    my $at = index($_, "[[package]]");
+    if ($at >= 0) {
+      my $head = substr($_, 0, $at);
+      my $body = substr($_, $at);
+      my @blocks = split /(?=\[\[package\]\])/, $body;
+      shift @blocks if @blocks && $blocks[0] eq "";
+      @blocks = sort {
+        (($a =~ /^name = "([^"]*)"/m)[0] // "")
+          cmp (($b =~ /^name = "([^"]*)"/m)[0] // "")
+      } @blocks;
+      $_ = $head . join "", @blocks;
+    }
+    print;
+  ' Cargo.lock
+  grep -q '^name = "voinc"$' Cargo.lock \
+    || { echo "Cargo.lock workspace rename failed" >&2; exit 1; }
+  say "  (renamed the workspace entries and re-sorted)"
 else
   say "  (nothing to rename)"
 fi

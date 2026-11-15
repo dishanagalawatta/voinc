@@ -220,7 +220,7 @@ pub(crate) enum Cheer<'a> {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Triumph<'a> {
     /// What you say, holding the shortcut.
-    pub(crate) hex: &'a str,
+    pub(crate) voinc: &'a str,
     pub(crate) cheers: Vec<Cheer<'a>>,
     /// The score's title; `{voinc}` is how long you spoke.
     pub(crate) score: &'a str,
@@ -428,7 +428,7 @@ struct Parser<'a> {
     pill: Option<&'a str>,
     lead: Option<&'a str>,
     ops: Vec<Op<'a>>,
-    hex: Option<&'a str>,
+    voinc: Option<&'a str>,
     cheers: Vec<Cheer<'a>>,
     score: Option<&'a str>,
     typed: Option<&'a str>,
@@ -461,7 +461,7 @@ fn parse_as(src: &str, sketch: bool) -> Result<Script<'_>, ParseErrors> {
         pill: None,
         lead: None,
         ops: Vec::new(),
-        hex: None,
+        voinc: None,
         cheers: Vec::new(),
         score: None,
         typed: None,
@@ -1165,7 +1165,7 @@ impl<'a> Parser<'a> {
             lead: self.lead.unwrap_or("One quick reply by hand."),
             ops: self.ops,
             with: Triumph {
-                hex: self.voinc.unwrap_or_default(),
+                voinc: self.voinc.unwrap_or_default(),
                 cheers: self.cheers,
                 score: self.score.unwrap_or_default(),
                 typed: self.typed.unwrap_or_default(),
@@ -1200,7 +1200,7 @@ mod tests {
         }
     }
 
-    const TINY: &str = "title Dinner\nboss Sam coral\nSam: so?\nstart\nSam: well [0.4 #well]\ntype ys omw [panic 0.3-0.6]\nsend slip meant yes omw\ntap @well ?\nend blocked\nwith\nhex Yes, on my way.\ntap ❤ ❤ 0.5\nSam: wow\nstatus Sam pinned your message\neffect confetti\nscore {voinc}, no typos\ntyped Typing: {secs}, {typos}\n";
+    const TINY: &str = "title Dinner\nboss Sam coral\nSam: so?\nstart\nSam: well [0.4 #well]\ntype ys omw [panic 0.3-0.6]\nsend slip meant yes omw\ntap @well ?\nend blocked\nwith\nvoinc Yes, on my way.\ntap ❤ ❤ 0.5\nSam: wow\nstatus Sam pinned your message\neffect confetti\nscore {voinc}, no typos\ntyped Typing: {secs}, {typos}\n";
 
     #[test]
     fn every_bundled_scene_parses() {

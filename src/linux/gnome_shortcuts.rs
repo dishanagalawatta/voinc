@@ -49,7 +49,7 @@ pub(crate) fn wanted(requested: bool, shortcuts: Option<DesktopShortcuts>) -> Op
 /// Writes Voinc's entries for `settings`' shortcuts, starting `voinc`, and
 /// removes Voinc's entries it no longer has a shortcut for. An entry already
 /// listed keeps its key, which the person may have changed in GNOME Settings.
-pub(crate) fn install(settings: &AppSettings, hex: &std::path::Path) -> Result<()> {
+pub(crate) fn install(settings: &AppSettings, voinc: &std::path::Path) -> Result<()> {
     let entries = entries(settings);
     let listed = string_list(&gsettings(&["get", LIST_SCHEMA, "custom-keybindings"])?);
     let command_path = voinc.to_string_lossy();
