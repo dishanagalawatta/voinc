@@ -28,4 +28,4 @@ export function choice(input) {
 
 export const union = (...members) => frozen({ type: "union", members })
 
-export const defineHexConfig = (config) => config
+export const defineVoincConfig = (config) => config

@@ -47,9 +47,9 @@ the text and the foreground context and returns the new text. If any
 transformation fails, Voinc keeps the text from before the transformations.
 
 ```ts
-import { defineHexConfig } from "@voinc/commands"
+import { defineVoincConfig } from "@voinc/commands"
 
-export default defineHexConfig({
+export default defineVoincConfig({
   transformations: {
     "trim-whitespace": {
       name: "Trim whitespace",

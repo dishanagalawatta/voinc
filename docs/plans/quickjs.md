@@ -79,7 +79,7 @@ source map. It costs a third of the transformer's size and is faster
 generated code: enums, namespaces, constructor parameter properties, and
 `import =`; the shipped `tsconfig.json` sets `erasableSyntaxOnly` so editors
 flag the same things. JavaScript with JSDoc would save the 0.79 MiB, but
-existing configs and the typed `defineHexConfig` capture inference are
+existing configs and the typed `defineVoincConfig` capture inference are
 TypeScript, so erasure keeps them loading unchanged.
 
 ## What Changed For Users

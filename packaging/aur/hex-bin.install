@@ -1,5 +1,0 @@
-post_install() {
-  echo 'Open Voinc from your launcher or run `voinc`; the first run downloads a speech model.'
-  echo 'Start Voinc at login: systemctl --user enable voinc.service'
-  echo 'Updates come from pacman; Voinc never replaces this package itself.'
-}

@@ -20,9 +20,9 @@ transformations can run with Commands off; hotkey dictation does not require
 voice commands.
 
 ```ts
-import { defineHexConfig, openUrl } from "@voinc/commands"
+import { defineVoincConfig, openUrl } from "@voinc/commands"
 
-export default defineHexConfig({
+export default defineVoincConfig({
   commands: {
     "open-training": {
       phrases: ["open training"],
@@ -72,9 +72,9 @@ typed text, which runs the same mode steps on text already in the field.
 `source` is absent from command-handler context.
 
 ```ts
-import { defineHexConfig } from "@voinc/commands"
+import { defineVoincConfig } from "@voinc/commands"
 
-export default defineHexConfig({
+export default defineVoincConfig({
   transformations: {
     "trim-whitespace": {
       name: "Trim whitespace",
@@ -113,9 +113,9 @@ The optional `dictation` section replaces the native voice-dictation phrases,
 not the native capture lifecycle:
 
 ```ts
-import { defineHexConfig } from "@voinc/commands"
+import { defineVoincConfig } from "@voinc/commands"
 
-export default defineHexConfig({
+export default defineVoincConfig({
   dictation: {
     start: ["begin note"],
     stop: ["finish note"],

@@ -1428,8 +1428,8 @@ mod tests {
     #[test]
     fn legacy_configs_with_commands_still_load_transformations() {
         let harness = Harness::new(
-            r#"import { choice, defineHexConfig, digit, letter, openUrl, union } from "@voinc/commands"
-export default defineHexConfig({
+            r#"import { choice, defineVoincConfig, digit, letter, openUrl, union } from "@voinc/commands"
+export default defineVoincConfig({
   transformations: {
     exclaim: { name: "Exclaim", transform: (text) => `${text}!` },
   },
@@ -1459,8 +1459,8 @@ export default defineHexConfig({
     #[test]
     fn transformations_chain_with_built_ins_and_failures_keep_nothing() {
         let harness = Harness::new(
-            r#"import { defineHexConfig } from "@voinc/commands"
-export default defineHexConfig({
+            r#"import { defineVoincConfig } from "@voinc/commands"
+export default defineVoincConfig({
   transformations: {
     exclaim: { name: "Exclaim", transform: (text: string): string => `${text}!` },
     later: { name: "Later", transform: async (text) => text.toUpperCase() },
