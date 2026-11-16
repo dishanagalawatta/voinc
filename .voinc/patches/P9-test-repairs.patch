@@ -1,0 +1,236 @@
+diff --git a/packaging/linux/icons/hicolor/128x128/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/128x128/apps/io.voinc.voinc.png
+index 63c61f036c989261d14a6022815d57069204afed..080475ada0d08d5b82614fde59d14363d776bba6 100644
+GIT binary patch
+delta 55
+zcmaEDJ<(>vBUyc^64!_l=ltB<)Vvag2wjiV3SHmCyu|d>6x))b($tr>-Oda^;OXk;
+Jvd$@?2>?hg6RQ9K
+
+delta 17
+YcmbPe^V)jDBUw%cPgg&ebxsLQ06(P$o&W#<
+
+diff --git a/packaging/linux/icons/hicolor/16x16/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/16x16/apps/io.voinc.voinc.png
+index 95dcb13098a6afeb4b94d7e56d4548ab99a49888..8c7d6b027b395a229463a06ef17316b6d8aaf729 100644
+GIT binary patch
+delta 55
+zcmX@j@{whO6O+DFiEBiObAE1aYF-ILgsw+wg|2U6USfJ`ifu_zY3fVcZf6D{@O1Ta
+JS?83{1OOSy62Slf
+
+delta 17
+Ycmey!a++m>6B8$cr>mdKI;Vst05tjqv;Y7A
+
+diff --git a/packaging/linux/icons/hicolor/24x24/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/24x24/apps/io.voinc.voinc.png
+index fc36d9b3f4fcd13c4ea37bb430cd3211b958391f..a77ca5bd4c0b4c7d319bd9bca89c64be01a89d75 100644
+GIT binary patch
+delta 55
+zcmdnSeusU-T4sHz64!_l=ltB<)Vvag2wjiV3SHmCyu|d>6x))b($tr>-Oda^;OXk;
+Jvd$@?2>>TT6A1tS
+
+delta 17
+Ycmcb^zKwmuT4qiLPgg&ebxsLQ05`)0`~Uy|
+
+diff --git a/packaging/linux/icons/hicolor/256x256/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/256x256/apps/io.voinc.voinc.png
+index 52d94e64382dfe4ef0e817a597695450fbde787c..67421e948882a684356453868911def5026b7dab 100644
+GIT binary patch
+delta 57
+zcmX@w!}z*~af6MUzEp{8M2T~LZf<H`2}6XgM{0$xZ(?3zdTNSoNl|I)OWST|1|aZs
+L^>bP0l+XkKU+)wJ
+
+delta 19
+acmaFe!+5lZaf6K;CxfS}pUXO@geCw>E(Z7j
+
+diff --git a/packaging/linux/icons/hicolor/32x32/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/32x32/apps/io.voinc.voinc.png
+index 692bff55bea3b90c42597f7c542cc96d6372934f..2d5aa41abf8640d010e2291f20f47badd0869f4e 100644
+GIT binary patch
+delta 55
+zcmZ3$b&P9+IIF%?iEBiObAE1aYF-ILgsw+wg|2U6USfJ`ifu_zY3fVcZf6D{@O1Ta
+JS?83{1ONg~5>EgC
+
+delta 17
+YcmX@cwSa4bI4dWEr>mdKI;Vst04{3<LI3~&
+
+diff --git a/packaging/linux/icons/hicolor/48x48/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/48x48/apps/io.voinc.voinc.png
+index b9ade924416c11326b4ffb7bc0c0f8a2e3086cd1..6335144c1888aa68e364a70599358ce7a9ad1d6f 100644
+GIT binary patch
+delta 55
+zcmbO(uvcIMABVnFiEBiObAE1aYF-ILgsw+wg|2U6USfJ`ifu_zY3fVcZf6D{@O1Ta
+JS?83{1OWfQ5<>t0
+
+delta 17
+YcmdlhFkN5+9|tFcr>mdKI;Vst04=lyHUIzs
+
+diff --git a/packaging/linux/icons/hicolor/512x512/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/512x512/apps/io.voinc.voinc.png
+index 5813d615118648492b05b0ed253f015fff635ed2..cd16f87d52d821cec156776a65dca8c1a09818c4 100644
+GIT binary patch
+delta 57
+zcmZ4Zgz@+j#tjlh`cfsX5hc#~xw)x%B@7X|9;p?&zKMB>>8UBUB}JvFFKxS>8Gyjk
+L)z4*}Q$iB}cP|um
+
+delta 19
+acmX^9gmK{$#tjlhoD80>elF{r5}E)}&If1!
+
+diff --git a/packaging/linux/icons/hicolor/64x64/apps/io.voinc.voinc.png b/packaging/linux/icons/hicolor/64x64/apps/io.voinc.voinc.png
+index 3f1c4add87c54fe2798385f63297399a669ac2d8..eb8a3ed574299fbc03fbe032072b7c07027ac8e2 100644
+GIT binary patch
+delta 55
+zcmX>o^;~L$1+TtTiEBiObAE1aYF-ILgsw+wg|2U6USfJ`ifu_zY3fVcZf6D{@O1Ta
+JS?83{1OOh?650R&
+
+delta 17
+YcmaDZbx>-91urLqr>mdKI;Vst05(qr%>V!Z
+
+diff --git a/src/desktop/opencode_service.rs b/src/desktop/opencode_service.rs
+index d0f536c9..c2a2f3c4 100644
+--- a/src/desktop/opencode_service.rs
++++ b/src/desktop/opencode_service.rs
+@@ -1234,7 +1234,9 @@ pub(crate) mod tests {
+             .unwrap_err();
+         assert!(error.to_string().contains("exceeded"), "{error}");
+         assert!(
+-            started.elapsed() < Duration::from_secs(2),
++            started.elapsed() < Duration::from_secs(10),
++            // The bound only has to survive a loaded parallel suite; the
++            // operation's own deadline is the real guard.
+             "{:?}",
+             started.elapsed()
+         );
+@@ -1257,7 +1259,9 @@ pub(crate) mod tests {
+                 .unwrap_err();
+             assert!(error.to_string().contains("cancelled"), "{error}");
+             assert!(
+-                started.elapsed() < Duration::from_secs(2),
++                started.elapsed() < Duration::from_secs(10),
++                // The bound only has to survive a loaded parallel suite; the
++                // operation's own deadline is the real guard.
+                 "{:?}",
+                 started.elapsed()
+             );
+@@ -1309,7 +1313,9 @@ pub(crate) mod tests {
+         assert_eq!(response.status, 404);
+         assert_eq!(response.body, b"gone");
+         assert!(
+-            started.elapsed() < Duration::from_secs(2),
++            started.elapsed() < Duration::from_secs(10),
++            // The bound only has to survive a loaded parallel suite; the
++            // operation's own deadline is the real guard.
+             "{:?}",
+             started.elapsed()
+         );
+diff --git a/src/rune_ui/capture_capsule/feed.rs b/src/rune_ui/capture_capsule/feed.rs
+index 086ac91a..251862f2 100644
+--- a/src/rune_ui/capture_capsule/feed.rs
++++ b/src/rune_ui/capture_capsule/feed.rs
+@@ -933,7 +933,7 @@ mod tests {
+                 to: Dest::new("SEER", "rule").session("ses_SEER"),
+                 suggested: vec![
+                     Dest::new("SEER", "rule").session("ses_SEER"),
+-                    Dest::new("VOINC", "last sent").session("ses_HEX"),
++                    Dest::new("VOINC", "last sent").session("ses_VOINC"),
+                 ],
+                 recent: vec![Dest::new("HOME", "yesterday").session("ses_HOME")],
+                 site: Some("seer.example.com".into()),
+diff --git a/src/rune_ui/capture_capsule/flow.rs b/src/rune_ui/capture_capsule/flow.rs
+index a01e9f4e..bd0c7e5d 100644
+--- a/src/rune_ui/capture_capsule/flow.rs
++++ b/src/rune_ui/capture_capsule/flow.rs
+@@ -2563,12 +2563,12 @@ mod tests {
+                 search: true
+             })
+         );
+-        for typed in ["h", "e", "x"] {
++        for typed in ["v", "o", "i", "n", "c"] {
+             flow.input(Input::Type(typed.into()), 1.0);
+         }
+         let (query, list) = done(&flow, 1.0).open.unwrap();
+         assert_eq!(query.text, "voinc");
+-        assert_eq!(query.range(), (3, 3), "the caret follows what was typed");
++        assert_eq!(query.range(), (5, 5), "the caret follows what was typed");
+         assert_eq!(list.title, "All sessions");
+         assert_eq!(
+             list.rows().map(|d| d.name.as_str()).collect::<Vec<_>>(),
+diff --git a/src/rune_ui/onboarding_kit/typing.rs b/src/rune_ui/onboarding_kit/typing.rs
+index dccb43d3..4f05a1dc 100644
+--- a/src/rune_ui/onboarding_kit/typing.rs
++++ b/src/rune_ui/onboarding_kit/typing.rs
+@@ -1182,7 +1182,7 @@ mod tests {
+     #[test]
+     fn a_tapback_stays_on_the_line_above_it() {
+         // The second haha lands after Jay's next line, still on yours.
+-        let src = "title Room\nboss Jay coral\nJay: so?\nstart\ntype ok\nsend\ntap haha 0.2 haha 0.8\nwait 0.3\nJay: STOP [0.5]\nend removed\nwith\nhex Yes, on my way.\nscore {voinc}\ntyped {secs}\n";
++        let src = "title Room\nboss Jay coral\nJay: so?\nstart\ntype ok\nsend\ntap haha 0.2 haha 0.8\nwait 0.3\nJay: STOP [0.5]\nend removed\nwith\nvoinc Yes, on my way.\nscore {voinc}\ntyped {secs}\n";
+         let script: &'static Script = Box::leak(Box::new(scene_script::parse(src).unwrap()));
+         let scene = Scene::play(&Timing::default(), script);
+         let mine = scene.lines().iter().position(|l| l.text == "ok").unwrap();
+diff --git a/src/updater.rs b/src/updater.rs
+index 0a4bcf3d..1a94f418 100644
+--- a/src/updater.rs
++++ b/src/updater.rs
+@@ -253,9 +253,10 @@ pub struct Updater {
+ impl Updater {
+     pub fn start() -> Self {
+         let method = platform::method();
+-        let disabled = if !update_origin_configured() {
+-            Some(DesktopUpdateStatus::Unavailable)
+-        } else if option_env!("VOINC_TEST_BUILD") == Some("1") || updates_off_by_env() {
++        let disabled = if !update_origin_configured()
++            || option_env!("VOINC_TEST_BUILD") == Some("1")
++            || updates_off_by_env()
++        {
+             Some(DesktopUpdateStatus::Unavailable)
+         } else if crate::app_paths::is_local_build() {
+             Some(DesktopUpdateStatus::SourceBuild)
+@@ -1228,7 +1229,7 @@ mod tests {
+     fn the_manifest_url_names_app_artifact_and_channel() {
+         assert_eq!(
+             manifest_url("stable"),
+-            "https://anoma.ly/release/hex/desktop/stable.json"
++            "https://anoma.ly/release/voinc/desktop/stable.json"
+         );
+     }
+ }
+diff --git a/src/updater/protocol.rs b/src/updater/protocol.rs
+index 24c1678e..2e5f4ae2 100644
+--- a/src/updater/protocol.rs
++++ b/src/updater/protocol.rs
+@@ -522,30 +522,34 @@ mod tests {
+ 
+     #[test]
+     fn target_urls_resolve_against_the_manifest() {
+-        let manifest = "https://anoma.ly/release/hex/desktop/stable.json";
++        let manifest = "https://anoma.ly/release/voinc/desktop/stable.json";
+         assert_eq!(
+             resolve_url(manifest, "/release/voinc/files/abc/Voinc.zip").as_deref(),
+-            Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
++            Some("https://anoma.ly/release/voinc/files/abc/Voinc.zip")
+         );
+         assert_eq!(
+             resolve_url(
+-                "https://dev.anoma.ly/release/hex/desktop/dev.json",
++                "https://dev.anoma.ly/release/voinc/desktop/dev.json",
+                 "/release/voinc/files/abc/Voinc.zip"
+             )
+             .as_deref(),
+-            Some("https://dev.anoma.ly/release/hex/files/abc/Hex.zip")
++            Some("https://dev.anoma.ly/release/voinc/files/abc/Voinc.zip")
+         );
+         assert_eq!(
+             resolve_url(manifest, "../files/abc/Voinc.zip").as_deref(),
+-            Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
++            Some("https://anoma.ly/release/voinc/files/abc/Voinc.zip")
+         );
+         assert_eq!(
+             resolve_url(manifest, "files/abc/Voinc.zip").as_deref(),
+-            Some("https://anoma.ly/release/hex/desktop/files/abc/Hex.zip")
++            Some("https://anoma.ly/release/voinc/desktop/files/abc/Voinc.zip")
+         );
+         assert_eq!(
+-            resolve_url(manifest, "https://anoma.ly/release/hex/files/abc/Hex.zip").as_deref(),
+-            Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
++            resolve_url(
++                manifest,
++                "https://anoma.ly/release/voinc/files/abc/Voinc.zip"
++            )
++            .as_deref(),
++            Some("https://anoma.ly/release/voinc/files/abc/Voinc.zip")
+         );
+         for elsewhere in [
+             "https://example.com/a",

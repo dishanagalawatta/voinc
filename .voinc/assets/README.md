@@ -36,3 +36,16 @@ with inkscape, trim to the alpha bbox, force straight white RGB, and
 recompose by the rules above (Lanczos); split subpaths on `M`. The tray and
 the 32 px glyph are written raw (4096 bytes). Tooling used: inkscape 1.x and
 Pillow; no other image tooling is needed.
+
+## The managed mark is not part of the art
+
+These copies are raw artwork: none carries the `X-Hex-Managed=true` chunk that
+`linux::icons::managed()` and the installers grep for, and rebrand.sh's copies
+must stay byte-identical to these files (a re-run of the sync changes
+nothing). The mark is added downstream, on the shipped Linux hicolor set, by
+the P9 patch's binary hunks; regenerate them with
+`python3 .voinc/managed-mark.py packaging/linux/icons/hicolor/*/apps/*.png`
+after the copies (see [`.voinc/patches/README.md`](../patches/README.md)).
+Do not mark the files here: a marked canonical copy would make rebrand.sh's
+copy step and the committed tree disagree the moment either is regenerated
+from raw art.
