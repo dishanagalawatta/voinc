@@ -1182,7 +1182,7 @@ mod tests {
     #[test]
     fn a_tapback_stays_on_the_line_above_it() {
         // The second haha lands after Jay's next line, still on yours.
-        let src = "title Room\nboss Jay coral\nJay: so?\nstart\ntype ok\nsend\ntap haha 0.2 haha 0.8\nwait 0.3\nJay: STOP [0.5]\nend removed\nwith\nhex Yes, on my way.\nscore {voinc}\ntyped {secs}\n";
+        let src = "title Room\nboss Jay coral\nJay: so?\nstart\ntype ok\nsend\ntap haha 0.2 haha 0.8\nwait 0.3\nJay: STOP [0.5]\nend removed\nwith\nvoinc Yes, on my way.\nscore {voinc}\ntyped {secs}\n";
         let script: &'static Script = Box::leak(Box::new(scene_script::parse(src).unwrap()));
         let scene = Scene::play(&Timing::default(), script);
         let mine = scene.lines().iter().position(|l| l.text == "ok").unwrap();

@@ -2563,12 +2563,12 @@ mod tests {
                 search: true
             })
         );
-        for typed in ["h", "e", "x"] {
+        for typed in ["v", "o", "i", "n", "c"] {
             flow.input(Input::Type(typed.into()), 1.0);
         }
         let (query, list) = done(&flow, 1.0).open.unwrap();
         assert_eq!(query.text, "voinc");
-        assert_eq!(query.range(), (3, 3), "the caret follows what was typed");
+        assert_eq!(query.range(), (5, 5), "the caret follows what was typed");
         assert_eq!(list.title, "All sessions");
         assert_eq!(
             list.rows().map(|d| d.name.as_str()).collect::<Vec<_>>(),

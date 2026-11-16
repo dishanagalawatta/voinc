@@ -253,9 +253,10 @@ pub struct Updater {
 impl Updater {
     pub fn start() -> Self {
         let method = platform::method();
-        let disabled = if !update_origin_configured() {
-            Some(DesktopUpdateStatus::Unavailable)
-        } else if option_env!("VOINC_TEST_BUILD") == Some("1") || updates_off_by_env() {
+        let disabled = if !update_origin_configured()
+            || option_env!("VOINC_TEST_BUILD") == Some("1")
+            || updates_off_by_env()
+        {
             Some(DesktopUpdateStatus::Unavailable)
         } else if crate::app_paths::is_local_build() {
             Some(DesktopUpdateStatus::SourceBuild)
@@ -1228,7 +1229,7 @@ mod tests {
     fn the_manifest_url_names_app_artifact_and_channel() {
         assert_eq!(
             manifest_url("stable"),
-            "https://anoma.ly/release/hex/desktop/stable.json"
+            "https://anoma.ly/release/voinc/desktop/stable.json"
         );
     }
 }

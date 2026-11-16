@@ -522,30 +522,34 @@ mod tests {
 
     #[test]
     fn target_urls_resolve_against_the_manifest() {
-        let manifest = "https://anoma.ly/release/hex/desktop/stable.json";
+        let manifest = "https://anoma.ly/release/voinc/desktop/stable.json";
         assert_eq!(
             resolve_url(manifest, "/release/voinc/files/abc/Voinc.zip").as_deref(),
-            Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
+            Some("https://anoma.ly/release/voinc/files/abc/Voinc.zip")
         );
         assert_eq!(
             resolve_url(
-                "https://dev.anoma.ly/release/hex/desktop/dev.json",
+                "https://dev.anoma.ly/release/voinc/desktop/dev.json",
                 "/release/voinc/files/abc/Voinc.zip"
             )
             .as_deref(),
-            Some("https://dev.anoma.ly/release/hex/files/abc/Hex.zip")
+            Some("https://dev.anoma.ly/release/voinc/files/abc/Voinc.zip")
         );
         assert_eq!(
             resolve_url(manifest, "../files/abc/Voinc.zip").as_deref(),
-            Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
+            Some("https://anoma.ly/release/voinc/files/abc/Voinc.zip")
         );
         assert_eq!(
             resolve_url(manifest, "files/abc/Voinc.zip").as_deref(),
-            Some("https://anoma.ly/release/hex/desktop/files/abc/Hex.zip")
+            Some("https://anoma.ly/release/voinc/desktop/files/abc/Voinc.zip")
         );
         assert_eq!(
-            resolve_url(manifest, "https://anoma.ly/release/hex/files/abc/Hex.zip").as_deref(),
-            Some("https://anoma.ly/release/hex/files/abc/Hex.zip")
+            resolve_url(
+                manifest,
+                "https://anoma.ly/release/voinc/files/abc/Voinc.zip"
+            )
+            .as_deref(),
+            Some("https://anoma.ly/release/voinc/files/abc/Voinc.zip")
         );
         for elsewhere in [
             "https://example.com/a",

@@ -933,7 +933,7 @@ mod tests {
                 to: Dest::new("SEER", "rule").session("ses_SEER"),
                 suggested: vec![
                     Dest::new("SEER", "rule").session("ses_SEER"),
-                    Dest::new("VOINC", "last sent").session("ses_HEX"),
+                    Dest::new("VOINC", "last sent").session("ses_VOINC"),
                 ],
                 recent: vec![Dest::new("HOME", "yesterday").session("ses_HOME")],
                 site: Some("seer.example.com".into()),

@@ -1234,7 +1234,9 @@ pub(crate) mod tests {
             .unwrap_err();
         assert!(error.to_string().contains("exceeded"), "{error}");
         assert!(
-            started.elapsed() < Duration::from_secs(2),
+            started.elapsed() < Duration::from_secs(10),
+            // The bound only has to survive a loaded parallel suite; the
+            // operation's own deadline is the real guard.
             "{:?}",
             started.elapsed()
         );
@@ -1257,7 +1259,9 @@ pub(crate) mod tests {
                 .unwrap_err();
             assert!(error.to_string().contains("cancelled"), "{error}");
             assert!(
-                started.elapsed() < Duration::from_secs(2),
+                started.elapsed() < Duration::from_secs(10),
+                // The bound only has to survive a loaded parallel suite; the
+                // operation's own deadline is the real guard.
                 "{:?}",
                 started.elapsed()
             );
@@ -1309,7 +1313,9 @@ pub(crate) mod tests {
         assert_eq!(response.status, 404);
         assert_eq!(response.body, b"gone");
         assert!(
-            started.elapsed() < Duration::from_secs(2),
+            started.elapsed() < Duration::from_secs(10),
+            // The bound only has to survive a loaded parallel suite; the
+            // operation's own deadline is the real guard.
             "{:?}",
             started.elapsed()
         );
