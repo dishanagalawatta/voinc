@@ -11,9 +11,10 @@
 //!   text. Any stream failure falls back to the whole clip, which [`batch`]
 //!   then transcribes.
 //!
-//! Auth is the person's Gemini API key: the saved setting first, else
-//! `VOINC_GOOGLE_API_KEY`. Requests and WebSockets go out like every other
-//! Voinc request: the platform's TLS and roots, and the proxy the computer
+//! Auth is the person's Gemini API key: `VOINC_GOOGLE_API_KEY` first, else
+//! the saved setting, which lives in the OS keychain ([`key_store`]), never
+//! in settings.json. Requests and WebSockets go out like every other Voinc
+//! request: the platform's TLS and roots, and the proxy the computer
 //! uses. Errors are named for a person.
 //!
 //! The free tier keeps some content to improve Google products and bounds
@@ -22,6 +23,7 @@
 //! kept in Google's interactions history on Voinc's behalf.
 
 pub(crate) mod batch;
+pub(crate) mod key_store;
 pub(crate) mod live;
 
 use std::sync::{Arc, OnceLock, RwLock};

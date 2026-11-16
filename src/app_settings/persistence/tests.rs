@@ -473,3 +473,105 @@ fn a_managed_lock_reads_off_and_never_rewrites_the_saved_switch() {
     assert!(unmanaged.meetings.enabled);
     assert!(unmanaged.labs.live_text);
 }
+
+/// The Gemini key: stored in the OS keychain, never in the file (except
+/// while the keychain is unavailable), with the load putting it back into
+/// the in-memory settings.
+#[test]
+fn the_gemini_key_moves_into_the_keychain_once() {
+    let file =
+        SettingsFile::new(br#"{"google_transcribe":{"api_key":"test-key-1","batch_only":true}}"#);
+    let settings = AppSettings::load_from(&file.path).unwrap();
+    // The runtime carries the key; the file no longer does.
+    assert_eq!(
+        settings.google_transcribe.api_key.as_deref(),
+        Some("test-key-1")
+    );
+    assert!(settings.has_migration(GOOGLE_KEY_MIGRATION));
+    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
+    assert!(saved["google_transcribe"].get("api_key").is_none());
+    assert_eq!(saved["google_transcribe"]["batch_only"], json!(true));
+    assert!(
+        saved["migrations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|id| id == GOOGLE_KEY_MIGRATION)
+    );
+
+    // Moving it once is enough: the next load re-seeds the field from the
+    // store without writing anything back.
+    let (again, migrated) = AppSettings::read_from(&file.path).unwrap();
+    assert!(!migrated);
+    assert_eq!(
+        again.google_transcribe.api_key.as_deref(),
+        Some("test-key-1")
+    );
+}
+
+#[test]
+fn a_saved_gemini_key_stays_out_of_the_file() {
+    let file = SettingsFile::new(br#"{}"#);
+    // What `AppSettings::save` does before writing: make the store hold the
+    // key, then the file leaves it out.
+    let mut settings = AppSettings::default();
+    settings.google_transcribe.api_key = Some("test-key-2".into());
+    key_store::sync(&file.path, Some("test-key-2")).unwrap();
+    settings.write_to(&file.path).unwrap();
+    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
+    assert!(saved["google_transcribe"].get("api_key").is_none());
+
+    // A load puts it back so the runtime keeps it.
+    let loaded = AppSettings::load_from(&file.path).unwrap();
+    assert_eq!(
+        loaded.google_transcribe.api_key.as_deref(),
+        Some("test-key-2")
+    );
+}
+
+#[test]
+fn an_unavailable_keychain_keeps_the_gemini_key_in_the_file() {
+    let file = SettingsFile::new(br#"{"google_transcribe":{"api_key":"test-key-3"}}"#);
+    key_store::test_fail(&file.path, true);
+    let settings = AppSettings::load_from(&file.path).unwrap();
+    assert_eq!(
+        settings.google_transcribe.api_key.as_deref(),
+        Some("test-key-3")
+    );
+    assert!(
+        !settings.has_migration(GOOGLE_KEY_MIGRATION),
+        "nothing moved"
+    );
+    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
+    assert_eq!(saved["google_transcribe"]["api_key"], json!("test-key-3"));
+    key_store::test_fail(&file.path, false);
+
+    // It heals: the next load moves the key in and cleans the file.
+    let settings = AppSettings::load_from(&file.path).unwrap();
+    assert!(settings.has_migration(GOOGLE_KEY_MIGRATION));
+    assert_eq!(
+        settings.google_transcribe.api_key.as_deref(),
+        Some("test-key-3")
+    );
+    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
+    assert!(saved["google_transcribe"].get("api_key").is_none());
+}
+
+/// The Linux two-second poll loads a fully migrated file forever: with the
+/// key absent from the file (or an explicit null there) that must never
+/// become a rewrite.
+#[test]
+fn a_migrated_file_is_not_rewritten_by_later_loads() {
+    let migrated_ids =
+        br#"{"migrations":["streaming-english-model","annotate-on-by-default","voinc-identity","meeting-retention-default","meeting-summaries-choice","google-key-in-keychain"]}"#;
+    let file = SettingsFile::new(migrated_ids);
+    let (settings, migrated) = AppSettings::read_from(&file.path).unwrap();
+    assert!(!migrated);
+    assert_eq!(settings.google_transcribe.api_key, None);
+
+    let file = SettingsFile::new(
+        br#"{"migrations":["streaming-english-model","annotate-on-by-default","voinc-identity","meeting-retention-default","meeting-summaries-choice","google-key-in-keychain"],"google_transcribe":{"api_key":null}}"#,
+    );
+    let (_, migrated) = AppSettings::read_from(&file.path).unwrap();
+    assert!(!migrated);
+}

@@ -618,14 +618,15 @@ pub(super) const KEYS: &[Key] = &[
     key(
         "labs.google_transcribe",
         Kind::Bool,
-        "Labs: transcribe with Google's Gemini models in the cloud, using the Gemini API key saved \
-         under google_transcribe.api_key (or VOINC_GOOGLE_API_KEY); audio is sent to Google",
+        "Labs: transcribe with Google's Gemini models in the cloud, using the Gemini API key \
+         stored in the system keychain (or VOINC_GOOGLE_API_KEY); audio is sent to Google",
     ),
     optional(
         "google_transcribe.api_key",
         Kind::Text,
-        "The Gemini API key Google Transcribe uses; none asks VOINC_GOOGLE_API_KEY first and \
-         otherwise leaves Google Transcribe unavailable",
+        "The Gemini API key Google Transcribe uses, stored in the system keychain and never \
+         printed by `voinc settings`; none asks VOINC_GOOGLE_API_KEY first and otherwise leaves \
+         Google Transcribe unavailable",
     ),
     key(
         "google_transcribe.batch_only",

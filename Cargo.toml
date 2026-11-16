@@ -105,6 +105,8 @@ objc2-quartz-core = { version = "0.3.2", features = ["CALayer"] }
 objc2-service-management = { version = "0.3.2", features = ["SMAppService"] }
 ratatui = "0.30.2"
 screencapturekit = { version = "=11.0.0", features = ["macos_15_0"] }
+# The OS keychain holds the Gemini API key (`transcription::gemini::key_store`).
+keyring = { version = "3.6.3", features = ["apple-native"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ctrlc = { version = "3.5.2", features = ["termination"] }
@@ -120,6 +122,10 @@ wayland-scanner = "0.31.11"
 x11-clipboard = "0.9.3"
 x11rb = { version = "0.14.0", features = ["xkb", "xtest"] }
 zbus = { version = "6.1.0", default-features = false, features = ["tokio", "proxy"] }
+# The Secret Service of the session bus holds the Gemini API key
+# (`transcription::gemini::key_store`), over zbus and Rust crypto, so no
+# system dbus library is required.
+keyring = { version = "3.6.3", features = ["async-secret-service", "async-io", "crypto-rust"] }
 
 # The desktop UI, and Annotate (Scrawl's capture engine), compiled into
 # every desktop build (`capture.enabled`).
@@ -144,6 +150,9 @@ wgpu = { version = "30", default-features = false, features = ["std", "parking_l
 
 [target.'cfg(target_os = "windows")'.dependencies]
 arboard = { version = "3.6.1", default-features = false, features = ["image-data"] }
+# Credential Manager holds the Gemini API key
+# (`transcription::gemini::key_store`).
+keyring = { version = "3.6.3", features = ["windows-native"] }
 winreg = "0.55.0"
 windows-sys = { version = "0.61.2", features = [
   "Win32_Foundation",

@@ -1,8 +1,113 @@
 diff --git a/Cargo.lock b/Cargo.lock
-index d6d5d287..01a79880 100644
+index d6d5d287..8bbcab33 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -1398,6 +1398,12 @@ version = "0.11.0"
+@@ -38,7 +38,7 @@ dependencies = [
+  "atspi-common",
+  "phf 0.14.0",
+  "serde",
+- "zvariant",
++ "zvariant 5.15.1",
+ ]
+ 
+ [[package]]
+@@ -112,6 +112,17 @@ version = "2.0.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
+ 
++[[package]]
++name = "aes"
++version = "0.8.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b169f7a6d4742236a0a00c541b845991d0ac43e546831af1249753ab4c3aa3a0"
++dependencies = [
++ "cfg-if",
++ "cipher",
++ "cpufeatures 0.2.17",
++]
++
+ [[package]]
+ name = "ahash"
+ version = "0.8.12"
+@@ -366,6 +377,17 @@ dependencies = [
+  "slab",
+ ]
+ 
++[[package]]
++name = "async-fs"
++version = "2.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8034a681df4aed8b8edbd7fbe472401ecf009251c8b40556b304567052e294c5"
++dependencies = [
++ "async-lock",
++ "blocking",
++ "futures-lite",
++]
++
+ [[package]]
+ name = "async-io"
+ version = "2.6.0"
+@@ -496,8 +518,8 @@ dependencies = [
+  "zbus 5.19.0",
+  "zbus-lockstep",
+  "zbus-lockstep-macros",
+- "zbus_names",
+- "zvariant",
++ "zbus_names 4.3.5",
++ "zvariant 5.15.1",
+ ]
+ 
+ [[package]]
+@@ -656,6 +678,15 @@ dependencies = [
+  "hybrid-array",
+ ]
+ 
++[[package]]
++name = "block-padding"
++version = "0.3.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a8894febbff9f758034a5b8e12d87918f56dfc64a8e1fe757d65e29041538d93"
++dependencies = [
++ "generic-array",
++]
++
+ [[package]]
+ name = "block2"
+ version = "0.5.1"
+@@ -800,6 +831,15 @@ dependencies = [
+  "rustversion",
+ ]
+ 
++[[package]]
++name = "cbc"
++version = "0.1.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "26b52a9543ae338f279b96b0b9fed9c8093744685043739079ce85cd58f289a6"
++dependencies = [
++ "cipher",
++]
++
+ [[package]]
+ name = "cc"
+ version = "1.5.1"
+@@ -836,6 +876,16 @@ dependencies = [
+  "windows-link 0.2.1",
+ ]
+ 
++[[package]]
++name = "cipher"
++version = "0.4.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad"
++dependencies = [
++ "crypto-common 0.1.7",
++ "inout",
++]
++
+ [[package]]
+ name = "clap"
+ version = "4.6.7"
+@@ -1398,12 +1448,47 @@ version = "0.11.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "0c87e182de0887fd5361989c677c4e8f5000cd9491d6d563161a8f3a5519fc7f"
  
@@ -15,7 +120,187 @@ index d6d5d287..01a79880 100644
  [[package]]
  name = "data-url"
  version = "0.3.2"
-@@ -4256,7 +4262,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "be1e0bca6c3637f992fc1cc7cbc52a78c1ef6db076dbf1059c4323d6a2048376"
+ 
++[[package]]
++name = "dbus"
++version = "0.9.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3ab69f03cc8c4340c9c8e315114e1658e6775a9b16a04357973aa21cec22b32e"
++dependencies = [
++ "libc",
++ "libdbus-sys",
++ "windows-sys 0.61.2",
++]
++
++[[package]]
++name = "dbus-secret-service"
++version = "4.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "708b509edf7889e53d7efb0ffadd994cc6c2345ccb62f55cfd6b0682165e4fa6"
++dependencies = [
++ "aes",
++ "block-padding",
++ "cbc",
++ "dbus",
++ "fastrand",
++ "hkdf",
++ "num",
++ "once_cell",
++ "sha2 0.10.9",
++ "zeroize",
++]
++
+ [[package]]
+ name = "deltae"
+ version = "0.3.2"
+@@ -1497,6 +1582,7 @@ checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
+ dependencies = [
+  "block-buffer 0.10.4",
+  "crypto-common 0.1.7",
++ "subtle",
+ ]
+ 
+ [[package]]
+@@ -2246,6 +2332,24 @@ version = "0.4.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+ 
++[[package]]
++name = "hkdf"
++version = "0.12.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7b5f8eb2ad728638ea2c7d47a21db23b7b58a72ed6a38256b8a1849f15fbbdf7"
++dependencies = [
++ "hmac",
++]
++
++[[package]]
++name = "hmac"
++version = "0.12.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
++dependencies = [
++ "digest 0.10.7",
++]
++
+ [[package]]
+ name = "hmac-sha256"
+ version = "1.1.15"
+@@ -2530,6 +2634,16 @@ dependencies = [
+  "rustversion",
+ ]
+ 
++[[package]]
++name = "inout"
++version = "0.1.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
++dependencies = [
++ "block-padding",
++ "generic-array",
++]
++
+ [[package]]
+ name = "instability"
+ version = "0.3.14"
+@@ -2665,6 +2779,23 @@ dependencies = [
+  "thiserror 2.0.21",
+ ]
+ 
++[[package]]
++name = "keyring"
++version = "3.6.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "eebcc3aff044e5944a8fbaf69eb277d11986064cba30c468730e8b9909fb551c"
++dependencies = [
++ "byteorder",
++ "dbus-secret-service",
++ "log",
++ "secret-service",
++ "security-framework 2.11.1",
++ "security-framework 3.7.0",
++ "windows-sys 0.60.2",
++ "zbus 4.4.0",
++ "zeroize",
++]
++
+ [[package]]
+ name = "kurbo"
+ version = "0.11.3"
+@@ -2694,6 +2825,15 @@ version = "0.2.189"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
+ 
++[[package]]
++name = "libdbus-sys"
++version = "0.2.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "328c4789d42200f1eeec05bd86c9c13c7f091d2ba9a6ea35acdf51f31bc0f043"
++dependencies = [
++ "pkg-config",
++]
++
+ [[package]]
+ name = "libloading"
+ version = "0.8.9"
+@@ -2960,7 +3100,7 @@ dependencies = [
+  "openssl-probe",
+  "openssl-sys",
+  "schannel",
+- "security-framework",
++ "security-framework 3.7.0",
+  "security-framework-sys",
+  "tempfile",
+ ]
+@@ -3020,6 +3160,7 @@ dependencies = [
+  "cfg-if",
+  "cfg_aliases",
+  "libc",
++ "memoffset",
+ ]
+ 
+ [[package]]
+@@ -3081,6 +3222,20 @@ dependencies = [
+  "windows-sys 0.61.2",
+ ]
+ 
++[[package]]
++name = "num"
++version = "0.4.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
++dependencies = [
++ "num-bigint 0.4.8",
++ "num-complex",
++ "num-integer",
++ "num-iter",
++ "num-rational",
++ "num-traits",
++]
++
+ [[package]]
+ name = "num-bigint"
+ version = "0.4.8"
+@@ -3136,6 +3291,16 @@ dependencies = [
+  "num-traits",
+ ]
+ 
++[[package]]
++name = "num-iter"
++version = "0.1.46"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c92800bd69a1eac91786bcfe9da64a897eb72911b8dc3095decbd07429e8048b"
++dependencies = [
++ "num-integer",
++ "num-traits",
++]
++
+ [[package]]
+ name = "num-rational"
+ version = "0.4.2"
+@@ -4256,7 +4421,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "3c80231409c20246a13fddb31776fb942c38553c51e871f8cbd687a4cfb5843d"
  dependencies = [
   "phf_shared 0.11.3",
@@ -24,7 +309,7 @@ index d6d5d287..01a79880 100644
  ]
  
  [[package]]
-@@ -4456,6 +4462,15 @@ version = "0.2.0"
+@@ -4456,6 +4621,15 @@ version = "0.2.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
  
@@ -40,11 +325,13 @@ index d6d5d287..01a79880 100644
  [[package]]
  name = "presser"
  version = "0.3.1"
-@@ -4551,7 +4566,27 @@ version = "0.8.8"
+@@ -4551,7 +4725,39 @@ version = "0.8.8"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c"
  dependencies = [
 - "rand_core",
++ "libc",
++ "rand_chacha 0.3.1",
 + "rand_core 0.6.4",
 +]
 +
@@ -54,8 +341,18 @@ index d6d5d287..01a79880 100644
 +source = "registry+https://github.com/rust-lang/crates.io-index"
 +checksum = "b9ef1d0d795eb7d84685bca4f72f3649f064e6641543d3a8c415898726a57b41"
 +dependencies = [
-+ "rand_chacha",
++ "rand_chacha 0.9.0",
 + "rand_core 0.9.5",
++]
++
++[[package]]
++name = "rand_chacha"
++version = "0.3.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e6c10a63a0fa32252be49d21e7709d4d4baf8d231c2dbce1eaa8141b9b127d88"
++dependencies = [
++ "ppv-lite86",
++ "rand_core 0.6.4",
 +]
 +
 +[[package]]
@@ -69,7 +366,7 @@ index d6d5d287..01a79880 100644
  ]
  
  [[package]]
-@@ -4563,6 +4598,15 @@ dependencies = [
+@@ -4563,6 +4769,15 @@ dependencies = [
   "getrandom 0.2.17",
  ]
  
@@ -85,7 +382,46 @@ index d6d5d287..01a79880 100644
  [[package]]
  name = "range-alloc"
  version = "0.1.5"
-@@ -5429,6 +5473,17 @@ dependencies = [
+@@ -5309,6 +5524,38 @@ dependencies = [
+  "tiny-skia",
+ ]
+ 
++[[package]]
++name = "secret-service"
++version = "4.0.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e4d35ad99a181be0a60ffcbe85d680d98f87bdc4d7644ade319b87076b9dbfd4"
++dependencies = [
++ "aes",
++ "cbc",
++ "futures-util",
++ "generic-array",
++ "hkdf",
++ "num",
++ "once_cell",
++ "rand 0.8.8",
++ "serde",
++ "sha2 0.10.9",
++ "zbus 4.4.0",
++]
++
++[[package]]
++name = "security-framework"
++version = "2.11.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "897b2245f0b511c87893af39b033e5ca9cce68824c4d7e7630b5a1d339658d02"
++dependencies = [
++ "bitflags 2.13.2",
++ "core-foundation 0.9.4",
++ "core-foundation-sys",
++ "libc",
++ "security-framework-sys",
++]
++
+ [[package]]
+ name = "security-framework"
+ version = "3.7.0"
+@@ -5429,6 +5676,17 @@ dependencies = [
   "serde_core",
  ]
  
@@ -103,7 +439,7 @@ index d6d5d287..01a79880 100644
  [[package]]
  name = "sha2"
  version = "0.10.9"
-@@ -5503,7 +5558,7 @@ version = "2.2.0"
+@@ -5503,7 +5761,7 @@ version = "2.2.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
  dependencies = [
@@ -112,7 +448,7 @@ index d6d5d287..01a79880 100644
  ]
  
  [[package]]
-@@ -6365,6 +6420,24 @@ version = "0.25.1"
+@@ -6365,6 +6623,24 @@ version = "0.25.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
  
@@ -137,7 +473,7 @@ index d6d5d287..01a79880 100644
  [[package]]
  name = "typenum"
  version = "1.20.1"
-@@ -6496,6 +6569,12 @@ dependencies = [
+@@ -6496,6 +6772,12 @@ dependencies = [
   "xmlwriter",
  ]
  
@@ -150,7 +486,7 @@ index d6d5d287..01a79880 100644
  [[package]]
  name = "utf8-zero"
  version = "0.8.1"
-@@ -6562,6 +6641,7 @@ version = "3.4.0"
+@@ -6562,6 +6844,7 @@ version = "3.4.0"
  dependencies = [
   "anyhow",
   "arboard",
@@ -158,15 +494,17 @@ index d6d5d287..01a79880 100644
   "block2 0.6.2",
   "capture-core",
   "cc",
-@@ -6579,6 +6659,7 @@ dependencies = [
+@@ -6578,7 +6861,9 @@ dependencies = [
+  "futures-util",
   "getrandom 0.4.3",
   "hound",
++ "keyring",
   "libc",
 + "native-tls",
   "objc2 0.6.5",
   "objc2-app-kit 0.3.2",
   "objc2-core-audio",
-@@ -6617,6 +6698,7 @@ dependencies = [
+@@ -6617,6 +6902,7 @@ dependencies = [
   "tracing-subscriber",
   "transcribe-cpp",
   "transcribe-rs",
@@ -174,8 +512,248 @@ index d6d5d287..01a79880 100644
   "unicode-normalization",
   "unicode-segmentation",
   "ureq",
+@@ -7704,6 +7990,16 @@ version = "0.3.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "163b33ed8786455e2fa5d72f554057ce3f3182425434f756cd39c99839d88e23"
+ 
++[[package]]
++name = "xdg-home"
++version = "1.3.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ec1cdab258fb55c0da61328dc52c8764709b249011b2cad0454c72f0bf10a1f6"
++dependencies = [
++ "libc",
++ "windows-sys 0.59.0",
++]
++
+ [[package]]
+ name = "xkbcommon"
+ version = "0.9.0"
+@@ -7780,6 +8076,44 @@ dependencies = [
+  "synstructure",
+ ]
+ 
++[[package]]
++name = "zbus"
++version = "4.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "bb97012beadd29e654708a0fdb4c84bc046f537aecfde2c3ee0a9e4b4d48c725"
++dependencies = [
++ "async-broadcast",
++ "async-executor",
++ "async-fs",
++ "async-io",
++ "async-lock",
++ "async-process",
++ "async-recursion",
++ "async-task",
++ "async-trait",
++ "blocking",
++ "enumflags2",
++ "event-listener",
++ "futures-core",
++ "futures-sink",
++ "futures-util",
++ "hex",
++ "nix 0.29.0",
++ "ordered-stream",
++ "rand 0.8.8",
++ "serde",
++ "serde_repr",
++ "sha1",
++ "static_assertions",
++ "tracing",
++ "uds_windows",
++ "windows-sys 0.52.0",
++ "xdg-home",
++ "zbus_macros 4.4.0",
++ "zbus_names 3.0.0",
++ "zvariant 4.2.0",
++]
++
+ [[package]]
+ name = "zbus"
+ version = "5.19.0"
+@@ -7811,8 +8145,8 @@ dependencies = [
+  "windows-sys 0.61.2",
+  "winnow",
+  "zbus_macros 5.19.0",
+- "zbus_names",
+- "zvariant",
++ "zbus_names 4.3.5",
++ "zvariant 5.15.1",
+ ]
+ 
+ [[package]]
+@@ -7850,7 +8184,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "6998de05217a084b7578728a9443d04ea4cd80f2a0839b8d78770b76ccd45863"
+ dependencies = [
+  "zbus_xml",
+- "zvariant",
++ "zvariant 5.15.1",
+ ]
+ 
+ [[package]]
+@@ -7864,7 +8198,20 @@ dependencies = [
+  "syn 2.0.119",
+  "zbus-lockstep",
+  "zbus_xml",
+- "zvariant",
++ "zvariant 5.15.1",
++]
++
++[[package]]
++name = "zbus_macros"
++version = "4.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "267db9407081e90bbfa46d841d3cbc60f59c0351838c4bc65199ecd79ab1983e"
++dependencies = [
++ "proc-macro-crate",
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++ "zvariant_utils 2.1.0",
+ ]
+ 
+ [[package]]
+@@ -7877,9 +8224,9 @@ dependencies = [
+  "proc-macro2",
+  "quote",
+  "syn 3.0.6",
+- "zbus_names",
+- "zvariant",
+- "zvariant_utils",
++ "zbus_names 4.3.5",
++ "zvariant 5.15.1",
++ "zvariant_utils 4.2.0",
+ ]
+ 
+ [[package]]
+@@ -7894,6 +8241,17 @@ dependencies = [
+  "zbus_utils",
+ ]
+ 
++[[package]]
++name = "zbus_names"
++version = "3.0.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4b9b1fef7d021261cc16cba64c351d291b715febe0fa10dc3a443ac5a5022e6c"
++dependencies = [
++ "serde",
++ "static_assertions",
++ "zvariant 4.2.0",
++]
++
+ [[package]]
+ name = "zbus_names"
+ version = "4.3.5"
+@@ -7902,7 +8260,7 @@ checksum = "812a12be4ead7a59e18ea8f047d08add0066b73bc62fc1467066a2472ae088dd"
+ dependencies = [
+  "serde",
+  "winnow",
+- "zvariant",
++ "zvariant 5.15.1",
+ ]
+ 
+ [[package]]
+@@ -7926,8 +8284,8 @@ checksum = "d1586c021a01ca0a9216dcd874e546382e156a5cbab5fab6cb5f10087e22682a"
+ dependencies = [
+  "serde",
+  "winnow",
+- "zbus_names",
+- "zvariant",
++ "zbus_names 4.3.5",
++ "zvariant 5.15.1",
+ ]
+ 
+ [[package]]
+@@ -7991,6 +8349,20 @@ name = "zeroize"
+ version = "1.9.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e"
++dependencies = [
++ "zeroize_derive",
++]
++
++[[package]]
++name = "zeroize_derive"
++version = "1.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
+ 
+ [[package]]
+ name = "zerotrie"
+@@ -8064,6 +8436,19 @@ dependencies = [
+  "zune-core",
+ ]
+ 
++[[package]]
++name = "zvariant"
++version = "4.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2084290ab9a1c471c38fc524945837734fbf124487e105daec2bb57fd48c81fe"
++dependencies = [
++ "endi",
++ "enumflags2",
++ "serde",
++ "static_assertions",
++ "zvariant_derive 4.2.0",
++]
++
+ [[package]]
+ name = "zvariant"
+ version = "5.15.1"
+@@ -8075,8 +8460,21 @@ dependencies = [
+  "serde",
+  "winnow",
+  "zcheapstr",
+- "zvariant_derive",
+- "zvariant_utils",
++ "zvariant_derive 5.15.1",
++ "zvariant_utils 4.2.0",
++]
++
++[[package]]
++name = "zvariant_derive"
++version = "4.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "73e2ba546bda683a90652bac4a279bc146adad1386f25379cf73200d2002c449"
++dependencies = [
++ "proc-macro-crate",
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++ "zvariant_utils 2.1.0",
+ ]
+ 
+ [[package]]
+@@ -8089,7 +8487,18 @@ dependencies = [
+  "proc-macro2",
+  "quote",
+  "syn 3.0.6",
+- "zvariant_utils",
++ "zvariant_utils 4.2.0",
++]
++
++[[package]]
++name = "zvariant_utils"
++version = "2.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c51bcff7cc3dbb5055396bcf774748c3dab426b4b8659046963523cee4808340"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
+ ]
+ 
+ [[package]]
 diff --git a/Cargo.toml b/Cargo.toml
-index 4ca227d0..0e03c9b2 100644
+index 4ca227d0..6da800e7 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -65,6 +65,7 @@ rquickjs = { version = "0.14.0", default-features = false, features = ["std", "l
@@ -199,6 +777,36 @@ index 4ca227d0..0e03c9b2 100644
  
  [target.'cfg(target_os = "macos")'.dependencies]
  capture-core = { path = "crates/capture-core" }
+@@ -98,6 +105,8 @@ objc2-quartz-core = { version = "0.3.2", features = ["CALayer"] }
+ objc2-service-management = { version = "0.3.2", features = ["SMAppService"] }
+ ratatui = "0.30.2"
+ screencapturekit = { version = "=11.0.0", features = ["macos_15_0"] }
++# The OS keychain holds the Gemini API key (`transcription::gemini::key_store`).
++keyring = { version = "3.6.3", features = ["apple-native"] }
+ 
+ [target.'cfg(target_os = "linux")'.dependencies]
+ ctrlc = { version = "3.5.2", features = ["termination"] }
+@@ -113,6 +122,10 @@ wayland-scanner = "0.31.11"
+ x11-clipboard = "0.9.3"
+ x11rb = { version = "0.14.0", features = ["xkb", "xtest"] }
+ zbus = { version = "6.1.0", default-features = false, features = ["tokio", "proxy"] }
++# The Secret Service of the session bus holds the Gemini API key
++# (`transcription::gemini::key_store`), over zbus and Rust crypto, so no
++# system dbus library is required.
++keyring = { version = "3.6.3", features = ["async-secret-service", "async-io", "crypto-rust"] }
+ 
+ # The desktop UI, and Annotate (Scrawl's capture engine), compiled into
+ # every desktop build (`capture.enabled`).
+@@ -137,6 +150,9 @@ wgpu = { version = "30", default-features = false, features = ["std", "parking_l
+ 
+ [target.'cfg(target_os = "windows")'.dependencies]
+ arboard = { version = "3.6.1", default-features = false, features = ["image-data"] }
++# Credential Manager holds the Gemini API key
++# (`transcription::gemini::key_store`).
++keyring = { version = "3.6.3", features = ["windows-native"] }
+ winreg = "0.55.0"
+ windows-sys = { version = "0.61.2", features = [
+   "Win32_Foundation",
 diff --git a/docs/features/README.md b/docs/features/README.md
 index 97dba05e..11ab5a8c 100644
 --- a/docs/features/README.md
@@ -217,10 +825,10 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..2af5153c
+index 00000000..a809b27f
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,186 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
@@ -241,9 +849,10 @@ index 00000000..2af5153c
 +├── Toggle on -> the card shows an "API key" field (drafted while typed and
 +│   committed once typing pauses — the shared draft save every text field
 +│   uses, so the first key saves through the field and a cleared field
-+│   clears it; `google_transcribe.api_key`, or the environment's
-+│   VOINC_GOOGLE_API_KEY, read again at every run) and, while on, a
-+│   "Skip live streaming" switch (`google_transcribe.batch_only`)
++│   clears it; the field shows dots, the key lives in the OS keychain and
++│   stays out of settings.json unless the keychain is unavailable, and the
++│   environment's VOINC_GOOGLE_API_KEY answers first at every run) and,
++│   while on, a "Skip live streaming" switch (`google_transcribe.batch_only`)
 +├── Skip live streaming (on) -> no live session at all: each dictation
 +│   transcribes the whole clip by batch after it ends; nothing shows while
 +│   it records
@@ -278,17 +887,29 @@ index 00000000..2af5153c
 +
 +## The key
 +
-+The key is the person's: the saved setting first (`voinc settings set
-+google_transcribe.api_key …`, or the field on the Labs card, serialized as
-+`null` while unset), else the `VOINC_GOOGLE_API_KEY` environment variable.
-+Either is trimmed; an empty one is no key. Google Transcribe is prepared —
-+nothing to download — while its key answers, and `voinc model use
-+gemini_transcribe` selects it under the same rule. A request with no key fails
-+before anything is sent, named for a person; a refused key, a rate limit, and
-+Google's HTML error pages are named for a person too. Requests and
-+WebSockets go out like every other Voinc request: the platform's TLS and
-+roots, and the proxy the computer uses — a SOCKS proxy refuses the live
-+session (the batch request still goes out).
++The key is the person's, and it lives in the OS keychain — the login keychain
++on macOS, Credential Manager on Windows, the Secret Service of the session bus
++on Linux (`transcription::gemini::key_store`, over zbus and Rust crypto so no
++system dbus library is needed) — never in settings.json: the saved setting
++(`google_transcribe.api_key`) is only the in-memory carrier, re-seeded from
++the keychain at every load and left out of every save. `voinc settings get`
++and `list` show whether one is saved ("saved in your system's keychain"),
++never the key itself. While the keychain is unavailable the key stays in the
++file instead — a save is never blocked by it — and a later load or save moves
++it in. A key found in an older file moves into the keychain once
++(`google-key-in-keychain` migration). At request time the
++`VOINC_GOOGLE_API_KEY` environment variable answers first, else the saved
++key. The field on the Labs card shows dots (masked) and is drafted while
++typed and committed once typing pauses — the shared draft save every text
++field uses — so a pasted first key saves through the field and a cleared
++field clears it; either is trimmed, and an empty one is no key. Google
++Transcribe is prepared — nothing to download — while its key answers, and
++`voinc model use gemini_transcribe` selects it under the same rule. A request
++with no key fails before anything is sent, named for a person; a refused
++key, a rate limit, and Google's HTML error pages are named for a person too.
++Requests and WebSockets go out like every other Voinc request: the platform's
++TLS and roots, and the proxy the computer uses — a SOCKS proxy refuses the
++live session (the batch request still goes out).
 +
 +## Batch and Live
 +
@@ -371,7 +992,17 @@ index 00000000..2af5153c
 +[rune_ui/tests.rs](../../src/rune_ui/tests.rs) holds the card's field itself:
 +seeded at the store's open (an unopened store projects nothing), a pasted
 +first key commits through the shared draft save, a later open reseeds from
-+the saved key, and clearing the field clears it.
++the saved key, and clearing the field clears it. The key's storage is held by
++`the_gemini_key_moves_into_the_keychain_once`, `a_saved_gemini_key_stays_out_of_the_file`,
++`an_unavailable_keychain_keeps_the_gemini_key_in_the_file`, and
++`a_migrated_file_is_not_rewritten_by_later_loads` in
++[persistence/tests.rs](../../src/app_settings/persistence/tests.rs);
++`the_gemini_key_is_never_printed` in
++[control/settings.rs](../../src/control/settings.rs) holds the redaction; and
++[key_store.rs](../../src/transcription/gemini/key_store.rs) unit-tests the
++store access itself — prime, sync on change, clear, holds, the unavailable
++store keeping the key in the file, and an empty key being no key — every one
++against an in-memory recorder: no test ever opens the real keychain.
 +
 +Observed on a real Linux desktop (GNOME Wayland, x86_64): selecting
 +`gemini_transcribe` with a key through `voinc model use` switches at once, a
@@ -385,26 +1016,29 @@ index 00000000..2af5153c
 +`voinc transcribe` over a real long file (segment splitting) is untested
 +against Google's truncation behavior.
 diff --git a/docs/features/labs.md b/docs/features/labs.md
-index ab4db808..4cdb12c6 100644
+index ab4db808..ac347b0b 100644
 --- a/docs/features/labs.md
 +++ b/docs/features/labs.md
 @@ -70,6 +70,7 @@ Feature             Pane  Toggle (settings.json, voinc settings)   On: what it d
  ├── Sort and filter models no labs.picker_sort_filter   the Local transcription picker sorts by recommendation, size, or name and can show only models for the saved language (#645)
  ├── Benchmark details no  labs.benchmark_details        picker rows show raw WER/CER (lower is better), language, dataset, source, and conditions; incomparable "Most accurate" badges drop (#647)
  ├── Parakeet Ultra  no    labs.parakeet_ultra          the picker offers Moondream's Parakeet Ultra (pinned Q8_0, CC BY 4.0) with a details view; stays on while it dictates (#648)
-+├── Google Transcribe no labs.google_transcribe + google_transcribe.api_key   the picker offers Google's cloud transcription with the person's Gemini API key; your audio goes to Google (google-transcribe.md)
++├── Google Transcribe no labs.google_transcribe + google_transcribe.api_key   the picker offers Google's cloud transcription with the person's Gemini API key, held in the OS keychain; your audio goes to Google (google-transcribe.md)
  ├── Special keys alone no labs.standalone_special_keys (Linux, Windows) Linux: Menu, Pause, Scroll Lock may be a shortcut's key, alone or with modifiers (#767); Windows: Insert, Home, End, Page Up, Page Down may stand alone (#794)
  ├── Section key alone no  labs.section_key_alone       (Linux) the § key, left of 1 on ISO keyboards, may be a shortcut with no modifier (#1050)
  ├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; voinc history stats prints it (#790)
-@@ -2764,6 +2765,31 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
+@@ -2764,6 +2765,34 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
  Bluetooth headphones and the lab on, and the Linux and Windows backends on a
  real desktop.
  
 +- Google Transcribe: Google's Gemini speech models in the cloud, behind the
 +  person's Gemini API key (every OS; see
 +  [Google Transcribe](google-transcribe.md)). Its toggle is
-+  `labs.google_transcribe` (off by default, applied at once) and the key is
-+  `google_transcribe.api_key` or the environment's `VOINC_GOOGLE_API_KEY`.
++  `labs.google_transcribe` (off by default, applied at once) and the key
++  lives in the OS keychain (`google_transcribe.api_key` is only its
++  in-memory carrier and stays out of settings.json unless the keychain is
++  unavailable; the environment's `VOINC_GOOGLE_API_KEY` answers first at
++  request time).
 +  The gate, `labs::google_transcribe()` plus the key
 +  (`ModelDefinition::available`), is where the work starts: with either
 +  missing the picker doesn't offer it and a saved choice of it runs the usual
@@ -429,10 +1063,10 @@ index ab4db808..4cdb12c6 100644
  `contributed_options_are_labs_toggles_off_by_default`,
  `the_browser_labs_toggle_turns_on_and_asks_for_system_audio`,
 diff --git a/src/app_settings.rs b/src/app_settings.rs
-index ada7a094..ae7da803 100644
+index ada7a094..efea1d5c 100644
 --- a/src/app_settings.rs
 +++ b/src/app_settings.rs
-@@ -134,6 +134,22 @@ pub fn env_hex_experimental_mic() -> bool {
+@@ -134,6 +134,26 @@ pub fn env_hex_experimental_mic() -> bool {
          .is_some_and(|v| matches!(v.trim(), "1" | "true" | "TRUE" | "yes"))
  }
  
@@ -442,8 +1076,12 @@ index ada7a094..ae7da803 100644
 +#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 +#[serde(default)]
 +pub struct GoogleTranscribeSettings {
-+    /// The key saved in Settings › Labs; `None` asks `VOINC_GOOGLE_API_KEY`
-+    /// first and otherwise leaves Google Transcribe unavailable.
++    /// The key saved in Settings › Labs, held in the OS keychain
++    /// (`transcription::gemini::key_store`) and only carried in memory here;
++    /// the file leaves it out unless the keychain is unavailable. `None`
++    /// asks `VOINC_GOOGLE_API_KEY` first and otherwise leaves Google
++    /// Transcribe unavailable.
++    #[serde(skip_serializing_if = "Option::is_none")]
 +    pub api_key: Option<String>,
 +    /// Whether dictation skips Google's live session: each capture
 +    /// transcribes the whole clip over the batch API after it ends. Off by
@@ -455,7 +1093,7 @@ index ada7a094..ae7da803 100644
  /// Where Linux and Windows run the speech model (#856): Auto picks a GPU
  /// unless it failed before under its current driver, then the CPU.
  #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-@@ -322,6 +338,8 @@ pub struct AppSettings {
+@@ -322,6 +342,8 @@ pub struct AppSettings {
      pub capture_from_other_build: Option<serde_json::Value>,
      #[serde(default)]
      pub experimental: ExperimentalSettings,
@@ -464,7 +1102,33 @@ index ada7a094..ae7da803 100644
      /// The Labs features' own switches (`crate::labs`).
      pub labs: LabsSettings,
      /// Labs › Screenshots' shortcut and folder (macOS).
-@@ -452,6 +470,7 @@ impl Default for AppSettings {
+@@ -381,6 +403,7 @@ const MIGRATIONS: &[&str] = &[
+     VOINC_IDENTITY_MIGRATION,
+     MEETING_RETENTION_DEFAULT_MIGRATION,
+     MEETING_SUMMARIES_MIGRATION,
++    GOOGLE_KEY_MIGRATION,
+ ];
+ #[cfg(not(hex_capture))]
+ const MIGRATIONS: &[&str] = &[
+@@ -388,6 +411,7 @@ const MIGRATIONS: &[&str] = &[
+     VOINC_IDENTITY_MIGRATION,
+     MEETING_RETENTION_DEFAULT_MIGRATION,
+     MEETING_SUMMARIES_MIGRATION,
++    GOOGLE_KEY_MIGRATION,
+ ];
+ /// Scrawl's settings were read into `capture` once. Left out of
+ /// `MIGRATIONS` so new settings import them too.
+@@ -403,6 +427,9 @@ const MEETING_RETENTION_DEFAULT_MIGRATION: &str = "meeting-retention-default";
+ /// Summarize with Apple Intelligence and Summarize with OpenCode became one
+ /// choice, `meetings.summaries`.
+ const MEETING_SUMMARIES_MIGRATION: &str = "meeting-summaries-choice";
++/// The Gemini key moved to the OS keychain; the file keeps carrying it only
++/// while the keychain is unavailable.
++const GOOGLE_KEY_MIGRATION: &str = "google-key-in-keychain";
+ 
+ fn deserialize_retired_value<'de, D>(
+     deserializer: D,
+@@ -452,6 +479,7 @@ impl Default for AppSettings {
              #[cfg(not(hex_capture))]
              capture_from_other_build: None,
              experimental: ExperimentalSettings::default(),
@@ -472,7 +1136,7 @@ index ada7a094..ae7da803 100644
              labs: LabsSettings::default(),
              screenshots: ScreenshotSettings::default(),
              enable_on_launch: true,
-@@ -502,6 +521,9 @@ impl KeyboardModelChoice {
+@@ -502,6 +530,9 @@ impl KeyboardModelChoice {
          let model = crate::transcription::models::validate(&selection)?;
          match model.runtime {
              crate::transcription::models::ModelRuntime::Gguf(_) => Ok(()),
@@ -482,7 +1146,23 @@ index ada7a094..ae7da803 100644
              crate::transcription::models::ModelRuntime::AppleSpeech => {
                  Err(eyre!("{} can't be switched to by input source", model.name))
              }
-@@ -779,6 +801,9 @@ impl AppSettings {
+@@ -719,6 +750,15 @@ impl AppSettings {
+ 
+     pub fn save(&self) -> Result<()> {
+         let path = path()?;
++        if let Err(error) = crate::transcription::gemini::key_store::sync(
++            &path,
++            self.google_transcribe.api_key.as_deref(),
++        ) {
++            tracing::warn!(
++                %error,
++                "could not store the Gemini key in the keychain; the file keeps it until the next save"
++            );
++        }
+         self.write_to(&path)?;
+         self.apply_runtime();
+         Ok(())
+@@ -779,6 +819,9 @@ impl AppSettings {
              Ordering::Release,
          );
          crate::labs::apply(&self.labs);
@@ -492,7 +1172,7 @@ index ada7a094..ae7da803 100644
          screenshots::apply_screenshots(self);
          #[cfg(hex_capture)]
          {
-@@ -1543,6 +1568,19 @@ mod tests {
+@@ -1543,6 +1586,19 @@ mod tests {
          assert!(AppSettings::default().has_migration(MEETING_SUMMARIES_MIGRATION));
      }
  
@@ -534,25 +1214,307 @@ index b88e4224..3a5a2417 100644
              speakers_only: false,
              app_model_switching: false,
              pause_menu: false,
+diff --git a/src/app_settings/persistence.rs b/src/app_settings/persistence.rs
+index d4510bd1..6c54d4b9 100644
+--- a/src/app_settings/persistence.rs
++++ b/src/app_settings/persistence.rs
+@@ -16,8 +16,9 @@ use serde_json::Value;
+ use serde_path_to_error::Segment;
+ use sha2::{Digest, Sha256};
+ 
+-use super::{AppSettings, path};
++use super::{AppSettings, GOOGLE_KEY_MIGRATION, path};
+ use crate::policy::Policy;
++use crate::transcription::gemini::key_store;
+ 
+ // A settings editor and a background migration may save at the same time.
+ static WRITER: Mutex<()> = Mutex::new(());
+@@ -127,6 +128,33 @@ impl AppSettings {
+         Ok((settings, migrated, issue))
+     }
+ 
++    /// The person's Gemini key moves to the OS keychain once: stored there,
++    /// left out of the file from then on. A keychain that refuses keeps the
++    /// key in the file and tries again on the next load; a file with no key
++    /// records the migration alone, so a later key saves straight to the
++    /// keychain.
++    fn migrate_google_key_to_keychain(&mut self, settings_path: &Path) {
++        if self.has_migration(GOOGLE_KEY_MIGRATION) {
++            return;
++        }
++        let Some(key) = self.google_transcribe.api_key.clone() else {
++            self.migrations.push(GOOGLE_KEY_MIGRATION.into());
++            return;
++        };
++        match crate::transcription::gemini::key_store::sync(settings_path, Some(&key)) {
++            Ok(()) => {
++                self.google_transcribe.api_key = None;
++                self.migrations.push(GOOGLE_KEY_MIGRATION.into());
++            }
++            Err(error) => {
++                tracing::debug!(
++                    %error,
++                    "could not move the Gemini key into the keychain; it stays in settings.json"
++                );
++            }
++        }
++    }
++
+     fn read_saved_from(path: &Path) -> Result<(Self, bool, Option<LoadIssue>)> {
+         let data = match fs::read(path) {
+             Ok(data) => data,
+@@ -175,6 +203,7 @@ impl AppSettings {
+             crate::dictation::vocabulary::fold_hints(&mut settings.vocabulary, hints);
+         }
+         settings.apply_one_time_migrations();
++        settings.migrate_google_key_to_keychain(path);
+         settings.normalize_transcription_recents();
+         settings
+             .keyboard_model_switching
+@@ -203,6 +232,16 @@ impl AppSettings {
+         // keep their existing write-on-load behavior for healthy settings.
+         let migrated =
+             !repaired && (!hints.is_empty() || serde_json::to_value(&settings)? != loaded);
++        // The keychain is the key's home once its migration has run: put the
++        // stored key back into the settings so the runtime and the picker
++        // see it. This runs after the diff above, so a re-seed never turns
++        // every load into a rewrite, and it only ever adopts a stored key —
++        // a key the store could not take yet stays in the settings.
++        if let Ok(Some(key)) = key_store::prime(path)
++            && settings.has_migration(GOOGLE_KEY_MIGRATION)
++        {
++            settings.google_transcribe.api_key = Some(key);
++        }
+         Ok((settings, migrated, issue))
+     }
+ 
+@@ -243,7 +282,18 @@ impl AppSettings {
+             }
+             _ => {}
+         }
+-        let bytes = serde_json::to_vec_pretty(&*self.as_saved(policy, original.as_deref()))?;
++        // The keychain holds the Gemini key: when the store holds what
++        // these settings carry, the file leaves it out. A key the store
++        // could not take (or a scope never primed with one) stays in the
++        // file until a later save can move it.
++        let saved = self.as_saved(policy, original.as_deref());
++        let bytes = if key_store::holds(path, saved.google_transcribe.api_key.as_deref()) {
++            let mut without_key = saved.into_owned();
++            without_key.google_transcribe.api_key = None;
++            serde_json::to_vec_pretty(&without_key)?
++        } else {
++            serde_json::to_vec_pretty(&*saved)?
++        };
+         crate::durable::write(path, &bytes)?;
+         Ok(())
+     }
+diff --git a/src/app_settings/persistence/tests.rs b/src/app_settings/persistence/tests.rs
+index 9d5d7740..a4796754 100644
+--- a/src/app_settings/persistence/tests.rs
++++ b/src/app_settings/persistence/tests.rs
+@@ -473,3 +473,105 @@ fn a_managed_lock_reads_off_and_never_rewrites_the_saved_switch() {
+     assert!(unmanaged.meetings.enabled);
+     assert!(unmanaged.labs.live_text);
+ }
++
++/// The Gemini key: stored in the OS keychain, never in the file (except
++/// while the keychain is unavailable), with the load putting it back into
++/// the in-memory settings.
++#[test]
++fn the_gemini_key_moves_into_the_keychain_once() {
++    let file =
++        SettingsFile::new(br#"{"google_transcribe":{"api_key":"test-key-1","batch_only":true}}"#);
++    let settings = AppSettings::load_from(&file.path).unwrap();
++    // The runtime carries the key; the file no longer does.
++    assert_eq!(
++        settings.google_transcribe.api_key.as_deref(),
++        Some("test-key-1")
++    );
++    assert!(settings.has_migration(GOOGLE_KEY_MIGRATION));
++    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
++    assert!(saved["google_transcribe"].get("api_key").is_none());
++    assert_eq!(saved["google_transcribe"]["batch_only"], json!(true));
++    assert!(
++        saved["migrations"]
++            .as_array()
++            .unwrap()
++            .iter()
++            .any(|id| id == GOOGLE_KEY_MIGRATION)
++    );
++
++    // Moving it once is enough: the next load re-seeds the field from the
++    // store without writing anything back.
++    let (again, migrated) = AppSettings::read_from(&file.path).unwrap();
++    assert!(!migrated);
++    assert_eq!(
++        again.google_transcribe.api_key.as_deref(),
++        Some("test-key-1")
++    );
++}
++
++#[test]
++fn a_saved_gemini_key_stays_out_of_the_file() {
++    let file = SettingsFile::new(br#"{}"#);
++    // What `AppSettings::save` does before writing: make the store hold the
++    // key, then the file leaves it out.
++    let mut settings = AppSettings::default();
++    settings.google_transcribe.api_key = Some("test-key-2".into());
++    key_store::sync(&file.path, Some("test-key-2")).unwrap();
++    settings.write_to(&file.path).unwrap();
++    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
++    assert!(saved["google_transcribe"].get("api_key").is_none());
++
++    // A load puts it back so the runtime keeps it.
++    let loaded = AppSettings::load_from(&file.path).unwrap();
++    assert_eq!(
++        loaded.google_transcribe.api_key.as_deref(),
++        Some("test-key-2")
++    );
++}
++
++#[test]
++fn an_unavailable_keychain_keeps_the_gemini_key_in_the_file() {
++    let file = SettingsFile::new(br#"{"google_transcribe":{"api_key":"test-key-3"}}"#);
++    key_store::test_fail(&file.path, true);
++    let settings = AppSettings::load_from(&file.path).unwrap();
++    assert_eq!(
++        settings.google_transcribe.api_key.as_deref(),
++        Some("test-key-3")
++    );
++    assert!(
++        !settings.has_migration(GOOGLE_KEY_MIGRATION),
++        "nothing moved"
++    );
++    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
++    assert_eq!(saved["google_transcribe"]["api_key"], json!("test-key-3"));
++    key_store::test_fail(&file.path, false);
++
++    // It heals: the next load moves the key in and cleans the file.
++    let settings = AppSettings::load_from(&file.path).unwrap();
++    assert!(settings.has_migration(GOOGLE_KEY_MIGRATION));
++    assert_eq!(
++        settings.google_transcribe.api_key.as_deref(),
++        Some("test-key-3")
++    );
++    let saved: serde_json::Value = serde_json::from_slice(&fs::read(&file.path).unwrap()).unwrap();
++    assert!(saved["google_transcribe"].get("api_key").is_none());
++}
++
++/// The Linux two-second poll loads a fully migrated file forever: with the
++/// key absent from the file (or an explicit null there) that must never
++/// become a rewrite.
++#[test]
++fn a_migrated_file_is_not_rewritten_by_later_loads() {
++    let migrated_ids =
++        br#"{"migrations":["streaming-english-model","annotate-on-by-default","voinc-identity","meeting-retention-default","meeting-summaries-choice","google-key-in-keychain"]}"#;
++    let file = SettingsFile::new(migrated_ids);
++    let (settings, migrated) = AppSettings::read_from(&file.path).unwrap();
++    assert!(!migrated);
++    assert_eq!(settings.google_transcribe.api_key, None);
++
++    let file = SettingsFile::new(
++        br#"{"migrations":["streaming-english-model","annotate-on-by-default","voinc-identity","meeting-retention-default","meeting-summaries-choice","google-key-in-keychain"],"google_transcribe":{"api_key":null}}"#,
++    );
++    let (_, migrated) = AppSettings::read_from(&file.path).unwrap();
++    assert!(!migrated);
++}
+diff --git a/src/control/settings.rs b/src/control/settings.rs
+index fa3f5a08..9a597bc6 100644
+--- a/src/control/settings.rs
++++ b/src/control/settings.rs
+@@ -207,6 +207,12 @@ fn unknown(name: &str) -> ControlError {
+     )
+ }
+ 
++/// The one setting whose value is a secret.
++const GOOGLE_API_KEY: &str = "google_transcribe.api_key";
++
++/// What `get` and `list` show for a saved secret instead of the secret.
++const SECRET_SHOWN: &str = "saved in your system's keychain";
++
+ fn value_of(key: &Key, json: &Value) -> SettingValue {
+     let raw = json
+         .pointer(&pointer(key.key))
+@@ -218,6 +224,11 @@ fn value_of(key: &Key, json: &Value) -> SettingValue {
+             _ => Value::Null,
+         },
+         Kind::Choice(_) if NUMERIC_CHOICES.contains(&key.key) => Value::String(raw.to_string()),
++        // A saved secret is never printed; whether one is saved is.
++        _ if key.key == GOOGLE_API_KEY => match raw {
++            Value::Null => Value::Null,
++            _ => Value::String(SECRET_SHOWN.into()),
++        },
+         _ => raw,
+     };
+     SettingValue {
+@@ -674,6 +685,34 @@ mod tests {
+         }
+     }
+ 
++    /// The Gemini key is a secret: `get` and `list` show whether one is
++    /// saved, never the key itself.
++    #[test]
++    fn the_gemini_key_is_never_printed() {
++        let mut settings = AppSettings::default();
++        settings.google_transcribe.api_key = Some("test-key-do-not-print".into());
++        for value in get(&settings, GOOGLE_API_KEY).unwrap() {
++            assert_eq!(value.value, Value::String(SECRET_SHOWN.into()));
++        }
++        let listed = list(&settings);
++        let key = listed
++            .iter()
++            .find(|value| value.key == GOOGLE_API_KEY)
++            .unwrap();
++        assert_eq!(key.value, Value::String(SECRET_SHOWN.into()));
++        assert!(
++            !serde_json::to_string(&listed)
++                .unwrap()
++                .contains("test-key-do-not-print"),
++            "the key must not appear anywhere in the listing"
++        );
++
++        settings.google_transcribe.api_key = None;
++        for value in get(&settings, GOOGLE_API_KEY).unwrap() {
++            assert_eq!(value.value, Value::Null);
++        }
++    }
++
+     /// A saved record shortcut and Annotate's shortcut can't share a chord
+     /// with either off. The reported sequence: Annotate off with the Lab on
+     /// and a record shortcut saved. Setting Annotate's shortcut to the
+@@ -803,6 +842,12 @@ mod tests {
+                 opencode_model: Some("anthropic/claude-haiku".into()),
+                 ..Default::default()
+             },
++            // The key is left out of the file while unset; fill it so the
++            // registry key counts.
++            google_transcribe: crate::app_settings::GoogleTranscribeSettings {
++                api_key: Some("test-key".into()),
++                ..Default::default()
++            },
+             ..Default::default()
+         };
+         let json = serde_json::to_value(settings).unwrap();
 diff --git a/src/control/settings/registry.rs b/src/control/settings/registry.rs
-index e9f833a8..5c06bced 100644
+index e9f833a8..0b2230ae 100644
 --- a/src/control/settings/registry.rs
 +++ b/src/control/settings/registry.rs
-@@ -615,6 +615,24 @@ pub(super) const KEYS: &[Key] = &[
+@@ -615,6 +615,25 @@ pub(super) const KEYS: &[Key] = &[
          "Labs: apps using Voinc's local API can ask for each segment's or word's start and end times \
           in a transcript, as the speech model heard them (timestamps=segment|word)",
      ),
 +    key(
 +        "labs.google_transcribe",
 +        Kind::Bool,
-+        "Labs: transcribe with Google's Gemini models in the cloud, using the Gemini API key saved \
-+         under google_transcribe.api_key (or VOINC_GOOGLE_API_KEY); audio is sent to Google",
++        "Labs: transcribe with Google's Gemini models in the cloud, using the Gemini API key \
++         stored in the system keychain (or VOINC_GOOGLE_API_KEY); audio is sent to Google",
 +    ),
 +    optional(
 +        "google_transcribe.api_key",
 +        Kind::Text,
-+        "The Gemini API key Google Transcribe uses; none asks VOINC_GOOGLE_API_KEY first and \
-+         otherwise leaves Google Transcribe unavailable",
++        "The Gemini API key Google Transcribe uses, stored in the system keychain and never \
++         printed by `voinc settings`; none asks VOINC_GOOGLE_API_KEY first and otherwise leaves \
++         Google Transcribe unavailable",
 +    ),
 +    key(
 +        "google_transcribe.batch_only",
@@ -1154,7 +2116,7 @@ index ffed7758..d58ec70c 100644
      let description_text = description.as_ref().map(|(text, _)| text.clone());
      rows.push_described(
 diff --git a/src/rune_ui/labs.rs b/src/rune_ui/labs.rs
-index 6307e29c..e82dedcc 100644
+index 6307e29c..a4101864 100644
 --- a/src/rune_ui/labs.rs
 +++ b/src/rune_ui/labs.rs
 @@ -11,7 +11,8 @@ mod group;
@@ -1270,18 +2232,20 @@ index 6307e29c..e82dedcc 100644
      if !entry.on {
          return None;
      }
-@@ -1053,6 +1108,61 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
+@@ -1053,6 +1108,63 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
      }
  }
  
 +/// How wide the API-key field is, on the card.
-+const GOOGLE_KEY_WIDTH: f32 = 320.0;
++const GOOGLE_KEY_WIDTH: f32 = 280.0;
 +
 +/// The person's Gemini API key, saved as they type (the window's draft
-+/// mechanism commits it once typing pauses).
++/// mechanism commits it once typing pauses) and masked while shown; the
++/// saved key lives in the OS keychain.
 +fn google_api_key(ui: &Ui, p: Paint) -> El {
 +    let field = TextInput::new(&ui.lab_store.api_key)
 +        .placeholder(tr("Paste your Gemini API key"))
++        .secure()
 +        .width(Some(GOOGLE_KEY_WIDTH))
 +        .on_edit(|ui: &mut Ui| &mut ui.lab_store.api_key)
 +        .build(p.k)
@@ -1622,6 +2586,56 @@ index e4553c16..30e880c0 100644
      // Found on this computer: Parakeet v3's exact file and an untested Whisper.
      ("picker-found", |ui| {
          *ui = portal_fixture();
+diff --git a/src/rune_ui/tests.rs b/src/rune_ui/tests.rs
+index 7454ecb6..97b8de02 100644
+--- a/src/rune_ui/tests.rs
++++ b/src/rune_ui/tests.rs
+@@ -834,6 +834,35 @@ fn a_draft_keeps_only_its_own_editor() {
+     );
+ }
+ 
++/// The Labs card's API-key field saves its pasted key through the same
++/// draft mechanism: seeded at the store's open, committed once typing
++/// pauses, and a clear (an empty field over a saved key) clears it.
++#[test]
++fn the_labs_api_key_draft_saves_and_clears() {
++    let mut ui = portal_fixture();
++    ui.lab_store.seed_api_key(&ui.settings);
++    assert!(ui.lab_store.api_key_seeded.is_none());
++    // The paste arrives.
++    ui.lab_store.api_key = TextEdit::new("test-key-for-draft");
++    let start = std::time::Instant::now();
++    assert!(!ui.save_drafts(start), "waits for a pause");
++    assert!(ui.save_drafts(start + DRAFT_DELAY));
++    assert_eq!(
++        ui.settings.google_transcribe.api_key.as_deref(),
++        Some("test-key-for-draft")
++    );
++    // A later open reseeds the field from the saved key.
++    ui.lab_store = crate::rune_ui::labs::Store::default();
++    ui.lab_store.seed_api_key(&ui.settings);
++    assert_eq!(ui.lab_store.api_key.text, "test-key-for-draft");
++    // Clearing the field clears the key.
++    ui.lab_store.api_key = TextEdit::new("");
++    let start = std::time::Instant::now();
++    assert!(!ui.save_drafts(start), "waits for a pause");
++    assert!(ui.save_drafts(start + DRAFT_DELAY));
++    assert_eq!(ui.settings.google_transcribe.api_key, None);
++}
++
+ fn settle(rt: &mut Runtime<Ui>) {
+     for _ in 0..60 {
+         rt.frame(1.0 / 60.0);
+@@ -2930,6 +2959,9 @@ fn goldens() {
+     check_golden("output-trust", false, PANE_SIZE);
+     check_golden("picker-custom-models", false, PANE_SIZE);
+     check_golden("picker-found", false, PANE_SIZE);
++    // Google Transcribe listed, and selected, before its key arrives.
++    check_golden("picker-google", false, PANE_SIZE);
++    check_golden("google-settings", false, PANE_SIZE);
+     check_golden("vocabulary-budget", false, PANE_SIZE);
+     check_golden("windows-labs", false, PANE_SIZE);
+     check_golden("linux-labs", false, PANE_SIZE);
 diff --git a/src/transcription.rs b/src/transcription.rs
 index ea733e8e..b807731d 100644
 --- a/src/transcription.rs
@@ -1909,10 +2923,10 @@ index d79a58bd..c660b9fd 100644
              .unwrap();
 diff --git a/src/transcription/gemini.rs b/src/transcription/gemini.rs
 new file mode 100644
-index 00000000..6ae93483
+index 00000000..aaa94a17
 --- /dev/null
 +++ b/src/transcription/gemini.rs
-@@ -0,0 +1,433 @@
+@@ -0,0 +1,435 @@
 +//! Google Transcribe: Gemini's speech-to-text over the Gemini API.
 +//!
 +//! Two ways to hear it:
@@ -1926,9 +2940,10 @@ index 00000000..6ae93483
 +//!   text. Any stream failure falls back to the whole clip, which [`batch`]
 +//!   then transcribes.
 +//!
-+//! Auth is the person's Gemini API key: the saved setting first, else
-+//! `VOINC_GOOGLE_API_KEY`. Requests and WebSockets go out like every other
-+//! Voinc request: the platform's TLS and roots, and the proxy the computer
++//! Auth is the person's Gemini API key: `VOINC_GOOGLE_API_KEY` first, else
++//! the saved setting, which lives in the OS keychain ([`key_store`]), never
++//! in settings.json. Requests and WebSockets go out like every other Voinc
++//! request: the platform's TLS and roots, and the proxy the computer
 +//! uses. Errors are named for a person.
 +//!
 +//! The free tier keeps some content to improve Google products and bounds
@@ -1937,6 +2952,7 @@ index 00000000..6ae93483
 +//! kept in Google's interactions history on Voinc's behalf.
 +
 +pub(crate) mod batch;
++pub(crate) mod key_store;
 +pub(crate) mod live;
 +
 +use std::sync::{Arc, OnceLock, RwLock};
@@ -2718,6 +3734,244 @@ index 00000000..8003db81
 +        assert_eq!(timeout(30 * 60 * 16_000), Duration::from_secs(300));
 +        // A moment of audio still waits a minute.
 +        assert_eq!(timeout(16_000), Duration::from_secs(60));
++    }
++}
+diff --git a/src/transcription/gemini/key_store.rs b/src/transcription/gemini/key_store.rs
+new file mode 100644
+index 00000000..41184587
+--- /dev/null
++++ b/src/transcription/gemini/key_store.rs
+@@ -0,0 +1,232 @@
++//! The Gemini API key lives in the OS keychain, not in settings.json.
++//!
++//! `app_settings` keeps `google_transcribe.api_key` as the in-memory carrier
++//! only: [`prime`] reads the store once at the first settings load (the load
++//! puts the stored key back into the settings), [`sync`] stores or clears it
++//! at every save, and [`holds`] tells the write path whether the file may
++//! leave it out. While the keychain is unavailable nothing is lost — the key
++//! stays in the file, saves keep working, and a later sync moves it in.
++//!
++//! macOS holds it in the login keychain, Windows in Credential Manager, and
++//! Linux in the Secret Service of the session bus (same user), so no crypto
++//! features are asked of the keyring crate.
++
++use std::collections::HashMap;
++use std::path::{Path, PathBuf};
++use std::sync::{LazyLock, Mutex};
++
++/// What each settings path last saw the store hold, so [`sync`] and
++/// [`holds`] compare against what is actually stored. Keyed by the settings
++/// path — one process serves one, but tests use several and they must not
++/// interfere, as `UNPARSEABLE` does not.
++static BASELINES: LazyLock<Mutex<HashMap<PathBuf, Option<String>>>> =
++    LazyLock::new(Default::default);
++
++/// Reads the store for `scope` and records what it holds: the baseline a
++/// later [`sync`] and [`holds`] compare against, kept so a save changes
++/// nothing when the key has not changed. Returns the stored key; an error
++/// leaves the baseline unset, so the file keeps carrying whatever it has.
++pub(crate) fn prime(scope: &Path) -> Result<Option<String>, String> {
++    if let Some(stored) = baselines().get(scope) {
++        return Ok(stored.clone());
++    }
++    let stored = imp::read(scope)?;
++    baselines().insert(scope.to_path_buf(), stored.clone());
++    Ok(stored)
++}
++
++/// Makes the store hold `key` for `scope`, storing or clearing only when it
++/// differs from what [`prime`] last saw. An unavailable store answers an
++/// error, and the caller keeps the key in the file instead.
++pub(crate) fn sync(scope: &Path, key: Option<&str>) -> Result<(), String> {
++    let key = real_key(key);
++    if let Some(stored) = baselines().get(scope)
++        && stored.as_deref() == key
++    {
++        return Ok(());
++    }
++    let stored = imp::read(scope)?;
++    baselines().insert(scope.to_path_buf(), stored.clone());
++    if stored.as_deref() != key {
++        imp::write(scope, key)?;
++        baselines().insert(scope.to_path_buf(), key.map(str::to_owned));
++    }
++    Ok(())
++}
++
++/// Whether the store already holds `key` for `scope`, so the settings file
++/// can leave it out. A scope never primed is known to hold no key.
++pub(crate) fn holds(scope: &Path, key: Option<&str>) -> bool {
++    let key = real_key(key);
++    match baselines().get(scope) {
++        Some(stored) => stored.as_deref() == key,
++        None => key.is_none(),
++    }
++}
++
++/// An empty key is no key, as `gemini::set_api_key` also treats it.
++fn real_key(key: Option<&str>) -> Option<&str> {
++    key.filter(|key| !key.trim().is_empty())
++}
++
++fn baselines() -> std::sync::MutexGuard<'static, HashMap<PathBuf, Option<String>>> {
++    BASELINES.lock().unwrap_or_else(|error| error.into_inner())
++}
++
++#[cfg(not(test))]
++mod imp {
++    use std::path::Path;
++
++    /// The keyring service Voinc stores the key under, and the account,
++    /// shared by every OS backend.
++    const SERVICE: &str = "io.voinc.voinc";
++    const ACCOUNT: &str = "gemini-api-key";
++
++    fn entry() -> Result<keyring::Entry, String> {
++        keyring::Entry::new(SERVICE, ACCOUNT).map_err(|error| error.to_string())
++    }
++
++    pub(super) fn read(_scope: &Path) -> Result<Option<String>, String> {
++        match entry()?.get_password() {
++            Ok(key) => Ok(Some(key)),
++            // The store simply has no key yet.
++            Err(keyring::Error::NoEntry) => Ok(None),
++            Err(error) => Err(error.to_string()),
++        }
++    }
++
++    pub(super) fn write(_scope: &Path, key: Option<&str>) -> Result<(), String> {
++        let entry = entry()?;
++        match key {
++            Some(key) => entry.set_password(key).map_err(|error| error.to_string()),
++            None => match entry.delete_credential() {
++                Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
++                Err(error) => Err(error.to_string()),
++            },
++        }
++    }
++}
++
++#[cfg(test)]
++mod imp {
++    use std::collections::{HashMap, HashSet};
++    use std::path::{Path, PathBuf};
++    use std::sync::{LazyLock, Mutex};
++
++    /// What the store holds, keyed by scope: an in-memory stand-in, so no
++    /// test ever touches the real keychain.
++    static STORES: LazyLock<Mutex<HashMap<PathBuf, Option<String>>>> =
++        LazyLock::new(Default::default);
++    /// Scopes whose store operations fail, as a locked or missing keychain
++    /// would.
++    static FAILING: LazyLock<Mutex<HashSet<PathBuf>>> = LazyLock::new(Default::default);
++
++    fn failing(scope: &Path) -> bool {
++        FAILING
++            .lock()
++            .unwrap_or_else(|error| error.into_inner())
++            .contains(scope)
++    }
++
++    pub(super) fn read(scope: &Path) -> Result<Option<String>, String> {
++        if failing(scope) {
++            return Err("the keychain is unavailable".into());
++        }
++        Ok(STORES
++            .lock()
++            .unwrap_or_else(|error| error.into_inner())
++            .get(scope)
++            .cloned()
++            .unwrap_or_default())
++    }
++
++    pub(super) fn write(scope: &Path, key: Option<&str>) -> Result<(), String> {
++        if failing(scope) {
++            return Err("the keychain is unavailable".into());
++        }
++        STORES
++            .lock()
++            .unwrap_or_else(|error| error.into_inner())
++            .insert(scope.to_path_buf(), key.map(str::to_owned));
++        Ok(())
++    }
++
++    /// Makes every store operation for `scope` fail until asked not to.
++    pub(super) fn fail(scope: &Path, on: bool) {
++        let mut failing = FAILING.lock().unwrap_or_else(|error| error.into_inner());
++        if on {
++            failing.insert(scope.to_path_buf());
++        } else {
++            failing.remove(scope);
++        }
++    }
++}
++
++/// Test-only: makes the keychain unavailable for `scope`.
++#[cfg(test)]
++pub(crate) fn test_fail(scope: &Path, on: bool) {
++    imp::fail(scope, on);
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    /// A scope no other test uses; the recorder never touches the disk, so
++    /// a made-up path is enough.
++    fn scope(name: &str) -> PathBuf {
++        PathBuf::from(format!("key-store-test-{name}"))
++    }
++
++    #[test]
++    fn a_prime_records_what_the_store_holds() {
++        let scope = scope("prime");
++        assert_eq!(prime(&scope).unwrap(), None, "an untouched store is empty");
++        sync(&scope, Some("k")).unwrap();
++        assert_eq!(prime(&scope).unwrap().as_deref(), Some("k"));
++    }
++
++    #[test]
++    fn a_sync_stores_a_new_key_and_changes_nothing_after() {
++        let scope = scope("sync");
++        sync(&scope, Some("k")).unwrap();
++        sync(&scope, Some("k")).unwrap();
++        assert_eq!(imp::read(&scope).unwrap().as_deref(), Some("k"));
++        sync(&scope, Some("k2")).unwrap();
++        assert_eq!(imp::read(&scope).unwrap().as_deref(), Some("k2"));
++    }
++
++    #[test]
++    fn clearing_a_key_clears_the_store() {
++        let scope = scope("clear");
++        sync(&scope, Some("k")).unwrap();
++        sync(&scope, None).unwrap();
++        assert_eq!(imp::read(&scope).unwrap(), None);
++        // Clearing an already empty store stays a success.
++        sync(&scope, None).unwrap();
++    }
++
++    #[test]
++    fn an_unavailable_store_keeps_the_key_in_the_file() {
++        let scope = scope("failing");
++        test_fail(&scope, true);
++        assert!(prime(&scope).is_err());
++        assert!(sync(&scope, Some("k")).is_err());
++        // The write path then leaves the key in the file: `holds` is false
++        // for it, and true for no key.
++        assert!(!holds(&scope, Some("k")));
++        assert!(holds(&scope, None));
++        test_fail(&scope, false);
++        // It heals: the next sync stores the key.
++        sync(&scope, Some("k")).unwrap();
++        assert!(holds(&scope, Some("k")));
++    }
++
++    #[test]
++    fn an_empty_key_is_no_key() {
++        let scope = scope("empty");
++        sync(&scope, Some("   ")).unwrap();
++        assert_eq!(imp::read(&scope).unwrap(), None, "nothing was stored");
++        assert!(holds(&scope, Some("  ")), "the file leaves it out too");
 +    }
 +}
 diff --git a/src/transcription/gemini/live.rs b/src/transcription/gemini/live.rs
@@ -10374,53 +11628,3 @@ PqnmFiq5sNLG!OZI1p#vv
 literal 0
 HcmV?d00001
 
-diff --git a/src/rune_ui/tests.rs b/src/rune_ui/tests.rs
-index 7454ecb6..97b8de02 100644
---- a/src/rune_ui/tests.rs
-+++ b/src/rune_ui/tests.rs
-@@ -834,6 +834,35 @@ fn a_draft_keeps_only_its_own_editor() {
-     );
- }
- 
-+/// The Labs card's API-key field saves its pasted key through the same
-+/// draft mechanism: seeded at the store's open, committed once typing
-+/// pauses, and a clear (an empty field over a saved key) clears it.
-+#[test]
-+fn the_labs_api_key_draft_saves_and_clears() {
-+    let mut ui = portal_fixture();
-+    ui.lab_store.seed_api_key(&ui.settings);
-+    assert!(ui.lab_store.api_key_seeded.is_none());
-+    // The paste arrives.
-+    ui.lab_store.api_key = TextEdit::new("test-key-for-draft");
-+    let start = std::time::Instant::now();
-+    assert!(!ui.save_drafts(start), "waits for a pause");
-+    assert!(ui.save_drafts(start + DRAFT_DELAY));
-+    assert_eq!(
-+        ui.settings.google_transcribe.api_key.as_deref(),
-+        Some("test-key-for-draft")
-+    );
-+    // A later open reseeds the field from the saved key.
-+    ui.lab_store = crate::rune_ui::labs::Store::default();
-+    ui.lab_store.seed_api_key(&ui.settings);
-+    assert_eq!(ui.lab_store.api_key.text, "test-key-for-draft");
-+    // Clearing the field clears the key.
-+    ui.lab_store.api_key = TextEdit::new("");
-+    let start = std::time::Instant::now();
-+    assert!(!ui.save_drafts(start), "waits for a pause");
-+    assert!(ui.save_drafts(start + DRAFT_DELAY));
-+    assert_eq!(ui.settings.google_transcribe.api_key, None);
-+}
-+
- fn settle(rt: &mut Runtime<Ui>) {
-     for _ in 0..60 {
-         rt.frame(1.0 / 60.0);
-@@ -2930,6 +2959,9 @@ fn goldens() {
-     check_golden("output-trust", false, PANE_SIZE);
-     check_golden("picker-custom-models", false, PANE_SIZE);
-     check_golden("picker-found", false, PANE_SIZE);
-+    // Google Transcribe listed, and selected, before its key arrives.
-+    check_golden("picker-google", false, PANE_SIZE);
-+    check_golden("google-settings", false, PANE_SIZE);
-     check_golden("vocabulary-budget", false, PANE_SIZE);
-     check_golden("windows-labs", false, PANE_SIZE);
-     check_golden("linux-labs", false, PANE_SIZE);

@@ -140,8 +140,12 @@ pub fn env_hex_experimental_mic() -> bool {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(default)]
 pub struct GoogleTranscribeSettings {
-    /// The key saved in Settings › Labs; `None` asks `VOINC_GOOGLE_API_KEY`
-    /// first and otherwise leaves Google Transcribe unavailable.
+    /// The key saved in Settings › Labs, held in the OS keychain
+    /// (`transcription::gemini::key_store`) and only carried in memory here;
+    /// the file leaves it out unless the keychain is unavailable. `None`
+    /// asks `VOINC_GOOGLE_API_KEY` first and otherwise leaves Google
+    /// Transcribe unavailable.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub api_key: Option<String>,
     /// Whether dictation skips Google's live session: each capture
     /// transcribes the whole clip over the batch API after it ends. Off by
@@ -399,6 +403,7 @@ const MIGRATIONS: &[&str] = &[
     VOINC_IDENTITY_MIGRATION,
     MEETING_RETENTION_DEFAULT_MIGRATION,
     MEETING_SUMMARIES_MIGRATION,
+    GOOGLE_KEY_MIGRATION,
 ];
 #[cfg(not(hex_capture))]
 const MIGRATIONS: &[&str] = &[
@@ -406,6 +411,7 @@ const MIGRATIONS: &[&str] = &[
     VOINC_IDENTITY_MIGRATION,
     MEETING_RETENTION_DEFAULT_MIGRATION,
     MEETING_SUMMARIES_MIGRATION,
+    GOOGLE_KEY_MIGRATION,
 ];
 /// Scrawl's settings were read into `capture` once. Left out of
 /// `MIGRATIONS` so new settings import them too.
@@ -421,6 +427,9 @@ const MEETING_RETENTION_DEFAULT_MIGRATION: &str = "meeting-retention-default";
 /// Summarize with Apple Intelligence and Summarize with OpenCode became one
 /// choice, `meetings.summaries`.
 const MEETING_SUMMARIES_MIGRATION: &str = "meeting-summaries-choice";
+/// The Gemini key moved to the OS keychain; the file keeps carrying it only
+/// while the keychain is unavailable.
+const GOOGLE_KEY_MIGRATION: &str = "google-key-in-keychain";
 
 fn deserialize_retired_value<'de, D>(
     deserializer: D,
@@ -741,6 +750,15 @@ impl AppSettings {
 
     pub fn save(&self) -> Result<()> {
         let path = path()?;
+        if let Err(error) = crate::transcription::gemini::key_store::sync(
+            &path,
+            self.google_transcribe.api_key.as_deref(),
+        ) {
+            tracing::warn!(
+                %error,
+                "could not store the Gemini key in the keychain; the file keeps it until the next save"
+            );
+        }
         self.write_to(&path)?;
         self.apply_runtime();
         Ok(())

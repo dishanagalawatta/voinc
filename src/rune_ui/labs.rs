@@ -1109,13 +1109,15 @@ fn extras(ui: &Ui, p: Paint, entry: &Row) -> Option<El> {
 }
 
 /// How wide the API-key field is, on the card.
-const GOOGLE_KEY_WIDTH: f32 = 320.0;
+const GOOGLE_KEY_WIDTH: f32 = 280.0;
 
 /// The person's Gemini API key, saved as they type (the window's draft
-/// mechanism commits it once typing pauses).
+/// mechanism commits it once typing pauses) and masked while shown; the
+/// saved key lives in the OS keychain.
 fn google_api_key(ui: &Ui, p: Paint) -> El {
     let field = TextInput::new(&ui.lab_store.api_key)
         .placeholder(tr("Paste your Gemini API key"))
+        .secure()
         .width(Some(GOOGLE_KEY_WIDTH))
         .on_edit(|ui: &mut Ui| &mut ui.lab_store.api_key)
         .build(p.k)

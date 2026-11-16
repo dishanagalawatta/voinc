@@ -18,9 +18,10 @@ Labs > Google Transcribe (off)                       // labs.google_transcribe
 ├── Toggle on -> the card shows an "API key" field (drafted while typed and
 │   committed once typing pauses — the shared draft save every text field
 │   uses, so the first key saves through the field and a cleared field
-│   clears it; `google_transcribe.api_key`, or the environment's
-│   VOINC_GOOGLE_API_KEY, read again at every run) and, while on, a
-│   "Skip live streaming" switch (`google_transcribe.batch_only`)
+│   clears it; the field shows dots, the key lives in the OS keychain and
+│   stays out of settings.json unless the keychain is unavailable, and the
+│   environment's VOINC_GOOGLE_API_KEY answers first at every run) and,
+│   while on, a "Skip live streaming" switch (`google_transcribe.batch_only`)
 ├── Skip live streaming (on) -> no live session at all: each dictation
 │   transcribes the whole clip by batch after it ends; nothing shows while
 │   it records
@@ -55,17 +56,29 @@ Labs > Google Transcribe (off)                       // labs.google_transcribe
 
 ## The key
 
-The key is the person's: the saved setting first (`voinc settings set
-google_transcribe.api_key …`, or the field on the Labs card, serialized as
-`null` while unset), else the `VOINC_GOOGLE_API_KEY` environment variable.
-Either is trimmed; an empty one is no key. Google Transcribe is prepared —
-nothing to download — while its key answers, and `voinc model use
-gemini_transcribe` selects it under the same rule. A request with no key fails
-before anything is sent, named for a person; a refused key, a rate limit, and
-Google's HTML error pages are named for a person too. Requests and
-WebSockets go out like every other Voinc request: the platform's TLS and
-roots, and the proxy the computer uses — a SOCKS proxy refuses the live
-session (the batch request still goes out).
+The key is the person's, and it lives in the OS keychain — the login keychain
+on macOS, Credential Manager on Windows, the Secret Service of the session bus
+on Linux (`transcription::gemini::key_store`, over zbus and Rust crypto so no
+system dbus library is needed) — never in settings.json: the saved setting
+(`google_transcribe.api_key`) is only the in-memory carrier, re-seeded from
+the keychain at every load and left out of every save. `voinc settings get`
+and `list` show whether one is saved ("saved in your system's keychain"),
+never the key itself. While the keychain is unavailable the key stays in the
+file instead — a save is never blocked by it — and a later load or save moves
+it in. A key found in an older file moves into the keychain once
+(`google-key-in-keychain` migration). At request time the
+`VOINC_GOOGLE_API_KEY` environment variable answers first, else the saved
+key. The field on the Labs card shows dots (masked) and is drafted while
+typed and committed once typing pauses — the shared draft save every text
+field uses — so a pasted first key saves through the field and a cleared
+field clears it; either is trimmed, and an empty one is no key. Google
+Transcribe is prepared — nothing to download — while its key answers, and
+`voinc model use gemini_transcribe` selects it under the same rule. A request
+with no key fails before anything is sent, named for a person; a refused
+key, a rate limit, and Google's HTML error pages are named for a person too.
+Requests and WebSockets go out like every other Voinc request: the platform's
+TLS and roots, and the proxy the computer uses — a SOCKS proxy refuses the
+live session (the batch request still goes out).
 
 ## Batch and Live
 
@@ -148,7 +161,17 @@ and the key-as-install rule. `the_labs_api_key_draft_saves_and_clears` in
 [rune_ui/tests.rs](../../src/rune_ui/tests.rs) holds the card's field itself:
 seeded at the store's open (an unopened store projects nothing), a pasted
 first key commits through the shared draft save, a later open reseeds from
-the saved key, and clearing the field clears it.
+the saved key, and clearing the field clears it. The key's storage is held by
+`the_gemini_key_moves_into_the_keychain_once`, `a_saved_gemini_key_stays_out_of_the_file`,
+`an_unavailable_keychain_keeps_the_gemini_key_in_the_file`, and
+`a_migrated_file_is_not_rewritten_by_later_loads` in
+[persistence/tests.rs](../../src/app_settings/persistence/tests.rs);
+`the_gemini_key_is_never_printed` in
+[control/settings.rs](../../src/control/settings.rs) holds the redaction; and
+[key_store.rs](../../src/transcription/gemini/key_store.rs) unit-tests the
+store access itself — prime, sync on change, clear, holds, the unavailable
+store keeping the key in the file, and an empty key being no key — every one
+against an in-memory recorder: no test ever opens the real keychain.
 
 Observed on a real Linux desktop (GNOME Wayland, x86_64): selecting
 `gemini_transcribe` with a key through `voinc model use` switches at once, a

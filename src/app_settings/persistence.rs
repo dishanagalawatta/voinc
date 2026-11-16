@@ -16,8 +16,9 @@ use serde_json::Value;
 use serde_path_to_error::Segment;
 use sha2::{Digest, Sha256};
 
-use super::{AppSettings, path};
+use super::{AppSettings, GOOGLE_KEY_MIGRATION, path};
 use crate::policy::Policy;
+use crate::transcription::gemini::key_store;
 
 // A settings editor and a background migration may save at the same time.
 static WRITER: Mutex<()> = Mutex::new(());
@@ -127,6 +128,33 @@ impl AppSettings {
         Ok((settings, migrated, issue))
     }
 
+    /// The person's Gemini key moves to the OS keychain once: stored there,
+    /// left out of the file from then on. A keychain that refuses keeps the
+    /// key in the file and tries again on the next load; a file with no key
+    /// records the migration alone, so a later key saves straight to the
+    /// keychain.
+    fn migrate_google_key_to_keychain(&mut self, settings_path: &Path) {
+        if self.has_migration(GOOGLE_KEY_MIGRATION) {
+            return;
+        }
+        let Some(key) = self.google_transcribe.api_key.clone() else {
+            self.migrations.push(GOOGLE_KEY_MIGRATION.into());
+            return;
+        };
+        match crate::transcription::gemini::key_store::sync(settings_path, Some(&key)) {
+            Ok(()) => {
+                self.google_transcribe.api_key = None;
+                self.migrations.push(GOOGLE_KEY_MIGRATION.into());
+            }
+            Err(error) => {
+                tracing::debug!(
+                    %error,
+                    "could not move the Gemini key into the keychain; it stays in settings.json"
+                );
+            }
+        }
+    }
+
     fn read_saved_from(path: &Path) -> Result<(Self, bool, Option<LoadIssue>)> {
         let data = match fs::read(path) {
             Ok(data) => data,
@@ -175,6 +203,7 @@ impl AppSettings {
             crate::dictation::vocabulary::fold_hints(&mut settings.vocabulary, hints);
         }
         settings.apply_one_time_migrations();
+        settings.migrate_google_key_to_keychain(path);
         settings.normalize_transcription_recents();
         settings
             .keyboard_model_switching
@@ -203,6 +232,16 @@ impl AppSettings {
         // keep their existing write-on-load behavior for healthy settings.
         let migrated =
             !repaired && (!hints.is_empty() || serde_json::to_value(&settings)? != loaded);
+        // The keychain is the key's home once its migration has run: put the
+        // stored key back into the settings so the runtime and the picker
+        // see it. This runs after the diff above, so a re-seed never turns
+        // every load into a rewrite, and it only ever adopts a stored key —
+        // a key the store could not take yet stays in the settings.
+        if let Ok(Some(key)) = key_store::prime(path)
+            && settings.has_migration(GOOGLE_KEY_MIGRATION)
+        {
+            settings.google_transcribe.api_key = Some(key);
+        }
         Ok((settings, migrated, issue))
     }
 
@@ -243,7 +282,18 @@ impl AppSettings {
             }
             _ => {}
         }
-        let bytes = serde_json::to_vec_pretty(&*self.as_saved(policy, original.as_deref()))?;
+        // The keychain holds the Gemini key: when the store holds what
+        // these settings carry, the file leaves it out. A key the store
+        // could not take (or a scope never primed with one) stays in the
+        // file until a later save can move it.
+        let saved = self.as_saved(policy, original.as_deref());
+        let bytes = if key_store::holds(path, saved.google_transcribe.api_key.as_deref()) {
+            let mut without_key = saved.into_owned();
+            without_key.google_transcribe.api_key = None;
+            serde_json::to_vec_pretty(&without_key)?
+        } else {
+            serde_json::to_vec_pretty(&*saved)?
+        };
         crate::durable::write(path, &bytes)?;
         Ok(())
     }

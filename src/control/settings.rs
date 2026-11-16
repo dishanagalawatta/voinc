@@ -207,6 +207,12 @@ fn unknown(name: &str) -> ControlError {
     )
 }
 
+/// The one setting whose value is a secret.
+const GOOGLE_API_KEY: &str = "google_transcribe.api_key";
+
+/// What `get` and `list` show for a saved secret instead of the secret.
+const SECRET_SHOWN: &str = "saved in your system's keychain";
+
 fn value_of(key: &Key, json: &Value) -> SettingValue {
     let raw = json
         .pointer(&pointer(key.key))
@@ -218,6 +224,11 @@ fn value_of(key: &Key, json: &Value) -> SettingValue {
             _ => Value::Null,
         },
         Kind::Choice(_) if NUMERIC_CHOICES.contains(&key.key) => Value::String(raw.to_string()),
+        // A saved secret is never printed; whether one is saved is.
+        _ if key.key == GOOGLE_API_KEY => match raw {
+            Value::Null => Value::Null,
+            _ => Value::String(SECRET_SHOWN.into()),
+        },
         _ => raw,
     };
     SettingValue {
@@ -674,6 +685,34 @@ mod tests {
         }
     }
 
+    /// The Gemini key is a secret: `get` and `list` show whether one is
+    /// saved, never the key itself.
+    #[test]
+    fn the_gemini_key_is_never_printed() {
+        let mut settings = AppSettings::default();
+        settings.google_transcribe.api_key = Some("test-key-do-not-print".into());
+        for value in get(&settings, GOOGLE_API_KEY).unwrap() {
+            assert_eq!(value.value, Value::String(SECRET_SHOWN.into()));
+        }
+        let listed = list(&settings);
+        let key = listed
+            .iter()
+            .find(|value| value.key == GOOGLE_API_KEY)
+            .unwrap();
+        assert_eq!(key.value, Value::String(SECRET_SHOWN.into()));
+        assert!(
+            !serde_json::to_string(&listed)
+                .unwrap()
+                .contains("test-key-do-not-print"),
+            "the key must not appear anywhere in the listing"
+        );
+
+        settings.google_transcribe.api_key = None;
+        for value in get(&settings, GOOGLE_API_KEY).unwrap() {
+            assert_eq!(value.value, Value::Null);
+        }
+    }
+
     /// A saved record shortcut and Annotate's shortcut can't share a chord
     /// with either off. The reported sequence: Annotate off with the Lab on
     /// and a record shortcut saved. Setting Annotate's shortcut to the
@@ -801,6 +840,12 @@ mod tests {
                 retention: Some(crate::app_settings::MeetingRetention::Day),
                 audio_retention: Some(crate::app_settings::MeetingRetention::Day),
                 opencode_model: Some("anthropic/claude-haiku".into()),
+                ..Default::default()
+            },
+            // The key is left out of the file while unset; fill it so the
+            // registry key counts.
+            google_transcribe: crate::app_settings::GoogleTranscribeSettings {
+                api_key: Some("test-key".into()),
                 ..Default::default()
             },
             ..Default::default()

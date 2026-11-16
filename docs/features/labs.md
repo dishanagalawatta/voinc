@@ -70,7 +70,7 @@ Feature             Pane  Toggle (settings.json, voinc settings)   On: what it d
 ├── Sort and filter models no labs.picker_sort_filter   the Local transcription picker sorts by recommendation, size, or name and can show only models for the saved language (#645)
 ├── Benchmark details no  labs.benchmark_details        picker rows show raw WER/CER (lower is better), language, dataset, source, and conditions; incomparable "Most accurate" badges drop (#647)
 ├── Parakeet Ultra  no    labs.parakeet_ultra          the picker offers Moondream's Parakeet Ultra (pinned Q8_0, CC BY 4.0) with a details view; stays on while it dictates (#648)
-├── Google Transcribe no labs.google_transcribe + google_transcribe.api_key   the picker offers Google's cloud transcription with the person's Gemini API key; your audio goes to Google (google-transcribe.md)
+├── Google Transcribe no labs.google_transcribe + google_transcribe.api_key   the picker offers Google's cloud transcription with the person's Gemini API key, held in the OS keychain; your audio goes to Google (google-transcribe.md)
 ├── Special keys alone no labs.standalone_special_keys (Linux, Windows) Linux: Menu, Pause, Scroll Lock may be a shortcut's key, alone or with modifiers (#767); Windows: Insert, Home, End, Page Up, Page Down may stand alone (#794)
 ├── Section key alone no  labs.section_key_alone       (Linux) the § key, left of 1 on ISO keyboards, may be a shortcut with no modifier (#1050)
 ├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; voinc history stats prints it (#790)
@@ -2768,8 +2768,11 @@ real desktop.
 - Google Transcribe: Google's Gemini speech models in the cloud, behind the
   person's Gemini API key (every OS; see
   [Google Transcribe](google-transcribe.md)). Its toggle is
-  `labs.google_transcribe` (off by default, applied at once) and the key is
-  `google_transcribe.api_key` or the environment's `VOINC_GOOGLE_API_KEY`.
+  `labs.google_transcribe` (off by default, applied at once) and the key
+  lives in the OS keychain (`google_transcribe.api_key` is only its
+  in-memory carrier and stays out of settings.json unless the keychain is
+  unavailable; the environment's `VOINC_GOOGLE_API_KEY` answers first at
+  request time).
   The gate, `labs::google_transcribe()` plus the key
   (`ModelDefinition::available`), is where the work starts: with either
   missing the picker doesn't offer it and a saved choice of it runs the usual
