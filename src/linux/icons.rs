@@ -62,6 +62,38 @@ pub(crate) fn install() -> Result<()> {
 
 const MANAGED_MARK: &[u8] = b"X-Hex-Managed=true";
 
+/// The mark's own tEXt chunk: `Comment` text, then the mark.
+const MANAGED_MARK_CHUNK: &[u8] = b"Comment\0X-Hex-Managed=true";
+
+/// The icon bytes without the mark chunk: the exact bytes builds older than
+/// the mark wrote into the user's theme. A file that equals them is Voinc's
+/// own icon that only lacks its mark, so it is replaced; a user's own icon
+/// never byte-matches the art.
+fn unmarked(png: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(png.len());
+    let (signature, mut rest) = png.split_at(png.len().min(8));
+    out.extend_from_slice(signature);
+    while rest.len() >= 12 {
+        let length = u32::from_be_bytes(rest[..4].try_into().unwrap()) as usize;
+        if rest.len() < 12 + length {
+            break; // malformed tail: keep it as it is
+        }
+        let (chunk, remainder) = rest.split_at(12 + length);
+        if !is_mark_chunk(chunk) {
+            out.extend_from_slice(chunk);
+        }
+        rest = remainder;
+    }
+    out.extend_from_slice(rest);
+    out
+}
+
+fn is_mark_chunk(chunk: &[u8]) -> bool {
+    chunk[4..8] == *b"tEXt"
+        && chunk.len() == 12 + MANAGED_MARK_CHUNK.len()
+        && chunk[8..8 + MANAGED_MARK_CHUNK.len()] == *MANAGED_MARK_CHUNK
+}
+
 fn install_in(data: &Path) -> Result<()> {
     let mut wrote = false;
     for (size, bytes) in ICONS {
@@ -74,7 +106,7 @@ fn install_in(data: &Path) -> Result<()> {
             Ok(metadata) if metadata.is_file() => {
                 let current = std::fs::read(&path)
                     .wrap_err_with(|| format!("could not read {}", path.display()))?;
-                current != bytes && managed(&current)
+                current != bytes && (managed(&current) || current == unmarked(bytes))
             }
             Ok(_) => false,
         };
@@ -142,6 +174,29 @@ mod tests {
     #[test]
     fn every_icon_carries_the_managed_mark() {
         assert!(ICONS.iter().all(|(_, bytes)| managed(bytes)));
+        // The strip is exact: the unmarked bytes are the art, nothing else.
+        for (_, bytes) in ICONS {
+            let plain = unmarked(bytes);
+            assert_ne!(plain, bytes);
+            assert!(managed(bytes) && !managed(&plain));
+            assert_eq!(plain, unmarked(&plain), "stripping twice changes nothing");
+        }
+    }
+
+    #[test]
+    fn a_pre_mark_install_grows_its_mark() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let data = std::env::temp_dir().join(format!("voinc-icons-premark-{unique}"));
+        // What builds older than the mark wrote: the art without its chunk.
+        let path = data.join("icons/hicolor/48x48/apps/io.voinc.voinc.png");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, unmarked(ICONS[3].1)).unwrap();
+        install_in(&data).unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), ICONS[3].1);
+        std::fs::remove_dir_all(data).unwrap();
     }
 
     #[test]
