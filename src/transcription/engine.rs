@@ -129,6 +129,11 @@ pub(crate) enum Command {
     /// Work that needs the model itself, such as loading or switching it.
     #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     Run(Box<dyn FnOnce(&mut Model) + Send>),
+    /// A save re-read nothing but asked the engine to: Google Transcribe's
+    /// batch-only choice gates its live sessions from outside the engine,
+    /// so the save asks it to re-read whether the loaded model can stream
+    /// now, instead of at the next dictation's command.
+    PublishStreams,
     /// Drops the model, then loads `selection` in its place, for a GPU with
     /// no room for both (#1170).
     #[cfg_attr(target_os = "macos", allow(dead_code))]
@@ -639,6 +644,14 @@ impl TranscriptionEngine {
         self
     }
 
+    /// Asks the engine to re-read whether the loaded model can stream now:
+    /// Google Transcribe's batch-only choice gates its live sessions from
+    /// outside the engine, so saving that choice sends this instead of
+    /// waiting for the next dictation's command.
+    pub fn note_streams_setting_changed(&self) {
+        let _ = self.commands.send(Command::PublishStreams);
+    }
+
     /// Opens a live stream when the loaded model can stream on this device.
     pub fn begin(&self) -> Option<LiveStream> {
         if !self.streams.load(Ordering::Acquire) {
@@ -1093,6 +1106,9 @@ impl Worker {
                     let current = self.requests.load(Ordering::Acquire) == generation;
                     work(if current { self.model() } else { None });
                 }
+                // A save asked the engine to re-read whether the loaded
+                // model can stream; the publish below does it.
+                Command::PublishStreams => {}
                 Command::Shutdown => return,
                 // Stale input for a stream that already ended.
                 Command::Feed { .. } | Command::Cancel { .. } => {}
@@ -1385,6 +1401,17 @@ mod tests {
         assert_eq!(Source::Stream.label(), "stream");
         assert_eq!(Source::Offline.label(), "offline");
         assert_eq!(Source::Fallback("x".into()).label(), "fallback");
+    }
+
+    #[test]
+    fn a_batch_only_save_asks_the_engine_to_re_read_its_streams() {
+        let (engine, commands) = TranscriptionEngine::for_test();
+        engine.note_streams_setting_changed();
+        let received: Vec<_> = commands.try_iter().collect();
+        assert!(
+            matches!(received.as_slice(), [Command::PublishStreams]),
+            "the save sends exactly one PublishStreams"
+        );
     }
 
     #[test]

@@ -825,10 +825,10 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..ad3d95ea
+index 00000000..25d9778e
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,198 @@
+@@ -0,0 +1,201 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
@@ -935,7 +935,10 @@ index 00000000..ad3d95ea
 +off by default) leaves the live session out of dictation entirely: the engine
 +opens no stream, so every capture finishes as a whole clip transcribed by
 +batch, and nothing shows while it records. The choice is read again at every
-+capture, like the key, and applies without a model reload. Where the live
++capture, like the key, and applies without a model reload: saving it asks the
++engine to re-read whether it can stream now (`Command::PublishStreams`), so
++the next capture follows the new choice instead of the last command's.
++Where the live
 +session cannot connect — a SOCKS proxy refuses it, and the batch request
 +still goes out — this spares every capture the refused attempt before its
 +fallback. Meetings, `voinc transcribe`, and the whole-clip fallback already
@@ -1075,7 +1078,7 @@ index ab4db808..ac347b0b 100644
  `contributed_options_are_labs_toggles_off_by_default`,
  `the_browser_labs_toggle_turns_on_and_asks_for_system_audio`,
 diff --git a/src/app_settings.rs b/src/app_settings.rs
-index ada7a094..efea1d5c 100644
+index ada7a094..a95c7b3f 100644
 --- a/src/app_settings.rs
 +++ b/src/app_settings.rs
 @@ -134,6 +134,26 @@ pub fn env_hex_experimental_mic() -> bool {
@@ -1174,17 +1177,20 @@ index ada7a094..efea1d5c 100644
          self.write_to(&path)?;
          self.apply_runtime();
          Ok(())
-@@ -779,6 +819,9 @@ impl AppSettings {
+@@ -779,6 +819,12 @@ impl AppSettings {
              Ordering::Release,
          );
          crate::labs::apply(&self.labs);
 +        // set_api_key trims and drops an empty key itself.
 +        crate::transcription::gemini::set_api_key(self.google_transcribe.api_key.clone());
 +        crate::transcription::gemini::set_batch_only(self.google_transcribe.batch_only);
++        if let Some(engine) = crate::transcription::engine::TranscriptionEngine::shared() {
++            engine.note_streams_setting_changed();
++        }
          screenshots::apply_screenshots(self);
          #[cfg(hex_capture)]
          {
-@@ -1543,6 +1586,19 @@ mod tests {
+@@ -1543,6 +1589,19 @@ mod tests {
          assert!(AppSettings::default().has_migration(MEETING_SUMMARIES_MIGRATION));
      }
  
@@ -2811,10 +2817,47 @@ index c29b63ec..4b1e250d 100644
          selection.clone()
      }
 diff --git a/src/transcription/engine.rs b/src/transcription/engine.rs
-index ff731670..eec8e6dd 100644
+index ff731670..f3a07991 100644
 --- a/src/transcription/engine.rs
 +++ b/src/transcription/engine.rs
-@@ -1377,6 +1377,7 @@ impl Worker {
+@@ -129,6 +129,11 @@ pub(crate) enum Command {
+     /// Work that needs the model itself, such as loading or switching it.
+     #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+     Run(Box<dyn FnOnce(&mut Model) + Send>),
++    /// A save re-read nothing but asked the engine to: Google Transcribe's
++    /// batch-only choice gates its live sessions from outside the engine,
++    /// so the save asks it to re-read whether the loaded model can stream
++    /// now, instead of at the next dictation's command.
++    PublishStreams,
+     /// Drops the model, then loads `selection` in its place, for a GPU with
+     /// no room for both (#1170).
+     #[cfg_attr(target_os = "macos", allow(dead_code))]
+@@ -639,6 +644,14 @@ impl TranscriptionEngine {
+         self
+     }
+ 
++    /// Asks the engine to re-read whether the loaded model can stream now:
++    /// Google Transcribe's batch-only choice gates its live sessions from
++    /// outside the engine, so saving that choice sends this instead of
++    /// waiting for the next dictation's command.
++    pub fn note_streams_setting_changed(&self) {
++        let _ = self.commands.send(Command::PublishStreams);
++    }
++
+     /// Opens a live stream when the loaded model can stream on this device.
+     pub fn begin(&self) -> Option<LiveStream> {
+         if !self.streams.load(Ordering::Acquire) {
+@@ -1093,6 +1106,9 @@ impl Worker {
+                     let current = self.requests.load(Ordering::Acquire) == generation;
+                     work(if current { self.model() } else { None });
+                 }
++                // A save asked the engine to re-read whether the loaded
++                // model can stream; the publish below does it.
++                Command::PublishStreams => {}
+                 Command::Shutdown => return,
+                 // Stale input for a stream that already ended.
+                 Command::Feed { .. } | Command::Cancel { .. } => {}
+@@ -1377,6 +1393,7 @@ impl Worker {
  
  #[cfg(test)]
  mod tests {
@@ -2822,6 +2865,24 @@ index ff731670..eec8e6dd 100644
      use super::*;
  
      #[test]
+@@ -1386,6 +1403,17 @@ mod tests {
+         assert_eq!(Source::Fallback("x".into()).label(), "fallback");
+     }
+ 
++    #[test]
++    fn a_batch_only_save_asks_the_engine_to_re_read_its_streams() {
++        let (engine, commands) = TranscriptionEngine::for_test();
++        engine.note_streams_setting_changed();
++        let received: Vec<_> = commands.try_iter().collect();
++        assert!(
++            matches!(received.as_slice(), [Command::PublishStreams]),
++            "the save sends exactly one PublishStreams"
++        );
++    }
++
+     #[test]
+     fn streams_send_their_audio_in_order_and_cancel_when_dropped() {
+         let (engine, commands) = TranscriptionEngine::for_test();
 diff --git a/src/transcription/engine/streaming.rs b/src/transcription/engine/streaming.rs
 index c2373ec5..303747af 100644
 --- a/src/transcription/engine/streaming.rs

@@ -104,7 +104,10 @@ The Labs card's **Skip live streaming** switch (`google_transcribe.batch_only`,
 off by default) leaves the live session out of dictation entirely: the engine
 opens no stream, so every capture finishes as a whole clip transcribed by
 batch, and nothing shows while it records. The choice is read again at every
-capture, like the key, and applies without a model reload. Where the live
+capture, like the key, and applies without a model reload: saving it asks the
+engine to re-read whether it can stream now (`Command::PublishStreams`), so
+the next capture follows the new choice instead of the last command's.
+Where the live
 session cannot connect — a SOCKS proxy refuses it, and the batch request
 still goes out — this spares every capture the refused attempt before its
 fallback. Meetings, `voinc transcribe`, and the whole-clip fallback already

@@ -822,6 +822,9 @@ impl AppSettings {
         // set_api_key trims and drops an empty key itself.
         crate::transcription::gemini::set_api_key(self.google_transcribe.api_key.clone());
         crate::transcription::gemini::set_batch_only(self.google_transcribe.batch_only);
+        if let Some(engine) = crate::transcription::engine::TranscriptionEngine::shared() {
+            engine.note_streams_setting_changed();
+        }
         screenshots::apply_screenshots(self);
         #[cfg(hex_capture)]
         {
