@@ -35,9 +35,11 @@ pub(crate) type Offline = Box<dyn FnOnce(&mut Model, Vec<f32>) -> Result<String,
 /// `None` instead of the model when dictation claimed the engine first.
 pub(crate) type Background = Box<dyn FnOnce(Option<&mut Model>) + Send>;
 
-/// A healthy finish decodes at most a couple of seconds of buffered audio.
-/// Past this the stream is aborted and the clip is transcribed offline.
-const STREAM_FINISH_DEADLINE: Duration = Duration::from_millis(1_500);
+/// A healthy finish decodes at most a couple of seconds of buffered audio,
+/// and Google's live session needs up to 2.5 s (`FINALIZE_WAIT`) for its
+/// last turn to settle after the stream ends. Past this the stream is
+/// aborted and the clip is transcribed offline.
+const STREAM_FINISH_DEADLINE: Duration = Duration::from_millis(3_000);
 /// Audio fed past the clip's trimmed end (a release handled late) that the
 /// stream may still keep. Beyond it, the offline clip is authoritative.
 const MAX_OVERFED_SAMPLES: usize = 16_000 / 4;

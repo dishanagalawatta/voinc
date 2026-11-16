@@ -100,10 +100,17 @@ appends, so the fallback's whole clip supplies anything the session dropped.
 Google sends every live event — `setupComplete` included — as a binary
 WebSocket frame whose payload is the events' JSON, and accepts the same
 JSON in text frames going out; the session parses both frame types the
-same way (`handle_event`), and this live model ends its turns with
-`generationComplete` rather than `turnComplete`, so the quiet rule —
-settling 500 ms after Google's last event — is what finalizes a capture
-when the stream ends.
+same way (`handle_event`). This live model ends its turns with
+`generationComplete` rather than `turnComplete`, arriving right after the
+utterance's finalized `inputTranscription`; a turn whose text only ever
+arrived as speculation is committed by the turn end, and `generationComplete`
+after the stream end settles the session with the whole capture's text. The
+quiet rule — settling 500 ms after Google's last event — remains the
+fallback when no turn end arrives. Measured on the wire (2026-11-16, probe):
+the last utterance's commit lands ~0.9–1.5 s after `audioStreamEnd` and
+Google never closes the socket, so the finalize waits up to 2.5 s — a 1.2 s
+wait missed every capture whose last utterance was still being transcribed
+at the release and fell back to the whole clip by batch.
 
 ## Batch only
 

@@ -43,7 +43,13 @@ const CONNECT_BUDGET: Duration = Duration::from_secs(10);
 /// engine's caller gives a stream finish 1.5 s and takes the whole clip when
 /// it misses, so this fails first and the engine thread is free to run the
 /// whole clip.
-const FINALIZE_WAIT: Duration = Duration::from_millis(1_200);
+/// How long the finalize waits for Google's last turn to settle. On the
+/// wire (probe, 2026-11-16): the commit lands ~0.9-1.5 s after
+/// `audioStreamEnd`, then the session goes quiet — so the wait must cover
+/// the commit plus [`QUIET_AFTER`], or a healthy capture misses the
+/// deadline and falls back to the whole clip. Google never closes the
+/// socket itself.
+const FINALIZE_WAIT: Duration = Duration::from_millis(2_500);
 /// Google finalizes the last turn right after the stream ends, so quiet this
 /// long after the last event means nothing more is coming.
 const QUIET_AFTER: Duration = Duration::from_millis(500);
@@ -488,7 +494,7 @@ impl Shared {
                     .last_event
                     .is_none_or(|at| at.elapsed() >= QUIET_AFTER)
                 {
-                    return Ok(state.turns.clone());
+                    return Ok(state.answer());
                 }
                 return Err("Google's live session missed its finish deadline".into());
             };
@@ -522,6 +528,22 @@ impl Shared {
 }
 
 impl State {
+    /// The session's whole text: committed turns, then the utterance still
+    /// speculative. After the stream end that speculation is the only text
+    /// for an utterance Google never committed, and dropping it would lose
+    /// what was said.
+    fn answer(&self) -> String {
+        let mut text = self.turns.clone();
+        let piece = self.interim.trim();
+        if !piece.is_empty() {
+            if !text.is_empty() {
+                text.push(' ');
+            }
+            text.push_str(piece);
+        }
+        text
+    }
+
     /// Google finalized one utterance: its text joins the turns.
     fn hear(&mut self, text: &str, shared: &Shared) {
         let piece = text.trim();
@@ -543,9 +565,19 @@ impl State {
         self.spoke(shared);
     }
 
-    /// A turn completed. After the stream end this settles the session.
+    /// A turn completed. The utterance's text normally arrived finalized
+    /// (`inputTranscription`) first, but a turn whose text only ever came as
+    /// speculation still happened: commit it before the next turn's
+    /// speculation replaces it.
     fn turn_complete(&mut self, shared: &Shared) {
-        self.interim.clear();
+        let pending = std::mem::take(&mut self.interim);
+        let piece = pending.trim();
+        if !piece.is_empty() {
+            if !self.turns.is_empty() {
+                self.turns.push(' ');
+            }
+            self.turns.push_str(piece);
+        }
         self.spoke(shared);
     }
 
@@ -574,18 +606,18 @@ fn fail(shared: &Shared, reason: String) {
 
 /// Answers the session with its text so far.
 fn settle(shared: &Shared) {
-    let turns = {
+    let text = {
         let state = shared
             .state
             .lock()
             .unwrap_or_else(|error| error.into_inner());
-        state.turns.clone()
+        state.answer()
     };
     shared
         .state
         .lock()
         .unwrap_or_else(|error| error.into_inner())
-        .complete(Ok(turns), shared);
+        .complete(Ok(text), shared);
 }
 
 /// Writes one audio chunk: 16-bit PCM at 16 kHz, base64 in a `realtimeInput`.
@@ -672,7 +704,10 @@ fn handle_event(text: &str, shared: &Shared, sent_end: bool) -> bool {
                 .unwrap_or_else(|error| error.into_inner());
             state.hear(text, shared);
         }
-        if content.get("turnComplete").is_some() {
+        if content.get("turnComplete").is_some() || content.get("generationComplete").is_some() {
+            // This live model ends its turns with `generationComplete` rather
+            // than `turnComplete` (observed on the wire): the same turn end
+            // under two names. Either way the turn is over.
             let mut state = shared
                 .state
                 .lock()
@@ -872,6 +907,115 @@ mod tests {
         assert!(
             failure.contains("unexpected model name format"),
             "{failure}"
+        );
+    }
+
+    /// Google's live model ends its turns with `generationComplete` rather
+    /// than `turnComplete` (observed on the wire, right after the finalized
+    /// `inputTranscription`): after the stream end it settles the session
+    /// with the whole capture's text.
+    #[test]
+    fn a_generation_complete_settles_the_stream_after_the_end() {
+        let shared = Shared::default();
+        let frame = |json: &str, shared: &Shared, sent_end: bool| {
+            let bytes = tungstenite::Bytes::from(json.to_string());
+            handle_event(String::from_utf8_lossy(&bytes).as_ref(), shared, sent_end)
+        };
+        frame(
+            "{\"serverContent\":{\"inputTranscription\":{\"text\":\"The latest tech build is ready to test.\"}}}",
+            &shared,
+            true,
+        );
+        assert!(frame(
+            "{\"serverContent\":{\"generationComplete\":true}}",
+            &shared,
+            true,
+        ));
+        let state = shared
+            .state
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        let answer = state
+            .result
+            .as_ref()
+            .and_then(|result| result.as_ref().ok())
+            .expect("the turn end settled the session");
+        assert_eq!(answer, "The latest tech build is ready to test.");
+    }
+
+    /// The settled answer keeps an utterance Google speculated but never
+    /// committed: after the stream end that speculation is the only text for
+    /// it, and dropping it would lose what was said.
+    #[test]
+    fn the_settled_answer_keeps_a_speculated_utterance() {
+        let shared = Shared::default();
+        handle_event(
+            "{\"serverContent\":{\"interimInputTranscription\":{\"text\":\"The latest tech build\"}}}",
+            &shared,
+            false,
+        );
+        settle(&shared);
+        let state = shared
+            .state
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        let answer = state
+            .result
+            .as_ref()
+            .and_then(|result| result.as_ref().ok())
+            .expect("the settle answered");
+        assert_eq!(answer, "The latest tech build");
+    }
+
+    /// A turn end commits an utterance whose text only ever arrived as
+    /// speculation, so the next turn's speculation cannot replace it.
+    #[test]
+    fn a_turn_end_commits_a_speculated_utterance() {
+        let shared = Shared::default();
+        handle_event(
+            "{\"serverContent\":{\"interimInputTranscription\":{\"text\":\"The latest\"}}}",
+            &shared,
+            false,
+        );
+        handle_event("{\"serverContent\":{\"turnComplete\":{}}}", &shared, false);
+        let state = shared
+            .state
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        assert_eq!(state.turns, "The latest");
+        assert_eq!(state.interim, "");
+    }
+
+    /// The owner's finalize wait: once Google has gone quiet its whole text
+    /// — committed turns and the speculative utterance — is the answer;
+    /// while its last event is still recent the deadline is a failure, the
+    /// whole clip's batch transcription covers it.
+    #[test]
+    fn the_finalize_wait_answers_quiet_text_and_fails_recent_activity() {
+        let shared = Shared::default();
+        let cancel = transcribe_cpp::CancelToken::new();
+        {
+            let mut state = shared
+                .state
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
+            state.turns = "Earlier words".into();
+            state.interim = "the latest".into();
+        }
+        // No event yet: Google never spoke, so the quiet rule reads.
+        assert_eq!(
+            shared.wait_for_final(Duration::ZERO, &cancel),
+            Ok("Earlier words the latest".into())
+        );
+        // A speculation right now keeps the wait going, to its deadline.
+        handle_event(
+            "{\"serverContent\":{\"interimInputTranscription\":{\"text\":\"the newest\"}}}",
+            &shared,
+            false,
+        );
+        assert_eq!(
+            shared.wait_for_final(Duration::ZERO, &cancel),
+            Err("Google's live session missed its finish deadline".into())
         );
     }
 }

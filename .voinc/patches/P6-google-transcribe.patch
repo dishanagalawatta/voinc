@@ -825,10 +825,10 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..4d24e6b3
+index 00000000..13a177a1
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,222 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
@@ -931,10 +931,17 @@ index 00000000..4d24e6b3
 +Google sends every live event — `setupComplete` included — as a binary
 +WebSocket frame whose payload is the events' JSON, and accepts the same
 +JSON in text frames going out; the session parses both frame types the
-+same way (`handle_event`), and this live model ends its turns with
-+`generationComplete` rather than `turnComplete`, so the quiet rule —
-+settling 500 ms after Google's last event — is what finalizes a capture
-+when the stream ends.
++same way (`handle_event`). This live model ends its turns with
++`generationComplete` rather than `turnComplete`, arriving right after the
++utterance's finalized `inputTranscription`; a turn whose text only ever
++arrived as speculation is committed by the turn end, and `generationComplete`
++after the stream end settles the session with the whole capture's text. The
++quiet rule — settling 500 ms after Google's last event — remains the
++fallback when no turn end arrives. Measured on the wire (2026-11-16, probe):
++the last utterance's commit lands ~0.9–1.5 s after `audioStreamEnd` and
++Google never closes the socket, so the finalize waits up to 2.5 s — a 1.2 s
++wait missed every capture whose last utterance was still being transcribed
++at the release and fell back to the whole clip by batch.
 +
 +## Batch only
 +
@@ -2832,10 +2839,25 @@ index c29b63ec..4b1e250d 100644
          selection.clone()
      }
 diff --git a/src/transcription/engine.rs b/src/transcription/engine.rs
-index ff731670..f3a07991 100644
+index ff731670..7040a022 100644
 --- a/src/transcription/engine.rs
 +++ b/src/transcription/engine.rs
-@@ -129,6 +129,11 @@ pub(crate) enum Command {
+@@ -35,9 +35,11 @@ pub(crate) type Offline = Box<dyn FnOnce(&mut Model, Vec<f32>) -> Result<String,
+ /// `None` instead of the model when dictation claimed the engine first.
+ pub(crate) type Background = Box<dyn FnOnce(Option<&mut Model>) + Send>;
+ 
+-/// A healthy finish decodes at most a couple of seconds of buffered audio.
+-/// Past this the stream is aborted and the clip is transcribed offline.
+-const STREAM_FINISH_DEADLINE: Duration = Duration::from_millis(1_500);
++/// A healthy finish decodes at most a couple of seconds of buffered audio,
++/// and Google's live session needs up to 2.5 s (`FINALIZE_WAIT`) for its
++/// last turn to settle after the stream ends. Past this the stream is
++/// aborted and the clip is transcribed offline.
++const STREAM_FINISH_DEADLINE: Duration = Duration::from_millis(3_000);
+ /// Audio fed past the clip's trimmed end (a release handled late) that the
+ /// stream may still keep. Beyond it, the offline clip is authoritative.
+ const MAX_OVERFED_SAMPLES: usize = 16_000 / 4;
+@@ -129,6 +131,11 @@ pub(crate) enum Command {
      /// Work that needs the model itself, such as loading or switching it.
      #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
      Run(Box<dyn FnOnce(&mut Model) + Send>),
@@ -2847,7 +2869,7 @@ index ff731670..f3a07991 100644
      /// Drops the model, then loads `selection` in its place, for a GPU with
      /// no room for both (#1170).
      #[cfg_attr(target_os = "macos", allow(dead_code))]
-@@ -639,6 +644,14 @@ impl TranscriptionEngine {
+@@ -639,6 +646,14 @@ impl TranscriptionEngine {
          self
      }
  
@@ -2862,7 +2884,7 @@ index ff731670..f3a07991 100644
      /// Opens a live stream when the loaded model can stream on this device.
      pub fn begin(&self) -> Option<LiveStream> {
          if !self.streams.load(Ordering::Acquire) {
-@@ -1093,6 +1106,9 @@ impl Worker {
+@@ -1093,6 +1108,9 @@ impl Worker {
                      let current = self.requests.load(Ordering::Acquire) == generation;
                      work(if current { self.model() } else { None });
                  }
@@ -2872,7 +2894,7 @@ index ff731670..f3a07991 100644
                  Command::Shutdown => return,
                  // Stale input for a stream that already ended.
                  Command::Feed { .. } | Command::Cancel { .. } => {}
-@@ -1377,6 +1393,7 @@ impl Worker {
+@@ -1377,6 +1395,7 @@ impl Worker {
  
  #[cfg(test)]
  mod tests {
@@ -2880,7 +2902,7 @@ index ff731670..f3a07991 100644
      use super::*;
  
      #[test]
-@@ -1386,6 +1403,17 @@ mod tests {
+@@ -1386,6 +1405,17 @@ mod tests {
          assert_eq!(Source::Fallback("x".into()).label(), "fallback");
      }
  
@@ -4108,10 +4130,10 @@ index 00000000..41184587
 +}
 diff --git a/src/transcription/gemini/live.rs b/src/transcription/gemini/live.rs
 new file mode 100644
-index 00000000..557f58b2
+index 00000000..9c9564d7
 --- /dev/null
 +++ b/src/transcription/gemini/live.rs
-@@ -0,0 +1,877 @@
+@@ -0,0 +1,1021 @@
 +//! The Live session: one WebSocket per streaming dictation capture.
 +//!
 +//! The engine's worker feeds 16 kHz audio while the capture runs and finalizes
@@ -4157,7 +4179,13 @@ index 00000000..557f58b2
 +/// engine's caller gives a stream finish 1.5 s and takes the whole clip when
 +/// it misses, so this fails first and the engine thread is free to run the
 +/// whole clip.
-+const FINALIZE_WAIT: Duration = Duration::from_millis(1_200);
++/// How long the finalize waits for Google's last turn to settle. On the
++/// wire (probe, 2026-11-16): the commit lands ~0.9-1.5 s after
++/// `audioStreamEnd`, then the session goes quiet — so the wait must cover
++/// the commit plus [`QUIET_AFTER`], or a healthy capture misses the
++/// deadline and falls back to the whole clip. Google never closes the
++/// socket itself.
++const FINALIZE_WAIT: Duration = Duration::from_millis(2_500);
 +/// Google finalizes the last turn right after the stream ends, so quiet this
 +/// long after the last event means nothing more is coming.
 +const QUIET_AFTER: Duration = Duration::from_millis(500);
@@ -4602,7 +4630,7 @@ index 00000000..557f58b2
 +                    .last_event
 +                    .is_none_or(|at| at.elapsed() >= QUIET_AFTER)
 +                {
-+                    return Ok(state.turns.clone());
++                    return Ok(state.answer());
 +                }
 +                return Err("Google's live session missed its finish deadline".into());
 +            };
@@ -4636,6 +4664,22 @@ index 00000000..557f58b2
 +}
 +
 +impl State {
++    /// The session's whole text: committed turns, then the utterance still
++    /// speculative. After the stream end that speculation is the only text
++    /// for an utterance Google never committed, and dropping it would lose
++    /// what was said.
++    fn answer(&self) -> String {
++        let mut text = self.turns.clone();
++        let piece = self.interim.trim();
++        if !piece.is_empty() {
++            if !text.is_empty() {
++                text.push(' ');
++            }
++            text.push_str(piece);
++        }
++        text
++    }
++
 +    /// Google finalized one utterance: its text joins the turns.
 +    fn hear(&mut self, text: &str, shared: &Shared) {
 +        let piece = text.trim();
@@ -4657,9 +4701,19 @@ index 00000000..557f58b2
 +        self.spoke(shared);
 +    }
 +
-+    /// A turn completed. After the stream end this settles the session.
++    /// A turn completed. The utterance's text normally arrived finalized
++    /// (`inputTranscription`) first, but a turn whose text only ever came as
++    /// speculation still happened: commit it before the next turn's
++    /// speculation replaces it.
 +    fn turn_complete(&mut self, shared: &Shared) {
-+        self.interim.clear();
++        let pending = std::mem::take(&mut self.interim);
++        let piece = pending.trim();
++        if !piece.is_empty() {
++            if !self.turns.is_empty() {
++                self.turns.push(' ');
++            }
++            self.turns.push_str(piece);
++        }
 +        self.spoke(shared);
 +    }
 +
@@ -4688,18 +4742,18 @@ index 00000000..557f58b2
 +
 +/// Answers the session with its text so far.
 +fn settle(shared: &Shared) {
-+    let turns = {
++    let text = {
 +        let state = shared
 +            .state
 +            .lock()
 +            .unwrap_or_else(|error| error.into_inner());
-+        state.turns.clone()
++        state.answer()
 +    };
 +    shared
 +        .state
 +        .lock()
 +        .unwrap_or_else(|error| error.into_inner())
-+        .complete(Ok(turns), shared);
++        .complete(Ok(text), shared);
 +}
 +
 +/// Writes one audio chunk: 16-bit PCM at 16 kHz, base64 in a `realtimeInput`.
@@ -4786,7 +4840,10 @@ index 00000000..557f58b2
 +                .unwrap_or_else(|error| error.into_inner());
 +            state.hear(text, shared);
 +        }
-+        if content.get("turnComplete").is_some() {
++        if content.get("turnComplete").is_some() || content.get("generationComplete").is_some() {
++            // This live model ends its turns with `generationComplete` rather
++            // than `turnComplete` (observed on the wire): the same turn end
++            // under two names. Either way the turn is over.
 +            let mut state = shared
 +                .state
 +                .lock()
@@ -4986,6 +5043,115 @@ index 00000000..557f58b2
 +        assert!(
 +            failure.contains("unexpected model name format"),
 +            "{failure}"
++        );
++    }
++
++    /// Google's live model ends its turns with `generationComplete` rather
++    /// than `turnComplete` (observed on the wire, right after the finalized
++    /// `inputTranscription`): after the stream end it settles the session
++    /// with the whole capture's text.
++    #[test]
++    fn a_generation_complete_settles_the_stream_after_the_end() {
++        let shared = Shared::default();
++        let frame = |json: &str, shared: &Shared, sent_end: bool| {
++            let bytes = tungstenite::Bytes::from(json.to_string());
++            handle_event(String::from_utf8_lossy(&bytes).as_ref(), shared, sent_end)
++        };
++        frame(
++            "{\"serverContent\":{\"inputTranscription\":{\"text\":\"The latest tech build is ready to test.\"}}}",
++            &shared,
++            true,
++        );
++        assert!(frame(
++            "{\"serverContent\":{\"generationComplete\":true}}",
++            &shared,
++            true,
++        ));
++        let state = shared
++            .state
++            .lock()
++            .unwrap_or_else(|error| error.into_inner());
++        let answer = state
++            .result
++            .as_ref()
++            .and_then(|result| result.as_ref().ok())
++            .expect("the turn end settled the session");
++        assert_eq!(answer, "The latest tech build is ready to test.");
++    }
++
++    /// The settled answer keeps an utterance Google speculated but never
++    /// committed: after the stream end that speculation is the only text for
++    /// it, and dropping it would lose what was said.
++    #[test]
++    fn the_settled_answer_keeps_a_speculated_utterance() {
++        let shared = Shared::default();
++        handle_event(
++            "{\"serverContent\":{\"interimInputTranscription\":{\"text\":\"The latest tech build\"}}}",
++            &shared,
++            false,
++        );
++        settle(&shared);
++        let state = shared
++            .state
++            .lock()
++            .unwrap_or_else(|error| error.into_inner());
++        let answer = state
++            .result
++            .as_ref()
++            .and_then(|result| result.as_ref().ok())
++            .expect("the settle answered");
++        assert_eq!(answer, "The latest tech build");
++    }
++
++    /// A turn end commits an utterance whose text only ever arrived as
++    /// speculation, so the next turn's speculation cannot replace it.
++    #[test]
++    fn a_turn_end_commits_a_speculated_utterance() {
++        let shared = Shared::default();
++        handle_event(
++            "{\"serverContent\":{\"interimInputTranscription\":{\"text\":\"The latest\"}}}",
++            &shared,
++            false,
++        );
++        handle_event("{\"serverContent\":{\"turnComplete\":{}}}", &shared, false);
++        let state = shared
++            .state
++            .lock()
++            .unwrap_or_else(|error| error.into_inner());
++        assert_eq!(state.turns, "The latest");
++        assert_eq!(state.interim, "");
++    }
++
++    /// The owner's finalize wait: once Google has gone quiet its whole text
++    /// — committed turns and the speculative utterance — is the answer;
++    /// while its last event is still recent the deadline is a failure, the
++    /// whole clip's batch transcription covers it.
++    #[test]
++    fn the_finalize_wait_answers_quiet_text_and_fails_recent_activity() {
++        let shared = Shared::default();
++        let cancel = transcribe_cpp::CancelToken::new();
++        {
++            let mut state = shared
++                .state
++                .lock()
++                .unwrap_or_else(|error| error.into_inner());
++            state.turns = "Earlier words".into();
++            state.interim = "the latest".into();
++        }
++        // No event yet: Google never spoke, so the quiet rule reads.
++        assert_eq!(
++            shared.wait_for_final(Duration::ZERO, &cancel),
++            Ok("Earlier words the latest".into())
++        );
++        // A speculation right now keeps the wait going, to its deadline.
++        handle_event(
++            "{\"serverContent\":{\"interimInputTranscription\":{\"text\":\"the newest\"}}}",
++            &shared,
++            false,
++        );
++        assert_eq!(
++            shared.wait_for_final(Duration::ZERO, &cancel),
++            Err("Google's live session missed its finish deadline".into())
 +        );
 +    }
 +}
