@@ -51,6 +51,19 @@ while IFS= read -r -d '' f; do
   fi
 done < <(git ls-files -z | grep -zZ 'term-hex-' || true)
 
+# artifact-hex-*.json capture fixtures -> artifact-voinc-*.json (the include_str
+# paths in look.rs follow the general rename, the file names must too; their
+# contents hold no product name).
+while IFS= read -r -d '' f; do
+  d="${f//artifact-hex-/artifact-voinc-}"
+  if [ "$f" != "$d" ] && [ ! -e "$d" ]; then
+    mkdir -p "$(dirname "$d")"
+    git mv "$f" "$d"
+    say "  $f -> $d"
+    renamed=$((renamed + 1))
+  fi
+done < <(git ls-files -z | grep -zZ 'artifact-hex-' || true)
+
 # Explicit product-file renames (keep internal names like crates/capture/src/hex.rs).
 while IFS='|' read -r src dst; do
   [ -z "$src" ] && continue
