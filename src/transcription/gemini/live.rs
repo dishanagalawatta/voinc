@@ -609,69 +609,12 @@ fn handle(
     sent_end: bool,
 ) -> bool {
     match message {
-        Message::Text(text) => {
-            let Ok(event) = serde_json::from_str::<serde_json::Value>(text.as_str()) else {
-                return false;
-            };
-            if event.get("setupComplete").is_some() {
-                let mut state = shared
-                    .state
-                    .lock()
-                    .unwrap_or_else(|error| error.into_inner());
-                state.setup = true;
-                shared.ready.notify_all();
-                return false;
-            }
-            if let Some(content) = event.get("serverContent") {
-                if let Some(text) = content
-                    .get("interimInputTranscription")
-                    .and_then(|interim| interim.get("text"))
-                    .and_then(|text| text.as_str())
-                {
-                    let mut state = shared
-                        .state
-                        .lock()
-                        .unwrap_or_else(|error| error.into_inner());
-                    state.speculate(text, shared);
-                }
-                if let Some(text) = content
-                    .get("inputTranscription")
-                    .and_then(|finalized| finalized.get("text"))
-                    .and_then(|text| text.as_str())
-                {
-                    let mut state = shared
-                        .state
-                        .lock()
-                        .unwrap_or_else(|error| error.into_inner());
-                    state.hear(text, shared);
-                }
-                if content.get("turnComplete").is_some() {
-                    let mut state = shared
-                        .state
-                        .lock()
-                        .unwrap_or_else(|error| error.into_inner());
-                    state.turn_complete(shared);
-                    if sent_end {
-                        // The last turn is over: the whole capture's text is
-                        // the answer.
-                        drop(state);
-                        settle(shared);
-                        return true;
-                    }
-                }
-            }
-            if let Some(error) = event
-                .get("error")
-                .and_then(|error| error.get("message"))
-                .and_then(|message| message.as_str())
-            {
-                fail(
-                    shared,
-                    format!("Google's live session failed: {}", error.trim()),
-                );
-                return true;
-            }
-            false
+        Message::Text(text) => handle_event(text.as_str(), shared, sent_end),
+        // Google's live events ride binary frames whose payload is the same
+        // JSON a text frame would carry; both parse. The first one,
+        // `setupComplete`, is what arms the session at all.
+        Message::Binary(bytes) => {
+            handle_event(String::from_utf8_lossy(&bytes).as_ref(), shared, sent_end)
         }
         // The server closed: whatever turns it finalized are the answer.
         Message::Close(_) => {
@@ -689,6 +632,73 @@ fn handle(
         }
         _ => false,
     }
+}
+
+/// Applies one event's JSON to the session, answering whether it is over.
+/// The socket is untouched: events only read and set state.
+fn handle_event(text: &str, shared: &Shared, sent_end: bool) -> bool {
+    let Ok(event) = serde_json::from_str::<serde_json::Value>(text) else {
+        return false;
+    };
+    if event.get("setupComplete").is_some() {
+        let mut state = shared
+            .state
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        state.setup = true;
+        shared.ready.notify_all();
+        return false;
+    }
+    if let Some(content) = event.get("serverContent") {
+        if let Some(text) = content
+            .get("interimInputTranscription")
+            .and_then(|interim| interim.get("text"))
+            .and_then(|text| text.as_str())
+        {
+            let mut state = shared
+                .state
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
+            state.speculate(text, shared);
+        }
+        if let Some(text) = content
+            .get("inputTranscription")
+            .and_then(|finalized| finalized.get("text"))
+            .and_then(|text| text.as_str())
+        {
+            let mut state = shared
+                .state
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
+            state.hear(text, shared);
+        }
+        if content.get("turnComplete").is_some() {
+            let mut state = shared
+                .state
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
+            state.turn_complete(shared);
+            if sent_end {
+                // The last turn is over: the whole capture's text is
+                // the answer.
+                drop(state);
+                settle(shared);
+                return true;
+            }
+        }
+    }
+    if let Some(error) = event
+        .get("error")
+        .and_then(|error| error.get("message"))
+        .and_then(|message| message.as_str())
+    {
+        fail(
+            shared,
+            format!("Google's live session failed: {}", error.trim()),
+        );
+        return true;
+    }
+    false
 }
 
 /// The session thread: writes the audio queued to it, reads Google's events
@@ -792,5 +802,76 @@ fn session(
             );
             return;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Google's live session arms and streams over binary WebSocket frames
+    /// whose payloads are the events' JSON (observed on the wire). The first
+    /// binary frame, `setupComplete`, is what arms the session at all; a
+    /// text frame parses just the same.
+    #[test]
+    fn the_live_events_parse_from_binary_frames() {
+        let shared = Shared::default();
+        let frame = |json: &str, shared: &Shared| {
+            let bytes = tungstenite::Bytes::from(json.to_string());
+            handle_event(String::from_utf8_lossy(&bytes).as_ref(), shared, false)
+        };
+        frame("{\"setupComplete\":{}}", &shared);
+        assert!(
+            shared.wait_for_setup(Duration::ZERO),
+            "the binary setupComplete arms the session"
+        );
+        frame(
+            "{\"serverContent\":{\"interimInputTranscription\":{\"text\":\"The latest\"}}}",
+            &shared,
+        );
+        frame(
+            "{\"serverContent\":{\"inputTranscription\":{\"text\":\"The latest tech build is ready to test.\"}}}",
+            &shared,
+        );
+        let state = shared
+            .state
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        assert_eq!(state.turns, "The latest tech build is ready to test.");
+        assert_eq!(state.interim, "", "a finalized turn clears the interim");
+        assert!(state.setup);
+    }
+
+    #[test]
+    fn the_same_events_parse_from_text_frames() {
+        let shared = Shared::default();
+        assert!(!handle_event("{\"setupComplete\":{}}", &shared, false));
+        assert!(
+            shared.wait_for_setup(Duration::ZERO),
+            "the text setupComplete arms the session too"
+        );
+    }
+
+    #[test]
+    fn an_error_event_ends_the_session_with_its_reason() {
+        let shared = Shared::default();
+        let json = r#"{"error":{"code":400,"message":"unexpected model name format"}}"#;
+        assert!(
+            handle_event(json, &shared, false),
+            "an error ends the session"
+        );
+        let state = shared
+            .state
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        let failure = state
+            .result
+            .as_ref()
+            .and_then(|result| result.as_ref().err())
+            .expect("the session failed with the reason");
+        assert!(
+            failure.contains("unexpected model name format"),
+            "{failure}"
+        );
     }
 }

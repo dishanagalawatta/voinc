@@ -97,6 +97,13 @@ to the whole clip, nothing pasting before the final text — applies unchanged,
 because it is the same code with a different transport under it. Google's
 Live API does not give word timestamps; interim text replaces and turn text
 appends, so the fallback's whole clip supplies anything the session dropped.
+Google sends every live event — `setupComplete` included — as a binary
+WebSocket frame whose payload is the events' JSON, and accepts the same
+JSON in text frames going out; the session parses both frame types the
+same way (`handle_event`), and this live model ends its turns with
+`generationComplete` rather than `turnComplete`, so the quiet rule —
+settling 500 ms after Google's last event — is what finalizes a capture
+when the stream ends.
 
 ## Batch only
 
