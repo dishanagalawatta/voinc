@@ -825,10 +825,10 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..56070255
+index 00000000..4d24e6b3
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,208 @@
+@@ -0,0 +1,215 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
@@ -1030,15 +1030,22 @@ index 00000000..56070255
 +`gemini_transcribe` with a key through `voinc model use` switches at once, a
 +saved choice without a key survives and holds the pending listen at Model
 +required, and saving the key starts the pending listener without a
-+preparation. Not yet observed, and not covered by any check: a real request
-+to Google.
-+The Live session's state machine (its reads between writes, tunnel
-+timeouts, and turn assembly) has no unit tests — the engine's stream rules
-+around it do. No macOS meeting with Gemini selected has been recorded, and
-+`voinc transcribe` over a real long file (segment splitting) is untested
-+against Google's truncation behavior.
++preparation. A real request to Google is observed too (2026-11-16, same
++desktop): dictating with Google Transcribe selected transcribes the capture
++on the live session — the log reads `transcribed Linux dictation
++source="stream"`, the stream finalizes in a few hundred milliseconds where
++the batch fallback took whole seconds, and the pasted text is coherent. The
++binary-frame rule was found first with a throwaway probe client against the
++real endpoint (every live event rides one; the session parsed only text
++frames, so setup never completed and every capture fell back to batch); the
++probe stays out of the tree.
++Still not observed: a macOS meeting with Gemini selected, `voinc
++transcribe` over a real long file (segment splitting against Google's
++truncation behavior), and the free tier's rate limit. The Live session's
++state machine (its reads between writes, tunnel timeouts, and turn
++assembly) has no unit tests — the engine's stream rules around it do.
 diff --git a/docs/features/labs.md b/docs/features/labs.md
-index ab4db808..ac347b0b 100644
+index ab4db808..540590ff 100644
 --- a/docs/features/labs.md
 +++ b/docs/features/labs.md
 @@ -70,6 +70,7 @@ Feature             Pane  Toggle (settings.json, voinc settings)   On: what it d
@@ -1049,7 +1056,7 @@ index ab4db808..ac347b0b 100644
  ├── Special keys alone no labs.standalone_special_keys (Linux, Windows) Linux: Menu, Pause, Scroll Lock may be a shortcut's key, alone or with modifiers (#767); Windows: Insert, Home, End, Page Up, Page Down may stand alone (#794)
  ├── Section key alone no  labs.section_key_alone       (Linux) the § key, left of 1 on ISO keyboards, may be a shortcut with no modifier (#1050)
  ├── Dictation stats no    labs.history_stats           History's Stats button opens a summary of retained dictations; voinc history stats prints it (#790)
-@@ -2764,6 +2765,34 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
+@@ -2764,6 +2765,35 @@ route, so a skipped recording keeps the setting's pre-roll. Checks:
  Bluetooth headphones and the lab on, and the Linux and Windows backends on a
  real desktop.
  
@@ -1077,9 +1084,10 @@ index ab4db808..ac347b0b 100644
 +  feature is on) leaves the live session out of dictation: each capture
 +  transcribes the whole clip by batch after it ends. Checks: the
 +  fixture-JSON tests named
-+  in [google-transcribe.md](google-transcribe.md); no request to Google has
-+  ever been made, the Live session's own state machine has no tests, and the
-+  Labs page goldens show the new card.
++  in [google-transcribe.md](google-transcribe.md); real dictation to Google
++  is observed (the feature doc records the live session and its logs), the
++  Live session's own state machine has no tests, and the Labs page goldens
++  show the new card.
 +
  Checks: `labs_is_one_flat_list_of_toggles_off_by_default`,
  `contributed_options_are_labs_toggles_off_by_default`,

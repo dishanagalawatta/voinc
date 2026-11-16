@@ -199,10 +199,17 @@ Observed on a real Linux desktop (GNOME Wayland, x86_64): selecting
 `gemini_transcribe` with a key through `voinc model use` switches at once, a
 saved choice without a key survives and holds the pending listen at Model
 required, and saving the key starts the pending listener without a
-preparation. Not yet observed, and not covered by any check: a real request
-to Google.
-The Live session's state machine (its reads between writes, tunnel
-timeouts, and turn assembly) has no unit tests — the engine's stream rules
-around it do. No macOS meeting with Gemini selected has been recorded, and
-`voinc transcribe` over a real long file (segment splitting) is untested
-against Google's truncation behavior.
+preparation. A real request to Google is observed too (2026-11-16, same
+desktop): dictating with Google Transcribe selected transcribes the capture
+on the live session — the log reads `transcribed Linux dictation
+source="stream"`, the stream finalizes in a few hundred milliseconds where
+the batch fallback took whole seconds, and the pasted text is coherent. The
+binary-frame rule was found first with a throwaway probe client against the
+real endpoint (every live event rides one; the session parsed only text
+frames, so setup never completed and every capture fell back to batch); the
+probe stays out of the tree.
+Still not observed: a macOS meeting with Gemini selected, `voinc
+transcribe` over a real long file (segment splitting against Google's
+truncation behavior), and the free tier's rate limit. The Live session's
+state machine (its reads between writes, tunnel timeouts, and turn
+assembly) has no unit tests — the engine's stream rules around it do.

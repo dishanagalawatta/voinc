@@ -32,6 +32,11 @@ the logo and the derived icon set (Linux hicolor sizes, Windows `.ico`/glyph
 PNGs/tray raster, the macOS Icon Composer layer, `.github/assets/voinc-icon.png`)
 from `.voinc/assets/` over upstream's artwork on every sync. Derivation rules
 and the regeneration recipe live in [`.voinc/assets/README.md`](../assets/README.md).
+The same goes for the fork's README and NOTICE: they are maintained as
+`.voinc/README.md` and `.voinc/NOTICE.md` and copied to the tree root by the
+rebrand (`.voinc/` itself is restored from the previous tip, never patched), so
+edit them there and copy `README.md` across — a patch hunk on the root README
+would be overwritten by the next sync.
 
 ## Deferred (not patched yet)
 

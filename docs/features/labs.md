@@ -2789,9 +2789,10 @@ real desktop.
   feature is on) leaves the live session out of dictation: each capture
   transcribes the whole clip by batch after it ends. Checks: the
   fixture-JSON tests named
-  in [google-transcribe.md](google-transcribe.md); no request to Google has
-  ever been made, the Live session's own state machine has no tests, and the
-  Labs page goldens show the new card.
+  in [google-transcribe.md](google-transcribe.md); real dictation to Google
+  is observed (the feature doc records the live session and its logs), the
+  Live session's own state machine has no tests, and the Labs page goldens
+  show the new card.
 
 Checks: `labs_is_one_flat_list_of_toggles_off_by_default`,
 `contributed_options_are_labs_toggles_off_by_default`,

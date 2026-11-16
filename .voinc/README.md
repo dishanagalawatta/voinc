@@ -8,7 +8,11 @@ Local voice dictation and transcription for macOS, Windows and Linux. Hold a key
 voinc transcribe meeting.m4a
 ```
 
-Everything runs on your device: the first run downloads a speech model, and after that nothing leaves your machine.
+Everything runs on your device by default: the first run downloads a speech
+model, and after that nothing leaves your machine. The one cloud option —
+Google Transcribe, Google's Gemini speech models behind your own Gemini API
+key — lives in Labs, off by default: turn it on, add your key, and dictation
+goes to Google instead.
 
 ## Downloads
 
@@ -30,7 +34,14 @@ See `.voinc/rebrand.sh`, `.voinc/assets/README.md` and `NOTICE.md` for details o
 
 ## Branding
 
-The fork's mark is a fountain-pen nib with a voice waveform, drawn in `assets/logo/logo.svg` (on a black plate) and `assets/logo/logo-transparent.svg` (white on alpha). Every icon the app shows is derived from it: the Linux hicolor set, the Windows `.ico`, installer and tray rasters, and the macOS Icon Composer layer. Sizes below 64 px and the tray use the nib alone — the waveform's thin bars merge into noise that small. How the assets are derived and regenerated: `.voinc/assets/README.md`.
+The fork's mark is a fountain-pen nib with a voice waveform, drawn in `assets/logo/logo.svg` (on a black plate) and `assets/logo/logo-transparent.svg` (white on alpha). Every icon the app shows is derived from it: the Linux hicolor set, the
+Windows `.ico`, installer and tray rasters, and the macOS Icon Composer
+layer. Sizes below 64 px and the tray use the nib alone — the waveform's thin
+bars merge into noise that small. Icons the app itself writes into the user's
+icon theme carry an `X-Hex-Managed=true` marker inside the PNG, so Voinc
+replaces — and the uninstaller removes — only the icons it wrote, never one
+you made. How the assets are derived and regenerated:
+`.voinc/assets/README.md`.
 
 ## Building from source (Linux)
 
