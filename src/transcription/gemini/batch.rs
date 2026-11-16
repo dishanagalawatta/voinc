@@ -8,12 +8,12 @@
 //! Voinc's behalf. A smart mode asks Google to punctuate and tidy; a verbatim
 //! mode answers word times, which meetings and `voinc transcribe` use.
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use base64::Engine;
 use serde::Deserialize;
 
-use super::{BATCH_MODEL, Config, GeminiError, INTERACTIONS_URL, MAX_SEGMENT_SAMPLES};
+use super::{API_HOST, BATCH_MODEL, Config, GeminiError, INTERACTIONS_URL, MAX_SEGMENT_SAMPLES};
 use crate::net;
 use crate::transcription::transcript::{Transcript, TranscriptSegment};
 
@@ -261,7 +261,31 @@ impl Annotation {
 
 /// Posts one request and reads its interaction, naming every failure for a
 /// person. The body carries the audio, so the timeout covers a slow upload.
+/// Each request logs its outcome (duration and byte counts, never text), so
+/// the logs say when transcription went to Google.
 fn send(body: &[u8], config: &Config, samples: &[f32]) -> Result<Interaction, GeminiError> {
+    let started = Instant::now();
+    let outcome = request(body, config, samples);
+    let ms = started.elapsed().as_millis() as u64;
+    match &outcome {
+        Ok(_) => tracing::info!(
+            host = API_HOST,
+            ms,
+            request_bytes = body.len(),
+            "transcribed with Google"
+        ),
+        Err(error) => tracing::warn!(
+            host = API_HOST,
+            ms,
+            request_bytes = body.len(),
+            error = %error,
+            "Google Transcribe request failed"
+        ),
+    }
+    outcome
+}
+
+fn request(body: &[u8], config: &Config, samples: &[f32]) -> Result<Interaction, GeminiError> {
     let agent = net::agent(INTERACTIONS_URL, |config| {
         config
             .http_status_as_error(false)

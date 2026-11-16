@@ -231,6 +231,11 @@ impl Gemini {
     pub(crate) fn load_selection(selection: &TranscriptionSelection) -> Result<Self> {
         validate(selection)?;
         Config::for_selection(selection)?;
+        tracing::info!(
+            model = BATCH_MODEL,
+            language = %selection.language,
+            "loaded Google Transcribe; transcription goes to Google"
+        );
         Ok(Self {
             selection: selection.clone(),
         })

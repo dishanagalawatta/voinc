@@ -445,7 +445,13 @@ pub fn imported() -> Vec<Imported> {
 pub fn runnable(selection: &TranscriptionSelection) -> TranscriptionSelection {
     let gated = selection.model.is_labs_gated();
     if gated && !super::models::definition(selection.model).available() {
-        fallback()
+        let fallback = fallback();
+        tracing::warn!(
+            saved = %selection.model.as_str(),
+            running = %fallback.model.as_str(),
+            "the saved transcription model cannot run; running the default until it can"
+        );
+        fallback
     } else {
         selection.clone()
     }

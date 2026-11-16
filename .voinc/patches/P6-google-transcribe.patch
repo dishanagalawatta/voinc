@@ -825,10 +825,10 @@ index 97dba05e..11ab5a8c 100644
  used for any French system language (#892), and Русский, used for any
 diff --git a/docs/features/google-transcribe.md b/docs/features/google-transcribe.md
 new file mode 100644
-index 00000000..a809b27f
+index 00000000..ad3d95ea
 --- /dev/null
 +++ b/docs/features/google-transcribe.md
-@@ -0,0 +1,186 @@
+@@ -0,0 +1,198 @@
 +# Google Transcribe
 +
 +Google Transcribe (Labs › Google Transcribe, off by default) transcribes with
@@ -957,6 +957,18 @@ index 00000000..a809b27f
 +Live API allows a few sessions at once and caps one at ten minutes. Every
 +request Voinc sends carries `store: false`. A rate limit is named for a
 +person, not shown as a raw status.
++
++## In the logs
++
++The Gemini paths say so in `process.log`: loading the runtime logs
++`loaded Google Transcribe; transcription goes to Google` (with the batch
++model and language), and every batch request logs `transcribed with Google`
++or `Google Transcribe request failed` with the host, its duration, and its
++byte counts — never any text — so whether a dictation went to Google reads
++straight from the logs. A saved model that cannot run — its key is gone, or
++its lab is off — is named where the listener falls back
++(`custom_models::runnable`): `the saved transcription model cannot run;
++running the default until it can`.
 +
 +## Checks
 +
@@ -2771,7 +2783,7 @@ index ea733e8e..b807731d 100644
                  "the active transcriber cannot stream".into(),
              )),
 diff --git a/src/transcription/custom_models.rs b/src/transcription/custom_models.rs
-index c29b63ec..13bca623 100644
+index c29b63ec..4b1e250d 100644
 --- a/src/transcription/custom_models.rs
 +++ b/src/transcription/custom_models.rs
 @@ -427,7 +427,7 @@ pub fn imported() -> Vec<Imported> {
@@ -2783,6 +2795,21 @@ index c29b63ec..13bca623 100644
              },
              sha256: entry.manifest.sha256.clone(),
              source: entry.manifest.source.clone(),
+@@ -445,7 +445,13 @@ pub fn imported() -> Vec<Imported> {
+ pub fn runnable(selection: &TranscriptionSelection) -> TranscriptionSelection {
+     let gated = selection.model.is_labs_gated();
+     if gated && !super::models::definition(selection.model).available() {
+-        fallback()
++        let fallback = fallback();
++        tracing::warn!(
++            saved = %selection.model.as_str(),
++            running = %fallback.model.as_str(),
++            "the saved transcription model cannot run; running the default until it can"
++        );
++        fallback
+     } else {
+         selection.clone()
+     }
 diff --git a/src/transcription/engine.rs b/src/transcription/engine.rs
 index ff731670..eec8e6dd 100644
 --- a/src/transcription/engine.rs
@@ -2923,10 +2950,10 @@ index d79a58bd..c660b9fd 100644
              .unwrap();
 diff --git a/src/transcription/gemini.rs b/src/transcription/gemini.rs
 new file mode 100644
-index 00000000..aaa94a17
+index 00000000..42fd8530
 --- /dev/null
 +++ b/src/transcription/gemini.rs
-@@ -0,0 +1,435 @@
+@@ -0,0 +1,440 @@
 +//! Google Transcribe: Gemini's speech-to-text over the Gemini API.
 +//!
 +//! Two ways to hear it:
@@ -3160,6 +3187,11 @@ index 00000000..aaa94a17
 +    pub(crate) fn load_selection(selection: &TranscriptionSelection) -> Result<Self> {
 +        validate(selection)?;
 +        Config::for_selection(selection)?;
++        tracing::info!(
++            model = BATCH_MODEL,
++            language = %selection.language,
++            "loaded Google Transcribe; transcription goes to Google"
++        );
 +        Ok(Self {
 +            selection: selection.clone(),
 +        })
@@ -3364,10 +3396,10 @@ index 00000000..aaa94a17
 +}
 diff --git a/src/transcription/gemini/batch.rs b/src/transcription/gemini/batch.rs
 new file mode 100644
-index 00000000..8003db81
+index 00000000..7cc80b66
 --- /dev/null
 +++ b/src/transcription/gemini/batch.rs
-@@ -0,0 +1,368 @@
+@@ -0,0 +1,392 @@
 +//! The batch Interactions path: a complete clip to `POST /v1beta/interactions`
 +//! as inline base64 WAV, transcript out.
 +//!
@@ -3378,12 +3410,12 @@ index 00000000..8003db81
 +//! Voinc's behalf. A smart mode asks Google to punctuate and tidy; a verbatim
 +//! mode answers word times, which meetings and `voinc transcribe` use.
 +
-+use std::time::Duration;
++use std::time::{Duration, Instant};
 +
 +use base64::Engine;
 +use serde::Deserialize;
 +
-+use super::{BATCH_MODEL, Config, GeminiError, INTERACTIONS_URL, MAX_SEGMENT_SAMPLES};
++use super::{API_HOST, BATCH_MODEL, Config, GeminiError, INTERACTIONS_URL, MAX_SEGMENT_SAMPLES};
 +use crate::net;
 +use crate::transcription::transcript::{Transcript, TranscriptSegment};
 +
@@ -3631,7 +3663,31 @@ index 00000000..8003db81
 +
 +/// Posts one request and reads its interaction, naming every failure for a
 +/// person. The body carries the audio, so the timeout covers a slow upload.
++/// Each request logs its outcome (duration and byte counts, never text), so
++/// the logs say when transcription went to Google.
 +fn send(body: &[u8], config: &Config, samples: &[f32]) -> Result<Interaction, GeminiError> {
++    let started = Instant::now();
++    let outcome = request(body, config, samples);
++    let ms = started.elapsed().as_millis() as u64;
++    match &outcome {
++        Ok(_) => tracing::info!(
++            host = API_HOST,
++            ms,
++            request_bytes = body.len(),
++            "transcribed with Google"
++        ),
++        Err(error) => tracing::warn!(
++            host = API_HOST,
++            ms,
++            request_bytes = body.len(),
++            error = %error,
++            "Google Transcribe request failed"
++        ),
++    }
++    outcome
++}
++
++fn request(body: &[u8], config: &Config, samples: &[f32]) -> Result<Interaction, GeminiError> {
 +    let agent = net::agent(INTERACTIONS_URL, |config| {
 +        config
 +            .http_status_as_error(false)

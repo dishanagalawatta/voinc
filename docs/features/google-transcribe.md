@@ -127,6 +127,18 @@ Live API allows a few sessions at once and caps one at ten minutes. Every
 request Voinc sends carries `store: false`. A rate limit is named for a
 person, not shown as a raw status.
 
+## In the logs
+
+The Gemini paths say so in `process.log`: loading the runtime logs
+`loaded Google Transcribe; transcription goes to Google` (with the batch
+model and language), and every batch request logs `transcribed with Google`
+or `Google Transcribe request failed` with the host, its duration, and its
+byte counts — never any text — so whether a dictation went to Google reads
+straight from the logs. A saved model that cannot run — its key is gone, or
+its lab is off — is named where the listener falls back
+(`custom_models::runnable`): `the saved transcription model cannot run;
+running the default until it can`.
+
 ## Checks
 
 `missing_key_is_reported_without_a_request`,
