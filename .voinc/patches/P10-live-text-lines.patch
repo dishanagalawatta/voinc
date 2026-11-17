@@ -1,3 +1,51 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index c717fb04..d484eaa1 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -431,9 +431,9 @@ substitute for source inspection or a second roadmap.
+   prevention, and the login item.
+ - `dictation/live_text`: Labs' live text of the recording in
+   progress: the recording's `Publisher` shows it and its drop clears it, and
+-  each OS's host installs `rune_ui::live_text`, one click-through line just
+-  past the HUD, as a watcher, placed where `rune_hud` last showed the HUD
+-  (`rune_hud::live_text_place`).
++  each OS's host installs `rune_ui::live_text`, a click-through pill just
++  past the HUD whose words wrap over up to four lines, as a watcher, placed
++  where `rune_hud` last showed the HUD (`rune_hud::live_text_place`).
+ - `dictation/modes`: the mode runtime the Windows and Linux listeners share:
+   mode selection by application and website, then global replacements, mode
+   corrections, OpenCode rewriting, and transformations, and the History entry.
+diff --git a/docs/features/dictation.md b/docs/features/dictation.md
+index 2aee6036..e7d1db8d 100644
+--- a/docs/features/dictation.md
++++ b/docs/features/dictation.md
+@@ -1188,14 +1188,15 @@ Model advertises streaming, GPU device             // dictate.streaming
+   Nothing is pasted or reaches the focused app until the final text exists
+   Labs + labs.live_text -> After each feed the stream publishes its text   // dictate.live-text
+   ├── Stable (committed) and tentative text, per capture; a new capture starts empty
+-  ├── One click-through line just past the HUD, on the HUD's screen
++  ├── One click-through pill just past the HUD, on the HUD's screen
+   │   ├── macOS: beside the plate the HUD placed (under the menu bar, over the Dock,
+   │   │   in the menu bar, out of the notch), on the pointer's screen
+   │   ├── Linux, Windows: past the plate `rune_hud` draws, on the HUD's display
+   │   ├── HUD hidden -> In the HUD's place at the top
+   │   ├── Appears with the first words, already drawn; prewarmed, so macOS never
+   │   │   reveals the last dictation's words for a frame (Linux, Windows: unverified)
+-  │   ├── Grows with the words to 552 pt; the newest stay in view, "…" cutting the start
++  │   ├── Grows with the words to 552 pt, wrapping over up to four lines; past
++  │   │   that the oldest give way with "…", so the newest stay in view
+   │   └── Tentative words, when the model has any, are dimmed after the stable ones
+   ├── Release, short tap, or a lost microphone -> The recording ends -> Hidden
+   ├── Provisional: never pasted, copied, or kept (the final text replaces it)
+@@ -1785,7 +1786,7 @@ projection and wording are unit-tested; the macOS event-log wiring and listener
+ card are not natively verified.
+ 
+ With Labs › Failure notices on (`labs.failure_notices`, off by default), the
+-same explanation also appears for about six seconds as one click-through line
++same explanation also appears for about six seconds as one click-through pill
+ beside the HUD, reusing the Live text plate and placement. A new capture hides
+ it at once, and the message travels with the HUD's failure event, so a launch
+ never replays an old failure. The HUD's coral flash, its 600 ms, tones, and
 diff --git a/docs/features/labs.md b/docs/features/labs.md
 index 540590ff..954890c7 100644
 --- a/docs/features/labs.md

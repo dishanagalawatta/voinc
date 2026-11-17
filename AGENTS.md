@@ -431,9 +431,9 @@ substitute for source inspection or a second roadmap.
   prevention, and the login item.
 - `dictation/live_text`: Labs' live text of the recording in
   progress: the recording's `Publisher` shows it and its drop clears it, and
-  each OS's host installs `rune_ui::live_text`, one click-through line just
-  past the HUD, as a watcher, placed where `rune_hud` last showed the HUD
-  (`rune_hud::live_text_place`).
+  each OS's host installs `rune_ui::live_text`, a click-through pill just
+  past the HUD whose words wrap over up to four lines, as a watcher, placed
+  where `rune_hud` last showed the HUD (`rune_hud::live_text_place`).
 - `dictation/modes`: the mode runtime the Windows and Linux listeners share:
   mode selection by application and website, then global replacements, mode
   corrections, OpenCode rewriting, and transformations, and the History entry.
