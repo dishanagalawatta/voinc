@@ -1,10 +1,12 @@
-//! The live text plate (Labs): one click-through line
-//! beside the recording HUD with what the dictation has said so far, on
-//! every OS. It shows while a recording has text and hides when the
-//! recording ends ([`crate::dictation::live_text`]); `rune_hud` says where the HUD is,
+//! The live text plate (Labs): a click-through pill beside the recording
+//! HUD with what the dictation has said so far, on every OS. The words
+//! wrap over up to four lines, and past that the oldest words give way
+//! with "…", so the newest ones stay in view. It shows while a recording
+//! has text and hides when the recording ends
+//! ([`crate::dictation::live_text`]); `rune_hud` says where the HUD is,
 //! so the plate sits just past it, on the HUD's screen. Labs › Failure
-//! notices reuses the same plate for one line saying why a dictation failed,
-//! for a few seconds or until the next capture.
+//! notices reuses the same plate for one line saying why a dictation
+//! failed, for a few seconds or until the next capture.
 //!
 //! The overlay is prewarmed: macOS keeps it drawn while hidden and refreshes
 //! it before a reveal, so it never reappears with the last dictation's
@@ -15,6 +17,7 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
+use rune::text::Span;
 use rune::{
     Anim, Cx, El, OverlayHandle, OverlayOptions, OverlayPlacement, OverlaySpec, ScreenEdge, row,
     text,
@@ -23,19 +26,35 @@ use rune::{
 use super::controls::Paint;
 use crate::transcription::engine::Partial;
 
-/// The overlay's size: room for about a dozen words on one line.
-pub(crate) const SIZE: (f32, f32) = (560.0, 44.0);
-/// The plate's height inside the overlay.
-const PLATE_H: f32 = 32.0;
-/// The overlay's room around the plate, across its height.
-const PAD: f32 = (SIZE.1 - PLATE_H) / 2.0;
+/// The overlay's size: room for about a dozen words a line and four
+/// wrapped lines of them (four 20-point lines of the UI face, the pill's
+/// padding and the root's, and slack).
+pub(crate) const SIZE: (f32, f32) = (560.0, 108.0);
+/// The gap between the plate's start and the HUD's own margin.
+const PAD: f32 = 6.0;
+/// The most lines the plate shows.
+const MAX_LINES: usize = 4;
+/// The most characters the plate keeps (about four lines at the width the
+/// overlay leaves them): past it the oldest words give way, cut between
+/// words, with "…" standing for them, so the newest words stay in view.
+const WORD_BUDGET: usize = 240;
+/// The least characters a trimmed part keeps: fewer cannot show a whole
+/// word beside its "…", so the part gives way entirely.
+const MIN_TAIL: usize = 8;
 /// How long a failure notice stays beside the HUD.
 const FAILURE_VISIBLE: Duration = Duration::from_secs(6);
 
 #[derive(Default)]
 pub(crate) struct Plate {
-    stable: String,
-    tentative: String,
+    /// The words shown, one string: the committed text, then a space, then
+    /// the speculative one. [`Plate::tail`] is the byte where the
+    /// speculative words start — 0 when there are none, a head "…" from
+    /// the trim included then.
+    words: String,
+    tail: usize,
+    /// Whether the pill hugs the overlay's bottom — the side the HUD is on
+    /// when the HUD sits below the plate; otherwise it hugs the top.
+    hug_bottom: bool,
     /// Labs › Failure notices: why the last dictation failed, shown instead
     /// of the live words while it lasts.
     failure: Option<String>,
@@ -47,9 +66,35 @@ pub(crate) struct Plate {
 }
 
 impl Plate {
+    /// Keeps the newest words: the speculative text takes the room it
+    /// needs, the committed text gets the rest, and past [`WORD_BUDGET`]
+    /// the oldest words give way, cut between words, with "…" standing
+    /// for them.
     fn set_words(&mut self, stable: String, tentative: String) {
-        self.stable = stable;
-        self.tentative = tentative;
+        let stable = stable.trim();
+        let tentative = tentative.trim();
+        let join = usize::from(!stable.is_empty() && !tentative.is_empty());
+        // A separating space counts toward the room.
+        let room = WORD_BUDGET.saturating_sub(join);
+        let kept_tentative = keep_tail(tentative, room);
+        let stable_room = room.saturating_sub(kept_tentative.chars().count());
+        // A remnant too small to show a whole word gives way with
+        // everything before it.
+        let kept_stable = if stable.chars().count() > stable_room && stable_room < MIN_TAIL {
+            String::new()
+        } else {
+            keep_tail(stable, stable_room)
+        };
+        if kept_stable.is_empty() {
+            self.tail = 0;
+            self.words = kept_tentative;
+        } else if kept_tentative.is_empty() {
+            self.tail = kept_stable.len();
+            self.words = kept_stable;
+        } else {
+            self.tail = kept_stable.len() + 1;
+            self.words = format!("{kept_stable} {kept_tentative}");
+        }
         self.live = true;
     }
 
@@ -140,6 +185,16 @@ impl Spot {
                 width: SIZE.0,
                 height: SIZE.1,
             },
+        }
+    }
+
+    /// Whether the pill hugs the overlay's bottom: the side the HUD is on
+    /// when the HUD sits below the plate. Otherwise it hugs the top, so
+    /// the pill grows down from the HUD instead of up into it.
+    fn hugs_bottom(self) -> bool {
+        match self {
+            Self::Edge(edge, _) => matches!(edge, ScreenEdge::Bottom),
+            Self::Global { below, .. } => !below,
         }
     }
 
@@ -262,7 +317,9 @@ pub(crate) fn install<S: 'static>(app: &mut rune::App<S>, place: Place) {
             if plate.failure.is_none() && !plate.shown {
                 // Placed and shown after the new words, so it appears
                 // where it belongs with them already drawn.
-                place().apply(&handle);
+                let spot = place();
+                plate.hug_bottom = spot.hugs_bottom();
+                spot.apply(&handle);
                 handle.show();
                 plate.mark_shown(true);
             }
@@ -288,7 +345,9 @@ pub(crate) fn show_failure(message: &str) {
         plate.show_failure(message);
         tx.instant();
         if !plate.shown {
-            place().apply(&handle);
+            let spot = place();
+            plate.hug_bottom = spot.hugs_bottom();
+            spot.apply(&handle);
             handle.show();
             plate.mark_shown(true);
         }
@@ -395,39 +454,51 @@ fn is_blank(partial: &Partial) -> bool {
     partial.stable.trim().is_empty() && partial.tentative.trim().is_empty()
 }
 
-/// About one space of the plate's font, between right-to-left stable and
-/// tentative words.
-const RTL_SPACE: f32 = 4.0;
-
-/// Whether the line's first strong letter is right-to-left (Hebrew, Arabic,
-/// Persian, Syriac, Thaana, N'Ko, and their presentation forms).
-fn is_right_to_left(stable: &str, tentative: &str) -> bool {
-    stable
+/// Keeps the last words of `text` within `budget` characters, cutting
+/// between words, with "…" standing for what gave way; text within the
+/// budget is unchanged. Prose with no separators to cut at (CJK) cuts
+/// between characters instead, where there is no word boundary to keep.
+fn keep_tail(text: &str, budget: usize) -> String {
+    let count = text.chars().count();
+    if count <= budget {
+        return text.to_owned();
+    }
+    if budget == 0 {
+        return String::new();
+    }
+    let cut = count - budget;
+    let mut at = text
+        .char_indices()
+        .nth(cut)
+        .map_or(text.len(), |(index, _)| index);
+    // A cut inside a word gives way with the whole word, so no half word
+    // is shown.
+    if text[..at]
         .chars()
-        .chain(tentative.chars())
-        .find(|c| c.is_alphabetic() || is_rtl_letter(*c))
-        .is_some_and(is_rtl_letter)
+        .next_back()
+        .is_some_and(|c| !c.is_whitespace())
+        && text[at..]
+            .chars()
+            .next()
+            .is_some_and(|c| !c.is_whitespace())
+        && let Some(space) = text[at..].find(char::is_whitespace)
+    {
+        at += space;
+    }
+    format!("… {}", text[at..].trim_start())
 }
 
-fn is_rtl_letter(c: char) -> bool {
-    matches!(
-        c,
-        '\u{0590}'..='\u{08FF}' | '\u{FB1D}'..='\u{FDFF}' | '\u{FE70}'..='\u{FEFF}'
-    )
-}
-
-fn plate(p: &Paint, line: El) -> El {
+fn plate(p: &Paint, body: El) -> El {
     let c = &p.k.c;
     row()
         .key("plate")
-        .h(PLATE_H)
         .max_w(SIZE.0 - 8.0)
         .px(14.0)
-        .center_y()
-        .radius(PLATE_H / 2.0)
+        .py(6.0)
+        .radius(p.k.radius.md)
         .fill(c.bg_base)
         .border(p.hair, c.border_base)
-        .child(line)
+        .child(body)
 }
 
 fn view(plate_state: &Plate, cx: &mut Cx<Plate>) -> El {
@@ -436,9 +507,18 @@ fn view(plate_state: &Plate, cx: &mut Cx<Plate>) -> El {
         .key("live-text")
         .w_full()
         .h_full()
-        .center()
+        .justify_center()
         .px(4.0)
+        .py(PAD)
         .hover_motion_within(Anim::INSTANT, Anim::INSTANT);
+    // The pill hugs the side the HUD is on: a top HUD hangs it from the
+    // overlay's top, a bottom one raises it from the bottom, and it grows
+    // away from the HUD as the words wrap.
+    let root = if plate_state.hug_bottom {
+        root.items_end()
+    } else {
+        root.items_start()
+    };
     if let Some(failure) = &plate_state.failure {
         let line = text(failure.clone())
             .key("failure")
@@ -447,42 +527,27 @@ fn view(plate_state: &Plate, cx: &mut Cx<Plate>) -> El {
             .color(p.danger());
         return root.child(plate(&p, line));
     }
-    if plate_state.stable.trim().is_empty() && plate_state.tentative.trim().is_empty() {
+    if plate_state.words.trim().is_empty() {
         return root;
     }
-    // The newest words stay in view: the start gives way with "…".
-    let stable = text(plate_state.stable.trim().to_owned())
-        .key("stable")
-        .truncate_head()
+    // The committed words read first and the speculative ones follow, one
+    // paragraph with spans: bidi lays right-to-left text out, so no row
+    // flip is needed, and the speculative words keep their faint colour to
+    // the reading end.
+    let only_tentative = plate_state.tail == 0;
+    let mut words = text(plate_state.words.clone())
+        .key("words")
+        .shrink()
+        .min_w(0.0)
+        .max_lines(MAX_LINES)
         .font(p.k.ty.ui)
-        .color(p.text());
-    let rtl = is_right_to_left(&plate_state.stable, &plate_state.tentative);
-    let tentative = (!plate_state.tentative.trim().is_empty()).then(|| {
-        let words = text(if rtl {
-            // A leading space would sit on the right-to-left line's far
-            // (right) side; the gap goes between the words instead.
-            plate_state.tentative.trim().to_owned()
-        } else {
-            plate_state.tentative.clone()
-        })
-        .key("tentative")
-        .truncate()
-        .font(p.k.ty.ui)
-        .color(p.faint());
-        let spaced = rtl
-            && !plate_state.stable.trim().is_empty()
-            && plate_state.tentative.starts_with(char::is_whitespace);
-        if spaced { words.mr(RTL_SPACE) } else { words }
-    });
-    let line = row().key("line").min_w(0.0).shrink();
-    // Right-to-left, the newer (tentative) words read after the stable ones,
-    // so they sit to their left.
-    let line = if rtl {
-        line.children(tentative).child(stable)
-    } else {
-        line.child(stable).children(tentative)
-    };
-    root.child(plate(&p, line))
+        .color(if only_tentative { p.faint() } else { p.text() });
+    if !only_tentative && plate_state.tail < plate_state.words.len() {
+        words = words.spans(vec![
+            Span::new(plate_state.tail, plate_state.words.len()).color(p.faint()),
+        ]);
+    }
+    root.child(plate(&p, words))
 }
 
 #[cfg(test)]
@@ -496,6 +561,12 @@ mod tests {
     const LONG: &str = "So the plan for today is to finish the release notes, then check the \
         streaming numbers on the M4, and after lunch we can review the onboarding flow together";
     const HEBREW: &str = "אז התוכנית להיום";
+    /// Longer than the plate keeps, to see the head trim's "…" in the
+    /// snapshot.
+    const OVERLONG: &str = "so we walked through the whole plan once more, and then the \
+        streaming numbers came in, and after that the onboarding flow was \
+        reviewed together with the team, and finally the release notes were \
+        finished, checked twice, and shipped with the build that afternoon";
 
     #[test]
     fn a_failure_notice_lasts_six_seconds() {
@@ -541,14 +612,9 @@ mod tests {
     }
 
     fn runtime(stable: &str, tentative: &str, dark: bool) -> Runtime<Plate> {
-        runtime_plate(
-            Plate {
-                stable: stable.into(),
-                tentative: tentative.into(),
-                ..Plate::default()
-            },
-            dark,
-        )
+        let mut plate = Plate::default();
+        plate.set_words(stable.into(), tentative.into());
+        runtime_plate(plate, dark)
     }
 
     fn runtime_plate(plate: Plate, dark: bool) -> Runtime<Plate> {
@@ -575,49 +641,121 @@ mod tests {
     }
 
     #[test]
-    fn a_short_line_hugs_its_words_in_the_middle() {
+    fn a_short_line_hugs_its_words() {
         let rt = runtime(SHORT, "", false);
         let [x, y, w, h] = rect(&rt, "plate").expect("the plate draws");
         assert!(w < SIZE.0 / 2.0, "the plate hugs a short line: {w}");
         assert!((x + w / 2.0 - SIZE.0 / 2.0).abs() < 1.0, "centred: {x} {w}");
-        assert!((y + h / 2.0 - SIZE.1 / 2.0).abs() < 1.0, "centred: {y} {h}");
-        assert!(rect(&rt, "tentative").is_none());
+        // The HUD sits above: the pill hangs from the overlay's top, its
+        // one line as tall as before.
+        assert!((y - PAD).abs() < 1.0, "top: {y}");
+        assert!((h - 32.0).abs() < 0.5, "one line: {h}");
+        assert!(rect(&rt, "words").is_some());
     }
 
     #[test]
-    fn a_long_line_stays_inside_the_overlay_on_one_line() {
+    fn the_pill_hugs_the_side_the_hud_is_on() {
+        // A bottom-edge HUD: the pill rises from the overlay's bottom.
+        let mut plate = Plate::default();
+        plate.set_words(SHORT.into(), String::new());
+        plate.hug_bottom = true;
+        let rt = runtime_plate(plate, false);
+        let [_, y, _, h] = rect(&rt, "plate").unwrap();
+        assert!((y + h - (SIZE.1 - PAD)).abs() < 1.0, "bottom: {y} {h}");
+    }
+
+    #[test]
+    fn a_long_line_wraps_over_four_lines_at_most() {
         for tentative in ["", " together with the team"] {
             let rt = runtime(LONG, tentative, true);
-            let [x, _, w, h] = rect(&rt, "plate").unwrap();
+            let [x, _, w, _] = rect(&rt, "plate").unwrap();
             assert!(x >= 0.0 && x + w <= SIZE.0, "inside: {x} {w}");
-            assert_eq!(h, PLATE_H);
-            let [line_x, _, line_w, _] = rect(&rt, "line").unwrap();
+            let [_, _, _, lines] = rect(&rt, "words").unwrap();
+            assert!(lines > 20.0, "more than one line: {lines}");
             assert!(
-                line_x + line_w <= x + w,
-                "the words fit the plate: {line_x} {line_w}"
+                lines <= 4.0 * 20.0 + 0.5,
+                "within the four lines the plate keeps: {lines}"
             );
-            let [_, _, _, line] = rect(&rt, "stable").unwrap();
-            assert!(line < PLATE_H, "one line: {line}");
-            assert_eq!(rect(&rt, "tentative").is_some(), !tentative.is_empty());
+            let [_, _, _, pill] = rect(&rt, "plate").unwrap();
+            assert!(pill <= 4.0 * 20.0 + 12.0 + 0.5, "the pill fits: {pill}");
         }
     }
 
     #[test]
-    fn tentative_words_follow_the_stable_ones_in_reading_order() {
-        let rt = runtime(SHORT, " is to finish", false);
-        let [sx, _, sw, _] = rect(&rt, "stable").unwrap();
-        let [tx, _, _, _] = rect(&rt, "tentative").unwrap();
-        assert!(tx >= sx + sw - 0.5, "left to right: {sx} {sw} {tx}");
+    fn the_newest_words_stay_and_the_oldest_give_way() {
+        let said = format!(
+            "{LONG} {}now",
+            "and then we went over the streaming numbers again ".repeat(4)
+        );
+        let mut plate = Plate::default();
+        plate.set_words(said.clone(), String::new());
+        let words = plate.words.clone();
+        assert!(words.starts_with("… "), "the head gives way: {words}");
+        assert!(
+            words.chars().count() <= WORD_BUDGET + 2,
+            "within the budget: {}",
+            words.chars().count()
+        );
+        // The kept words are the dictation's newest ones, whole: they end
+        // where it did, and a separator stood before the first kept word.
+        let kept = &words["… ".len()..];
+        assert!(said.ends_with(kept), "the tail is kept: {kept}");
+        assert!(kept.ends_with("now"), "the newest words stay: {kept}");
+        let at = said.len() - kept.len();
+        assert!(
+            said[..at]
+                .chars()
+                .next_back()
+                .is_some_and(char::is_whitespace),
+            "the cut fell between words"
+        );
+    }
 
-        let rt = runtime(HEBREW, " והיום", false);
-        let [sx, _, _, _] = rect(&rt, "stable").unwrap();
-        let [tx, _, tw, _] = rect(&rt, "tentative").unwrap();
-        assert!(tx + tw < sx, "right to left, after a space: {tx} {tw} {sx}");
+    #[test]
+    fn a_long_speculation_leaves_the_committed_words_out() {
+        let mut plate = Plate::default();
+        plate.set_words(
+            "earlier words that already landed".into(),
+            format!(
+                "{LONG} {}",
+                "and the streaming numbers keep coming in ".repeat(3) + "now"
+            ),
+        );
+        // The speculative text takes the room it needs; the committed words
+        // that would not fit give way whole.
+        assert_eq!(plate.tail, 0, "no committed words fit");
+        assert!(!plate.words.contains("earlier"));
+        assert!(plate.words.starts_with("… "), "its own head gives way");
+        assert!(plate.words.ends_with("now"), "the newest words stay");
+    }
 
-        assert!(is_right_to_left(HEBREW, ""));
-        assert!(is_right_to_left("  ", " مرحبا"));
-        assert!(!is_right_to_left(SHORT, " שלום"));
-        assert!(!is_right_to_left("", ""));
+    #[test]
+    fn short_words_stay_whole() {
+        let mut plate = Plate::default();
+        plate.set_words(SHORT.into(), " is to finish".into());
+        assert_eq!(plate.words, "So the plan for today is to finish");
+        assert_eq!(plate.tail, SHORT.len() + 1);
+    }
+
+    #[test]
+    fn prose_without_separators_cuts_between_characters() {
+        let mut plate = Plate::default();
+        plate.set_words("早".repeat(300), String::new());
+        assert!(plate.words.starts_with("… "));
+        assert_eq!(plate.words.chars().count(), WORD_BUDGET + 2);
+    }
+
+    #[test]
+    fn right_to_left_words_stay_inside_the_plate() {
+        // The words are one paragraph now: bidi orders the runs, so the
+        // reading order needs no row flip, and the plate only has to keep
+        // the text inside the overlay.
+        for (stable, tentative) in [(HEBREW, " והיום"), ("", HEBREW), (HEBREW, "")] {
+            let rt = runtime(stable, tentative, false);
+            let [x, _, w, _] = rect(&rt, "plate").unwrap();
+            assert!(x >= 0.0 && x + w <= SIZE.0, "inside: {x} {w}");
+            assert!(rect(&rt, "words").is_some());
+        }
     }
 
     #[test]
@@ -646,7 +784,26 @@ mod tests {
         assert_eq!(rect(true), (700.0 - SIZE.0 / 2.0, 100.0 - PAD, SIZE.0));
         assert_eq!(
             rect(false),
-            (700.0 - SIZE.0 / 2.0, 100.0 - PAD - PLATE_H, SIZE.0)
+            (700.0 - SIZE.0 / 2.0, 100.0 - SIZE.1 + PAD, SIZE.0)
+        );
+        // The pill hugs the side the HUD is on.
+        assert!(!Spot::Edge(ScreenEdge::Top, 50.0).hugs_bottom());
+        assert!(Spot::Edge(ScreenEdge::Bottom, 50.0).hugs_bottom());
+        assert!(
+            !Spot::Global {
+                x: 0.0,
+                y: 0.0,
+                below: true
+            }
+            .hugs_bottom()
+        );
+        assert!(
+            Spot::Global {
+                x: 0.0,
+                y: 0.0,
+                below: false
+            }
+            .hugs_bottom()
         );
     }
 
@@ -662,7 +819,7 @@ mod tests {
         assert!(plate.should_hide());
         plate.show_failure("No microphone is available.".into());
         assert!(!plate.should_hide());
-        assert_eq!(plate.stable, "old words", "the old words stay for the fade");
+        assert_eq!(plate.words, "old words", "the old words stay for the fade");
 
         // Once the notice is up, a later words end cannot hide it.
         plate.words_ended();
@@ -674,19 +831,13 @@ mod tests {
 
     #[test]
     fn a_failure_notice_takes_the_plate_from_the_live_words() {
-        let rt = runtime_plate(
-            Plate {
-                stable: SHORT.into(),
-                tentative: " and then".into(),
-                failure: Some("No microphone is available. Connect a microphone.".into()),
-                ..Plate::default()
-            },
-            false,
-        );
+        let mut plate = Plate::default();
+        plate.set_words(SHORT.into(), " and then".into());
+        plate.show_failure("No microphone is available. Connect a microphone.".into());
+        let rt = runtime_plate(plate, false);
         assert!(rect(&rt, "plate").is_some());
         assert!(rect(&rt, "failure").is_some());
-        assert!(rect(&rt, "stable").is_none());
-        assert!(rect(&rt, "tentative").is_none());
+        assert!(rect(&rt, "words").is_none());
     }
 
     #[test]
@@ -715,6 +866,7 @@ mod tests {
         for (name, stable, tentative) in [
             ("short", SHORT, ""),
             ("long", LONG, ""),
+            ("overlong", OVERLONG, ""),
             ("tentative", SHORT, " is to finish"),
             ("rtl", HEBREW, " והיום"),
         ] {

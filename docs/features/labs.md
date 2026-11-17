@@ -27,7 +27,7 @@ Feature             Pane  Toggle (settings.json, voinc settings)   On: what it d
 ├── Voice Filter (Dev) yes experimental.hex_microphone (macOS, Linux) Voice Filter joins the sidebar; feeds the Voinc Microphone (macOS driver, Linux PipeWire source)
 │                                        a stable build never feeds it; with the macOS driver installed it keeps the pane with Uninstall alone
 ├── Playground (Dev) yes  labs.playground                        a Playground sidebar item and ⇧⌘D open the story browser
-├── Live text       no    labs.live_text                         provisional words beside the HUD while dictating
+├── Live text       no    labs.live_text                         provisional words beside the HUD while dictating, over up to four lines
 ├── Failure notices no    labs.failure_notices                   when a dictation fails, its explanation sits beside the HUD for about 6 s, or until the next capture starts
 ├── Live typing     no    labs.live_typing                       (Linux Wayland) provisional words as an underlined input-method preedit in the focused field; the final text is committed there instead of pasted
 ├── Settings search no    labs.settings_search                  a search field atop General filters its rows, Advanced's included
@@ -2383,9 +2383,13 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   `run_setup_again_opens_the_first_run_on_linux_and_windows` in
   [panes.rs](../../src/rune_ui/tests/panes.rs).
 - Live text: a streaming dictation shows what you have said so far while
-  you dictate, as one click-through line just past the recording HUD (every
-  OS; see [Streaming Finish](dictation.md#streaming-finish)). Off macOS the
-  line is placed with the HUD's own edge placement (`OverlayHandle::place`),
+  you dictate, in a click-through pill just past the recording HUD (every
+  OS; see [Streaming Finish](dictation.md#streaming-finish)). The words wrap
+  over up to four lines, and past that the oldest words give way with "…",
+  cut between words, so the newest ones stay in view; the pill grows with
+  the text and hugs the side the HUD is on, growing away from it. Off macOS
+  the pill is placed with the HUD's own edge placement
+  (`OverlayHandle::place`),
   so with the HUD at the bottom it sits above the pill and the Windows
   taskbar rather than under the pill (#797; not yet observed on Windows).
   Its toggle
@@ -2405,13 +2409,18 @@ vocabulary list itself (rewriting and search), and Linux's Terminal paste.
   [dictation.rs](../../src/dictation.rs); the three tests in
   [dictation/live_text.rs](../../src/dictation/live_text.rs) (a recording's end clears only its
   own text); `a_spot_places_the_plate_just_past_the_hud`,
-  `a_short_line_hugs_its_words_in_the_middle`,
-  `a_long_line_stays_inside_the_overlay_on_one_line`, and
+  `a_short_line_hugs_its_words`, `the_pill_hugs_the_side_the_hud_is_on`,
+  `a_long_line_wraps_over_four_lines_at_most`,
+  `the_newest_words_stay_and_the_oldest_give_way`,
+  `a_long_speculation_leaves_the_committed_words_out`,
+  `short_words_stay_whole`,
+  `prose_without_separators_cuts_between_characters`,
+  `right_to_left_words_stay_inside_the_plate`, and
   `no_words_draw_nothing` in
   [rune_ui/live_text.rs](../../src/rune_ui/live_text.rs), whose opt-in
-  `snapshots` renders the line in light and dark; and
+  `snapshots` renders the plate in light and dark; and
   `live_text_hangs_just_past_the_plate_wherever_it_sits` in
-  [rune_hud/hud_placement.rs](../../src/rune_hud/hud_placement.rs). The line has no golden
+  [rune_hud/hud_placement.rs](../../src/rune_hud/hud_placement.rs). The plate has no golden
   and no `--snap` scene (overlays have none), and nothing headless checks
   how it appears and hides on screen.
 - Failure notices: when a dictation fails, the same click-through plate that
